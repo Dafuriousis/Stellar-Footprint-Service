@@ -23,7 +23,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
   metrics.incrementActiveSimulations();
 
   try {
-    const result = await simulateTransaction(xdr, net);
+    const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
     
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);

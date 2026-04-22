@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import routes from "./api/routes";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
+import { timeoutMiddleware } from "./middleware/timeout";
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(metricsMiddleware);
+app.use(timeoutMiddleware);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

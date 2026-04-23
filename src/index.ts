@@ -7,12 +7,16 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
+import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const COMPRESSION_THRESHOLD = parseInt(process.env.COMPRESSION_THRESHOLD || "1024", 10);
+const COMPRESSION_THRESHOLD = parseInt(
+  process.env.COMPRESSION_THRESHOLD || "1024",
+  10,
+);
 
 // Middleware
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
@@ -44,6 +48,9 @@ app.get("/metrics", async (req, res) => {
 
 // API routes
 app.use("/api", routes);
+
+// Error handling middleware (must be last)
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.warn(`stellar-footprint-service running on port ${PORT}`);

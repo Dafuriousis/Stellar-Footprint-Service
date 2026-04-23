@@ -1,0 +1,52 @@
+diff a/README.md b/README.md	(rejected hunks)
+@@ -63,6 +63,50 @@ npm install
+ cp .env.example .env
+ # Edit .env with your RPC URLs and keys
+ ```
++## Load Testing
++
++To benchmark the service under concurrent load:
++
++1. Start the local server:
++   ```bash
++   npm run dev
++   ```
++2. Run the autocannon load test:
++   ```bash
++   npm run load-test
++   ```
++
++### What is tested
++
++This load test runs three concurrency levels against the service:
++
++- `10` connections
++- `50` connections
++- `100` connections
++
++### Metrics explained
++
++- `p50`: median latency, meaning half of requests completed faster than this value.
++- `p95`: latency at the 95th percentile, showing how slow the slowest 5% of requests are.
++- `p99`: latency at the 99th percentile, showing the tail latency for the slowest 1% of requests.
++- `Req/sec`: average number of successful requests per second.
++- `Errors(%)`: percentage of requests that failed, timed out, or returned non-2xx responses.
++
++### How to interpret results
++
++- Lower `p50`, `p95`, and `p99` values indicate better request latency.
++- A small gap between `p95` and `p99` suggests a stable service under load.
++- A low `Errors(%)` means the service handled the traffic reliably.
++
++### Customize the target
++
++By default, the load test targets the health endpoint at `http://localhost:3000/health`.
++
++You can override the base URL using `LOAD_TEST_URL` or change the path via `LOAD_TEST_PATH`:
++
++```bash
++LOAD_TEST_URL=http://localhost:3000 LOAD_TEST_PATH=/metrics npm run load-test
++```
+ 
+ ### Scaffold from Scratch
+ 

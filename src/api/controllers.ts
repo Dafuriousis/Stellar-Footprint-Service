@@ -771,6 +771,7 @@ export async function simulateBatch(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 /**
 <<<<<<< ours
  * Handle GET /api/v1/network/status requests
@@ -946,6 +947,8 @@ export async function restore(
 =======
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 export async function footprintDiffController(
   req: Request,
   res: Response,
@@ -955,6 +958,7 @@ export async function footprintDiffController(
 
 export async function validate(req: Request, res: Response): Promise<void> {
   res.status(501).json({ error: "Not implemented" });
+<<<<<<< ours
 <<<<<<< ours
 >>>>>>> theirs
 }
@@ -1273,6 +1277,8 @@ export async function restore(req: Request, res: Response): Promise<void> {
     const message = err instanceof Error ? err.message : "Unexpected error";
     res.status(500).json({ error: message });
   }
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 }

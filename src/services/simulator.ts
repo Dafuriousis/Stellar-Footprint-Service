@@ -127,6 +127,7 @@ async function _checkContractExists(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     // Convert contractIdString to LedgerKey for an account
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accountId = (StellarSdk.xdr as any).AccountId.fromString(contractIdString);
@@ -163,6 +164,10 @@ async function _checkContractExists(
       server.getLedgerEntries(ledgerKey),
     );
     const exists = response.entries && response.entries.length > 0;
+=======
+    // For now, assume contract exists if we can parse it
+    const exists = contractIdString.length > 0;
+>>>>>>> theirs
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });
     return exists;
 <<<<<<< ours
@@ -190,6 +195,32 @@ export interface TtlInfo {
   expiresInLedgers: number;
 }
 
+export interface FootprintStats {
+  readOnlyCount: number;
+  readWriteCount: number;
+  totalEntries: number;
+  estimatedSizeBytes: number;
+}
+
+export interface AuthEntry {
+  contractId: string;
+  functionName: string;
+  xdr: string;
+}
+
+export interface ContractEvent {
+  type: string;
+  contractId: string;
+  topics: string[];
+  data: string;
+}
+
+export interface ContractInvocation {
+  contractId: string;
+  functionName: string;
+  args: string[];
+}
+
 export interface SimulateResult {
   success: boolean;
   footprint?: {
@@ -209,6 +240,14 @@ export interface SimulateResult {
     readOnly: string[];
     readWrite: string[];
   };
+  /** Footprint size analytics */
+  footprintStats?: FootprintStats;
+  /** Contract invocation details */
+  invocation?: ContractInvocation;
+  /** Authorization entries required for the transaction */
+  authEntries?: AuthEntry[];
+  /** Contract events emitted during simulation */
+  events?: ContractEvent[];
   cost?: {
     cpuInsns: string;
     memBytes: string;
@@ -329,6 +368,9 @@ async function fetchTtlInfo(
 /**
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
  * Calculate footprint size statistics
  */
 function calculateFootprintStats(
@@ -345,6 +387,9 @@ function calculateFootprintStats(
   );
 
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
   return {
     readOnlyCount: readOnly.length,
     readWriteCount: readWrite.length,
@@ -352,6 +397,7 @@ function calculateFootprintStats(
     estimatedSizeBytes: readOnlySize + readWriteSize,
   };
 }
+<<<<<<< ours
 =======
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 
@@ -370,15 +416,21 @@ function calculateFootprintStats(
   }
   const response = await server.simulateTransaction(tx, simOptions as never);
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 
 /**
  * Extract contract invocation details from transaction
  */
 function extractInvocation(
+<<<<<<< ours
   tx: StellarSdk.Transaction<
     StellarSdk.Memo<StellarSdk.MemoType>,
     StellarSdk.Operation[]
   >,
+=======
+  tx: StellarSdk.Transaction<StellarSdk.Memo<StellarSdk.MemoType>, StellarSdk.Operation[]>,
+>>>>>>> theirs
 ): ContractInvocation | undefined {
   try {
     const op = tx.operations[0];
@@ -386,7 +438,10 @@ function extractInvocation(
       return undefined;
     }
 
+<<<<<<< ours
     // Basic extraction - can be improved to parse xdr.HostFunction
+=======
+>>>>>>> theirs
     return {
       contractId: "",
       functionName: "",
@@ -398,6 +453,9 @@ function extractInvocation(
 }
 
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 /**
  * Extract authorization entries from simulation response
  */
@@ -419,6 +477,7 @@ function extractAuthEntries(
 function extractEvents(
   response: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse,
 ): ContractEvent[] {
+<<<<<<< ours
   const events =
     (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
 
@@ -439,11 +498,22 @@ function extractEvents(
       error: "Simulation succeeded but no transactionData or results; cannot extract footprint.",
       raw: response,
 >>>>>>> theirs
+=======
+  const events = (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
+
+  return events.map((event) => {
+    return {
+      type: "contract",
+      contractId: "",
+      topics: [],
+      data: "",
+>>>>>>> theirs
     };
   });
 }
 
 /**
+<<<<<<< ours
  * Extract required signers from auth entries.
  */
 function extractRequiredSigners(auth: unknown[]): {
@@ -596,6 +666,19 @@ function extractRequiredSigners(auth: any[]): { requiredSigners: string[], thres
 <<<<<<< ours
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+ * Extract required signers from authorization entries
+ */
+function extractRequiredSigners(
+  auth: StellarSdk.xdr.SorobanAuthorizationEntry[],
+): { requiredSigners: string[]; threshold: number } {
+  return {
+    requiredSigners: [],
+    threshold: 0,
+  };
+}
+
 >>>>>>> theirs
 export async function simulateTransaction(
   xdr: string,
@@ -795,6 +878,7 @@ export async function simulateTransaction(
       };
     }
 
+<<<<<<< ours
 =======
   if (results.length === 1) {
     // Single operation
@@ -806,6 +890,11 @@ export async function simulateTransaction(
         raw: response,
       };
     }
+=======
+  // Extract required signers from auth entries
+  const auth = (response.transactionData?.build() as unknown as { auth: () => StellarSdk.xdr.SorobanAuthorizationEntry[] }).auth?.() ?? [];
+  const { requiredSigners, threshold } = extractRequiredSigners(auth);
+>>>>>>> theirs
 
 >>>>>>> theirs
     const footprint = result.transactionData.build().resources().footprint();
@@ -814,6 +903,7 @@ export async function simulateTransaction(
       readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
     };
 
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -1096,6 +1186,25 @@ export async function simulateTransaction(
 =======
 >>>>>>> theirs
   const result: SimulateResult = {
+=======
+  // Calculate footprint size statistics
+  const footprintStats = calculateFootprintStats(
+    rawFootprint.readOnly,
+    rawFootprint.readWrite,
+  );
+
+  // Extract contract invocation details
+  const txObj = tx as StellarSdk.Transaction<StellarSdk.Memo<StellarSdk.MemoType>, StellarSdk.Operation[]>;
+  const invocation = extractInvocation(txObj);
+
+  // Extract authorization entries
+  const authEntries = extractAuthEntries(auth);
+
+  // Extract contract events
+  const events = extractEvents(response);
+
+  return {
+>>>>>>> theirs
     success: true,
     footprint: {
       readOnly: extracted.optimizationResult.readOnly,
@@ -1104,8 +1213,17 @@ export async function simulateTransaction(
     contracts: extracted.contracts,
     contractType: extracted.contractType,
     ttl,
+<<<<<<< ours
     optimized: extracted.optimizationResult.optimized,
     rawFootprint: extracted.rawFootprint,
+=======
+    optimized: optimizationResult.optimized,
+    rawFootprint,
+    footprintStats,
+    invocation,
+    authEntries,
+    events,
+>>>>>>> theirs
     cost: {
       cpuInsns: response.cost?.cpuInsns ?? "0",
       memBytes: response.cost?.memBytes ?? "0",

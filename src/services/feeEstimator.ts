@@ -84,8 +84,18 @@ function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
 
   try {
     // Get the latest ledger to fetch fee parameters
+<<<<<<< ours
     // We use a fallback since SDK might not expose it directly in a stable way across versions
     const _ledgerResponse = await server.getLatestLedger();
+=======
+    const ledgerResponse = await server.getLatestLedger();
+
+    // Use default fee parameters for now
+    const feeParams = {
+      feeRatePerInstructionIncrement: 100,
+      writeFeePerLedgerEntry: 100,
+    };
+>>>>>>> theirs
 
     // In a real scenario, we'd extract from ledgerResponse.feeParams
     // For now, use these well-known defaults as per PR 196 request

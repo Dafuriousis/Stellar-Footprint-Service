@@ -75,8 +75,11 @@ app.use("/api/:path(*)", (req, res) => {
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  logger.warn(`stellar-footprint-service running on port ${PORT}`);
-});
+// Only start the server when this file is run directly (not imported in tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    logger.warn(`stellar-footprint-service running on port ${PORT}`);
+  });
+}
 
 export default app;

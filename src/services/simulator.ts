@@ -1,5 +1,6 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { Network, getNetworkConfig, getRpcServer } from "@config/stellar";
+import { sanitizeRpcError } from "../utils/rpcErrorSanitizer";
 import {
   parseFootprint,
   extractContracts,
@@ -400,12 +401,18 @@ export async function simulateTransaction(
   }
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
-    return { success: false, error: response.error, raw: response };
+    return {
+      success: false,
+      type: "simulation_error" as const,
+      error: sanitizeRpcError(response.error),
+      raw: response,
+    };
   }
 
   if (StellarSdk.SorobanRpc.Api.isSimulationRestore(response)) {
     return {
       success: false,
+      type: "restoration_required" as const,
       error: "Transaction requires ledger entry restoration before simulation.",
       raw: response,
     };

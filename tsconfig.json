@@ -10,19 +10,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-    "types": ["jest", "node"]
-=======
-=======
->>>>>>> theirs
     "ignoreDeprecations": "6.0",
     "baseUrl": "./src",
     "paths": {
@@ -31,33 +18,8 @@
       "@config/*": ["config/*"],
       "@middleware/*": ["middleware/*"],
       "@utils/*": ["utils/*"]
-    }
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-    "types": ["node"]
-=======
+    },
     "types": ["node", "jest"]
->>>>>>> theirs
-=======
-    "types": ["node", "jest"]
->>>>>>> theirs
-=======
-    "types": ["node", "jest"]
->>>>>>> theirs
-=======
-    "types": ["node", "jest"]
->>>>>>> theirs
-=======
-    "types": ["node", "jest"]
->>>>>>> theirs
-=======
-    "types": ["node", "jest"]
->>>>>>> theirs
-=======
-    "types": ["node", "jest"]
->>>>>>> theirs
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/__tests__/**"]

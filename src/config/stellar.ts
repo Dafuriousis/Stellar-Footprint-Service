@@ -51,8 +51,6 @@ export function getNetworkConfig(network: Network = "testnet"): NetworkConfig {
   return config;
 }
 
-const RPC_POOL_TTL_MS = parseInt(process.env.RPC_POOL_TTL_MS || "300000", 10);
-
 interface PoolEntry {
   server: StellarSdk.SorobanRpc.Server;
   createdAt: number;
@@ -69,10 +67,12 @@ const pool = new Map<Network, PoolEntry>();
 export function getRpcServer(
   network: Network = "testnet",
 ): StellarSdk.SorobanRpc.Server {
+  // Read at call time so dotenv.config() in index.ts runs first
+  const rpcPoolTtlMs = parseInt(process.env.RPC_POOL_TTL_MS || "300000", 10);
   const now = Date.now();
   const entry = pool.get(network);
 
-  if (entry && now - entry.createdAt < RPC_POOL_TTL_MS) {
+  if (entry && now - entry.createdAt < rpcPoolTtlMs) {
     return entry.server;
   }
 

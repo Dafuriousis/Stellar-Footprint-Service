@@ -1,7 +1,11 @@
+// dotenv must be configured before any other imports that read process.env
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import compression from "compression";
 import helmet from "helmet";
-import dotenv from "dotenv";
+import cors from "cors";
 import routes from "./api/routes";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { timeoutMiddleware } from "./middleware/timeout";
@@ -13,19 +17,27 @@ import { errorHandler } from "./middleware/errorHandler";
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
 import { logger } from "./utils/logger";
 
-dotenv.config();
-
 const app = express();
-const _rawPort = process.env.PORT || "3000";
-const _parsedPort = parseInt(_rawPort, 10);
-if (!Number.isInteger(_parsedPort) || _parsedPort <= 0 || String(_parsedPort) !== _rawPort.trim()) {
-  throw new Error(`PORT must be a valid number, got: "${_rawPort}"`);
-}
-const PORT = _parsedPort;
+const PORT = process.env.PORT || 3000;
 const COMPRESSION_THRESHOLD = parseInt(
   process.env.COMPRESSION_THRESHOLD || "1024",
   10,
 );
+
+// CORS — read allowed origins from CORS_ORIGIN env var (comma-separated list)
+// Defaults to * in development, strict in production
+function buildCorsOptions(): cors.CorsOptions {
+  const origin = process.env.CORS_ORIGIN;
+  if (!origin) {
+    return process.env.NODE_ENV === "production"
+      ? { origin: false }
+      : { origin: "*" };
+  }
+  const allowed = origin.split(",").map((o) => o.trim());
+  return { origin: allowed.length === 1 ? allowed[0] : allowed };
+}
+
+app.use(cors(buildCorsOptions()));
 
 // Middleware
 app.use(

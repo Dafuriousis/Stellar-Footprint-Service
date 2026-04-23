@@ -15,6 +15,12 @@ export const CACHE_TTL = {
   RPC_POOL_MS: 300000, // 5 minutes
 } as const;
 
+/** Simulation result LRU cache — configurable via env vars */
+export const SIMULATION_CACHE_TTL_MS =
+  (parseInt(process.env.CACHE_TTL_SECONDS ?? "60", 10) || 60) * 1000;
+export const SIMULATION_CACHE_MAX_SIZE =
+  parseInt(process.env.CACHE_MAX_SIZE ?? "500", 10) || 500;
+
 export const BATCH_MAX_SIZE = 10;
 
 export const ERROR_MESSAGES = {

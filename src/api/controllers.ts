@@ -42,29 +42,34 @@ export async function simulate(
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
   if (!xdr) {
-    return next(new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST));
+    return next(
+      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
+    );
   }
 
-  if (
-    network &&
-    network !== NETWORKS.MAINNET &&
-    network !== NETWORKS.TESTNET
-  ) {
+  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
   }
 
-  const net: Network = network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const net: Network =
+    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
 
   try {
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
     metrics.recordSimulation(net, result.success);
-    res.status(result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY).json(result);
+    res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
+    res
+      .status(
+        result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      )
+      .json(result);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     metrics.recordSimulation(net, false);
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   } finally {
@@ -108,11 +113,7 @@ export async function simulateBatch(
     );
   }
 
-  if (
-    network &&
-    network !== NETWORKS.MAINNET &&
-    network !== NETWORKS.TESTNET
-  ) {
+  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
@@ -149,6 +150,9 @@ export async function simulateBatch(
       }
     });
 
+    const anyHit = results.some((r) => "cacheHit" in r && r.cacheHit);
+    const allHit = results.every((r) => "cacheHit" in r && r.cacheHit);
+    res.setHeader("X-Cache", allHit ? "HIT" : anyHit ? "PARTIAL" : "MISS");
     res.status(HTTP_STATUS.OK).json({ results });
   } catch (err: unknown) {
     const message =
@@ -184,11 +188,11 @@ export async function networkStatus(
     const status = await getNetworkStatus(network);
     res.status(HTTP_STATUS.OK).json(status);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }
-
 
 /**
  * Handle POST /api/footprint/diff requests
@@ -205,7 +209,8 @@ export async function footprintDiffController(
   try {
     res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }
@@ -225,7 +230,8 @@ export async function validate(
   try {
     res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }

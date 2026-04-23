@@ -1,17 +1,24 @@
-import type { Config } from 'jest';
+import type { Config } from "jest";
 
 const config: Config = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.+(ts|tsx|js)', '**/?(*.)+(spec|test).+(ts|tsx|js)'],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  roots: ["<rootDir>/src"],
+  testMatch: [
+    "**/__tests__/**/*.+(ts|tsx|js)",
+    "**/?(*.)+(spec|test).+(ts|tsx|js)",
+  ],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
+    "^.+\\.(ts|tsx)$": "ts-jest",
   },
   collectCoverage: true,
-  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.test.ts', '!src/__tests__/**'],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov'],
+  collectCoverageFrom: [
+    "src/**/*.ts",
+    "!src/**/*.test.ts",
+    "!src/__tests__/**",
+  ],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov"],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -21,7 +28,7 @@ const config: Config = {
     },
   },
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
 };
 

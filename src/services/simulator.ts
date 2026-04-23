@@ -8,7 +8,11 @@ import {
   type ContractType,
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
-
+import { LRUCache, buildCacheKey } from "./cache";
+import {
+  SIMULATION_CACHE_TTL_MS,
+  SIMULATION_CACHE_MAX_SIZE,
+} from "../constants";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -106,7 +110,15 @@ export interface SimulateResult {
   /** Contract ID that was not found (if error is "Contract not found") */
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
+  /** Whether this result was served from cache */
+  cacheHit?: boolean;
 }
+
+/** Shared simulation result LRU cache (singleton) */
+export const simulationCache = new LRUCache<SimulateResult>(
+  SIMULATION_CACHE_MAX_SIZE,
+  SIMULATION_CACHE_TTL_MS,
+);
 
 /**
  * Fetch TTL information for footprint entries via RPC
@@ -172,6 +184,12 @@ export async function simulateTransaction(
   signal?: AbortSignal,
   ledgerSequence?: number,
 ): Promise<SimulateResult> {
+  const cacheKey = buildCacheKey(xdr, network);
+  const cached = simulationCache.get(cacheKey);
+  if (cached) {
+    return { ...cached, cacheHit: true };
+  }
+
   const server = getRpcServer(network);
   const { networkPassphrase } = getNetworkConfig(network);
 
@@ -234,7 +252,7 @@ export async function simulateTransaction(
       ? await detectTokenContract(contracts[0], server)
       : "unknown";
 
-  return {
+  const result: SimulateResult = {
     success: true,
     footprint: {
       readOnly: optimizationResult.readOnly,
@@ -251,4 +269,7 @@ export async function simulateTransaction(
     },
     raw: response,
   };
+
+  simulationCache.set(cacheKey, result);
+  return { ...result, cacheHit: false };
 }

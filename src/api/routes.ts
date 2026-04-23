@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { health, simulate, simulateBatch, footprintDiffController, validate, networkStatus } from "./controllers";
+import {
+  health,
+  simulate,
+  simulateBatch,
+  footprintDiffController,
+  validate,
+  networkStatus,
+} from "./controllers";
 
 const router = Router();
 

@@ -9,6 +9,7 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -33,6 +34,8 @@ import {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 import {
   health,
   simulate,
@@ -40,6 +43,7 @@ import {
   footprintDiffController,
   validate,
   networkStatus,
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
   decode,
@@ -104,6 +108,15 @@ const router = Router();
 router.get("/health", health);
 
 >>>>>>> theirs
+=======
+} from "./controllers";
+
+const router = Router();
+
+// GET /health — liveness check for load balancers and uptime monitors
+router.get("/health", health);
+
+>>>>>>> theirs
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 <<<<<<< ours
 <<<<<<< ours
@@ -159,6 +172,9 @@ router.post("/simulate/async", simulateAsync);
 router.post("/simulate/batch", simulateBatch);
 =======
 >>>>>>> theirs
+
+// POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
+router.post("/simulate/batch", simulateBatch);
 
 // GET /network/status — returns current network information
 >>>>>>> theirs

@@ -470,17 +470,23 @@ Simulate a Soroban transaction and extract its footprint.
 ```
 
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 | Field            | Type   | Required | Description                                                                                                       |
 | ---------------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------- |
 | `xdr`            | string | ✅       | Base64-encoded transaction XDR                                                                                    |
 | `network`        | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`)                                                                 |
 | `ledgerSequence` | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
+<<<<<<< ours
 =======
 | Field             | Type   | Required | Description                                                                 |
 | ----------------- | ------ | -------- | --------------------------------------------------------------------------- |
 | `xdr`             | string | ✅       | Base64-encoded transaction XDR                                              |
 | `network`         | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`)                           |
 | `ledgerSequence`  | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 #### Success Response (200)

@@ -2,6 +2,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
 import * as StellarSdk from "@stellar/stellar-sdk";
@@ -9,6 +10,9 @@ import { Network, getNetworkConfig, getRpcServer } from "@config/stellar";
 import { Network, getRpcServer } from "../config/stellar";
 =======
 import { getRpcServer } from "../config/stellar";
+import { Network } from "../config/stellar";
+>>>>>>> theirs
+=======
 import { Network } from "../config/stellar";
 >>>>>>> theirs
 =======
@@ -80,6 +84,7 @@ function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   const server = getRpcServer(network);
 
   try {
@@ -109,13 +114,21 @@ function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
     // SDK 12 does not expose a getLedger() or fee parameter endpoint directly.
     // Fall back to well-known Stellar network defaults.
 >>>>>>> theirs
+=======
+  try {
+    // SDK 12 does not expose a getLedger() or fee parameter endpoint directly.
+    // Fall back to well-known Stellar network defaults.
+>>>>>>> theirs
     const feeParams: FeeParameters = {
       feeRatePerInstructionIncrement: 100,
       writeFeePerLedgerEntry: 100,
     };
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======

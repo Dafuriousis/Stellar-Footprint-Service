@@ -12,6 +12,7 @@ import { errorHandler } from "@middleware/errorHandler";
 import routes from "./api/routes";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { timeoutMiddleware } from "./middleware/timeout";
+<<<<<<< ours
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
@@ -35,6 +36,9 @@ import { responseTimeMiddleware } from "./middleware/responseTime";
 >>>>>>> theirs
 =======
 import { responseTimeMiddleware } from "./middleware/responseTime";
+>>>>>>> theirs
+=======
+import { bruteForceMiddleware } from "./middleware/bruteForce";
 >>>>>>> theirs
 
 dotenv.config();
@@ -65,11 +69,15 @@ app.use(requestLogger);
 app.use(metricsMiddleware);
 app.use(timeoutMiddleware);
 app.use(bruteForceMiddleware);
+<<<<<<< ours
 app.use(contentTypeMiddleware);
+=======
+>>>>>>> theirs
 
 // Health check endpoint
 <<<<<<< ours
 app.get("/health", (req, res) => {
+<<<<<<< ours
   const circuit = rpcCircuitBreaker.getState();
   res.status(200).json({
     status: "healthy",
@@ -81,6 +89,12 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     circuitBreaker: circuit,
+=======
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+>>>>>>> theirs
   });
 });
 

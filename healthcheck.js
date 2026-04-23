@@ -5,12 +5,16 @@ const options = {
   port: process.env.PORT || 3000,
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   path: "/api/health",
 =======
   path: '/api/health',
 >>>>>>> theirs
 =======
   path: '/api/health',
+>>>>>>> theirs
+=======
+  path: "/health",
 >>>>>>> theirs
   timeout: 2000,
 };
@@ -25,7 +29,11 @@ const request = http.request(options, (res) => {
 });
 
 request.on("error", (err) => {
+<<<<<<< ours
   console.error("ERROR:", err.message);
+=======
+  console.log("ERROR:", err.message);
+>>>>>>> theirs
   process.exit(1);
 });
 

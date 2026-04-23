@@ -88,12 +88,15 @@ const stellarSimulationsTotal = new client.Counter({
   name: "stellar_simulations_total",
   help: "Total number of Stellar simulations",
   labelNames: ["network", "success"],
+<<<<<<< ours
 =======
 // RPC health metrics
 const rpcErrorsTotal = new client.Counter({
   name: 'rpc_errors_total',
   help: 'Total number of RPC errors',
   labelNames: ['network', 'error_type'],
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   registers: [register],
 });
@@ -146,6 +149,9 @@ export const metrics = {
     cacheMissesTotal.inc({ cache_type: cacheType });
   },
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 
   // Stellar simulation metrics
 =======
@@ -183,7 +189,11 @@ export const metrics = {
   recordRpcError: (network: string, errorType: string) => {
     rpcErrorsTotal.inc({ network, error_type: errorType });
   },
+<<<<<<< ours
   
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
   // Active simulations
   incrementActiveSimulations: () => {
@@ -199,6 +209,9 @@ export const metrics = {
     return await register.metrics();
   },
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 
   // Get register for custom metrics
   getRegister: () => register,

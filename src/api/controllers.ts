@@ -12,6 +12,7 @@ import { estimateFee } from "../services/feeEstimator";
 import metrics from "../middleware/metrics";
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { AppError } from "../utils/AppError";
 <<<<<<< ours
 <<<<<<< ours
@@ -56,6 +57,9 @@ import { ResponseEnvelope } from "../types";
 >>>>>>> theirs
 =======
 import { ResponseEnvelope } from "../types";
+>>>>>>> theirs
+=======
+import { recordFailure } from "../middleware/bruteForce";
 >>>>>>> theirs
 
 <<<<<<< ours
@@ -130,6 +134,7 @@ export async function simulate(
 
   if (!xdr) {
 <<<<<<< ours
+<<<<<<< ours
     return next(
       new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
     );
@@ -180,6 +185,9 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 
   if (!xdr) {
 <<<<<<< ours
+=======
+    recordFailure(req.ip || req.socket.remoteAddress || "unknown");
+>>>>>>> theirs
     res.status(400).json({ error: "Missing required field: xdr" });
 >>>>>>> theirs
 =======
@@ -215,6 +223,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 
   // Validate network parameter
   if (network && network !== "mainnet" && network !== "testnet") {
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 =======
@@ -258,6 +267,12 @@ export async function simulate(req: Request, res: Response): Promise<void> {
   // Validate ledgerSequence if provided
   if (ledgerSequence !== undefined && (!Number.isInteger(ledgerSequence) || ledgerSequence <= 0)) {
     res.status(400).json({ error: "Invalid ledgerSequence. Must be a positive integer." });
+=======
+    recordFailure(req.ip || req.socket.remoteAddress || "unknown");
+    res
+      .status(400)
+      .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+>>>>>>> theirs
     return;
   }
 
@@ -271,6 +286,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
 
+<<<<<<< ours
     const duration = (Date.now() - start) / 1000;
 <<<<<<< ours
     metrics.recordSimulation(net, result.success);
@@ -431,6 +447,16 @@ export async function simulateBatch(
     const allHit = results.every((r) => "cacheHit" in r && r.cacheHit);
     res.setHeader("X-Cache", allHit ? "HIT" : anyHit ? "PARTIAL" : "MISS");
     res.status(HTTP_STATUS.OK).json({ results });
+=======
+    // Record simulation metrics
+    metrics.recordSimulation(net, result.success);
+
+    if (!result.success) {
+      recordFailure(req.ip || req.socket.remoteAddress || "unknown");
+    }
+
+    res.status(result.success ? 200 : 422).json(result);
+>>>>>>> theirs
   } catch (err: unknown) {
 <<<<<<< ours
 <<<<<<< ours
@@ -476,6 +502,7 @@ export async function simulateBatch(
     }
 
     const message = err instanceof Error ? err.message : "Unexpected error";
+<<<<<<< ours
 >>>>>>> theirs
 
 /**
@@ -579,6 +606,12 @@ export async function simulateBatch(
     if (message.toLowerCase().includes('rpc') || message.toLowerCase().includes('connection')) {
         metrics.recordRpcError(net, 'connection_failure');
     }
+=======
+
+    // Record failed simulation
+    metrics.recordSimulation(net, false);
+    recordFailure(req.ip || req.socket.remoteAddress || "unknown");
+>>>>>>> theirs
 
     res.status(500).json({ error: message });
 >>>>>>> theirs

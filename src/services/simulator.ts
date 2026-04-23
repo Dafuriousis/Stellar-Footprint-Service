@@ -3,7 +3,9 @@ import { Network, getNetworkConfig, getRpcServer } from "../config/stellar";
 import {
   parseFootprint,
   extractContracts,
+  detectTokenContract,
   type FootprintEntry,
+  type ContractType,
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 
@@ -20,6 +22,8 @@ export interface SimulateResult {
   };
   /** All unique contract IDs touched by the transaction */
   contracts?: string[];
+  /** SEP-41 token contract detection result for the invoked contract */
+  contractType?: ContractType;
   /** TTL information keyed by XDR hash */
   ttl?: Record<string, TtlInfo>;
   /** Optimization result showing redundant entries removed */
@@ -135,6 +139,12 @@ export async function simulateTransaction(
   // Fetch TTL information
   const ttl = await fetchTtlInfo(server, allXdrEntries);
 
+  // Detect SEP-41 token contract type for the first invoked contract
+  const contractType =
+    contracts.length > 0
+      ? await detectTokenContract(contracts[0], server)
+      : "unknown";
+
   return {
     success: true,
     footprint: {
@@ -142,6 +152,7 @@ export async function simulateTransaction(
       readWrite: optimizationResult.readWrite,
     },
     contracts,
+    contractType,
     ttl,
     optimized: optimizationResult.optimized,
     rawFootprint,

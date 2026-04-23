@@ -1300,6 +1300,15 @@ export async function simulateTransaction(
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+  // Detect SEP-41 token contract type for the first invoked contract
+  const contractType =
+    contracts.length > 0
+      ? await detectTokenContract(contracts[0], server)
+      : "unknown";
+
+>>>>>>> theirs
   return {
 >>>>>>> theirs
 =======
@@ -1319,8 +1328,13 @@ export async function simulateTransaction(
       readOnly: extracted.optimizationResult.readOnly,
       readWrite: extracted.optimizationResult.readWrite,
     },
+<<<<<<< ours
     contracts: extracted.contracts,
     contractType: extracted.contractType,
+=======
+    contracts,
+    contractType,
+>>>>>>> theirs
     ttl,
 <<<<<<< ours
     optimized: extracted.optimizationResult.optimized,

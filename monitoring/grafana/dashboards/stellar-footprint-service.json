@@ -624,9 +624,7 @@
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -691,9 +689,7 @@
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -722,13 +718,7 @@
   ],
   "refresh": "30s",
   "schemaVersion": 39,
-  "tags": [
-    "stellar",
-    "soroban",
-    "footprint",
-    "blockchain",
-    "api"
-  ],
+  "tags": ["stellar", "soroban", "footprint", "blockchain", "api"],
   "templating": {
     "list": []
   },

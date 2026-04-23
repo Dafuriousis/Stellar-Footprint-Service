@@ -6,12 +6,16 @@ const options = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   path: "/api/health",
 =======
   path: '/api/health',
 >>>>>>> theirs
 =======
   path: '/api/health',
+>>>>>>> theirs
+=======
+  path: "/health",
 >>>>>>> theirs
 =======
   path: "/health",
@@ -30,7 +34,11 @@ const request = http.request(options, (res) => {
 
 request.on("error", (err) => {
 <<<<<<< ours
+<<<<<<< ours
   console.error("ERROR:", err.message);
+=======
+  console.log("ERROR:", err.message);
+>>>>>>> theirs
 =======
   console.log("ERROR:", err.message);
 >>>>>>> theirs

@@ -237,6 +237,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
     const response: ResponseEnvelope = {
@@ -280,6 +281,11 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     res.status(400).json({ error: "Invalid ledgerSequence. Must be a positive integer." });
 =======
     recordFailure(req.ip || req.socket.remoteAddress || "unknown");
+    res
+      .status(400)
+      .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+>>>>>>> theirs
+=======
     res
       .status(400)
       .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
@@ -328,6 +334,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
 
+<<<<<<< ours
 <<<<<<< ours
     const duration = (Date.now() - start) / 1000;
 <<<<<<< ours
@@ -496,6 +503,10 @@ export async function simulateBatch(
     if (!result.success) {
       recordFailure(req.ip || req.socket.remoteAddress || "unknown");
     }
+=======
+    // Record simulation metrics
+    metrics.recordSimulation(net, result.success);
+>>>>>>> theirs
 
     res.status(result.success ? 200 : 422).json(result);
 >>>>>>> theirs
@@ -544,6 +555,7 @@ export async function simulateBatch(
     }
 
     const message = err instanceof Error ? err.message : "Unexpected error";
+<<<<<<< ours
 <<<<<<< ours
 >>>>>>> theirs
 
@@ -653,6 +665,11 @@ export async function simulateBatch(
     // Record failed simulation
     metrics.recordSimulation(net, false);
     recordFailure(req.ip || req.socket.remoteAddress || "unknown");
+>>>>>>> theirs
+=======
+
+    // Record failed simulation
+    metrics.recordSimulation(net, false);
 >>>>>>> theirs
 
     res.status(500).json({ error: message });

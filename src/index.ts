@@ -78,6 +78,7 @@ app.use(contentTypeMiddleware);
 <<<<<<< ours
 app.get("/health", (req, res) => {
 <<<<<<< ours
+<<<<<<< ours
   const circuit = rpcCircuitBreaker.getState();
   res.status(200).json({
     status: "healthy",
@@ -89,6 +90,12 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     circuitBreaker: circuit,
+=======
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+>>>>>>> theirs
 =======
   res.status(200).json({
     status: "healthy",

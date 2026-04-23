@@ -5,6 +5,7 @@ import { Network } from "../config/stellar";
 import { getNetworkStatus } from "../services/networkStatus";
 import metrics from "../middleware/metrics";
 import { AppError } from "../utils/AppError";
+import { ResponseEnvelope } from "../types";
 import {
   NETWORKS,
   DEFAULT_NETWORK,
@@ -13,11 +14,7 @@ import {
 } from "../constants";
 
 /**
- * Handle POST /api/simulate requests
- * Simulates a Soroban transaction and returns its footprint and resource costs
- * @param req - Express request with xdr and optional network in body
- * @param res - Express response
- * @param next - Express next function for error handling
+ * Handle POST /api/v1/simulate requests
  */
 export async function simulate(
   req: Request,
@@ -32,7 +29,6 @@ export async function simulate(
     );
   }
 
-  // Validate XDR is valid base64
   if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
     return next(
       new AppError(
@@ -42,7 +38,6 @@ export async function simulate(
     );
   }
 
-  // Enforce max XDR length (100kb)
   if (xdr.length > 100 * 1024) {
     return next(
       new AppError("XDR too large: maximum 100kb", HTTP_STATUS.BAD_REQUEST),
@@ -69,36 +64,35 @@ export async function simulate(
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
 
     const duration = (Date.now() - start) / 1000;
-
-    // Record simulation metrics
     metrics.recordSimulation(net, result.success);
     metrics.recordSimulationDuration(net, duration);
 
+    const response: ResponseEnvelope = result.success
+      ? { success: true, data: result }
+      : { success: false, error: result.error };
+
     res
       .status(result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY)
-      .json(result);
+      .json(response);
   } catch (err: unknown) {
-    // Handle circuit breaker open state (from pr-179)
     if (
       err instanceof Error &&
       (err as { circuitOpen?: boolean; retryAfter?: number }).circuitOpen
     ) {
       const retryAfter =
         (err as unknown as { retryAfter: number }).retryAfter ?? 30;
-      res
-        .status(503)
-        .set("Retry-After", String(retryAfter))
-        .json({ error: "Service temporarily unavailable", retryAfter });
+      const response: ResponseEnvelope = {
+        success: false,
+        error: "Service temporarily unavailable due to high error rate",
+      };
+      res.status(503).set("Retry-After", String(retryAfter)).json(response);
       return;
     }
 
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
-
-    // Record failed simulation
     metrics.recordSimulation(net, false);
 
-    // Record RPC error if applicable
     if (
       message.toLowerCase().includes("rpc") ||
       message.toLowerCase().includes("connection")
@@ -113,11 +107,7 @@ export async function simulate(
 }
 
 /**
- * Handle GET /api/network/status requests
- * Returns current network information including latest ledger and RPC latency
- * @param req - Express request with optional network query parameter
- * @param res - Express response
- * @param next - Express next function for error handling
+ * Handle GET /api/v1/network/status requests
  */
 export async function networkStatus(
   req: Request,
@@ -134,7 +124,8 @@ export async function networkStatus(
 
   try {
     const status = await getNetworkStatus(network);
-    res.status(HTTP_STATUS.OK).json(status);
+    const response: ResponseEnvelope = { success: true, data: status };
+    res.status(HTTP_STATUS.OK).json(response);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -143,11 +134,7 @@ export async function networkStatus(
 }
 
 /**
- * Handle POST /api/footprint/diff requests
- * Compares two footprints and returns differences
- * @param req - Express request
- * @param res - Express response
- * @param next - Express next function for error handling
+ * Handle POST /api/v1/footprint/diff requests
  */
 export async function footprintDiffController(
   req: Request,
@@ -155,18 +142,8 @@ export async function footprintDiffController(
   next: NextFunction,
 ): Promise<void> {
   const { before, after } = req.body as {
-    before?: {
-      footprint?: {
-        readOnly: any[];
-        readWrite: any[];
-      } | null;
-    };
-    after?: {
-      footprint?: {
-        readOnly: any[];
-        readWrite: any[];
-      } | null;
-    };
+    before?: any;
+    after?: any;
   };
 
   if (!before || !after) {
@@ -179,8 +156,11 @@ export async function footprintDiffController(
   }
 
   try {
-    // This will be implemented fully once optimization logic is merged
-    res.status(HTTP_STATUS.OK).json({ message: "Not fully implemented" });
+    const response: ResponseEnvelope = {
+      success: true,
+      data: { message: "Not fully implemented" },
+    };
+    res.status(HTTP_STATUS.OK).json(response);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -189,11 +169,7 @@ export async function footprintDiffController(
 }
 
 /**
- * Handle POST /api/validate requests
- * Validates transaction XDR without simulating
- * @param req - Express request
- * @param res - Express response
- * @param next - Express next function for error handling
+ * Handle POST /api/v1/validate requests
  */
 export async function validate(
   req: Request,
@@ -201,7 +177,11 @@ export async function validate(
   next: NextFunction,
 ): Promise<void> {
   try {
-    res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
+    const response: ResponseEnvelope = {
+      success: true,
+      data: { message: "Not implemented" },
+    };
+    res.status(HTTP_STATUS.OK).json(response);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -210,11 +190,7 @@ export async function validate(
 }
 
 /**
- * Handle POST /api/restore requests
- * Returns a restoration transaction if the transaction requires it
- * @param req - Express request
- * @param res - Express response
- * @param next - Express next function for error handling
+ * Handle POST /api/v1/restore requests
  */
 export async function restore(
   req: Request,
@@ -234,7 +210,8 @@ export async function restore(
 
   try {
     const result = await buildRestoreTransaction(xdr, net);
-    res.status(HTTP_STATUS.OK).json(result);
+    const response: ResponseEnvelope = { success: true, data: result };
+    res.status(HTTP_STATUS.OK).json(response);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;

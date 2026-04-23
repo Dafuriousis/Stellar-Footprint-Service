@@ -22,14 +22,16 @@ const COMPRESSION_THRESHOLD = parseInt(
 );
 
 // Middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'none'"],
-      frameAncestors: ["'none'"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
     },
-  },
-}));
+  }),
+);
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
 app.use(ipFilterMiddleware);

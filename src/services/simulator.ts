@@ -8,7 +8,7 @@ import {
   type ContractType,
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
-import { calculateResourceFee } from "./feeEstimator";
+
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -199,10 +199,6 @@ export async function simulateTransaction(
   // Fetch TTL information
   const ttl = await fetchTtlInfo(server, allXdrEntries);
 
-  // Extract required signers from auth entries
-  const auth = response.transactionData?.build().auth() ?? [];
-  const { requiredSigners, threshold } = extractRequiredSigners(auth);
-
   // Detect SEP-41 token contract type for the first invoked contract
   const contractType =
     contracts.length > 0
@@ -224,8 +220,6 @@ export async function simulateTransaction(
       cpuInsns: response.cost?.cpuInsns ?? "0",
       memBytes: response.cost?.memBytes ?? "0",
     },
-    requiredSigners,
-    threshold,
     raw: response,
   };
 }

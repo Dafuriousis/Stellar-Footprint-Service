@@ -142,12 +142,17 @@ export async function simulateTransaction(
   xdr: string,
   network: Network = "testnet",
   signal?: AbortSignal,
+  ledgerSequence?: number,
 ): Promise<SimulateResult> {
   const server = getRpcServer(network);
   const { networkPassphrase } = getNetworkConfig(network);
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
-  const response = await server.simulateTransaction(tx, { signal } as never);
+  const simOptions: Record<string, unknown> = { signal };
+  if (ledgerSequence !== undefined) {
+    simOptions.ledger = ledgerSequence;
+  }
+  const response = await server.simulateTransaction(tx, simOptions as never);
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
     return { success: false, error: response.error, raw: response };

@@ -7,6 +7,7 @@ This implementation adds comprehensive monitoring infrastructure for the Stellar
 ### 📊 Grafana Dashboard Features
 
 **7 Comprehensive Panels:**
+
 1. **Request Rate** - HTTP requests per second by method and route
 2. **Error Rate** - Percentage of 4xx/5xx responses with color thresholds
 3. **Latency Percentiles** - P50, P95, P99 response times in milliseconds
@@ -18,6 +19,7 @@ This implementation adds comprehensive monitoring infrastructure for the Stellar
 ### 🏗️ Infrastructure Added
 
 **Docker Compose Production Setup:**
+
 - Stellar Footprint Service container
 - Prometheus for metrics collection
 - Grafana for visualization
@@ -26,6 +28,7 @@ This implementation adds comprehensive monitoring infrastructure for the Stellar
 - Health checks and restart policies
 
 **Monitoring Configuration:**
+
 - Prometheus scrape configuration
 - Grafana datasource provisioning
 - Dashboard auto-loading on startup
@@ -65,36 +68,44 @@ Source code:
 ### 📊 Metrics Implemented
 
 **HTTP Metrics:**
+
 - `http_requests_total{method, route, status_code}` - Request counter
 - `http_request_duration_seconds_bucket{method, route}` - Latency histogram
 
 **Cache Metrics:**
+
 - `cache_hits_total{cache_type}` - Cache hit counter
 - `cache_misses_total{cache_type}` - Cache miss counter
 
 **Business Metrics:**
+
 - `stellar_simulations_total{network, success}` - Simulation counter
 - `active_simulations` - Concurrent requests gauge
 
 **System Metrics:**
+
 - Node.js default metrics (memory, CPU, event loop, etc.)
 
 ### 🔧 Code Changes
 
 **package.json:**
+
 - Added `prom-client` dependency for Prometheus metrics
 
 **src/index.ts:**
+
 - Added metrics middleware
 - Added `/health` endpoint
 - Added `/metrics` endpoint
 
 **src/api/controllers.ts:**
+
 - Added simulation tracking
 - Added active simulations gauge
 - Added success/failure metrics
 
 **src/middleware/metrics.ts (NEW):**
+
 - Prometheus client setup
 - Metric definitions
 - Middleware implementation
@@ -232,6 +243,7 @@ wait
 ### 5. Verify Dashboard
 
 Open Grafana (http://localhost:3001) and verify:
+
 - ✅ Dashboard loads automatically
 - ✅ All 7 panels display data
 - ✅ Request rate shows activity
@@ -243,6 +255,7 @@ Open Grafana (http://localhost:3001) and verify:
 ### 6. Take Screenshots
 
 For the PR, capture:
+
 1. Full dashboard view
 2. Request rate panel (zoomed)
 3. Latency percentiles panel (zoomed)
@@ -275,11 +288,13 @@ Use this template when creating the pull request:
 # Grafana Dashboard for Service Metrics
 
 ## Description
+
 Adds comprehensive monitoring infrastructure with Grafana dashboard for visualizing Prometheus metrics.
 
 **Closes #37**
 
 ## Features
+
 - 7-panel Grafana dashboard (request rate, error rate, latency, cache, etc.)
 - Prometheus metrics instrumentation
 - Docker Compose production setup
@@ -287,6 +302,7 @@ Adds comprehensive monitoring infrastructure with Grafana dashboard for visualiz
 - Health check endpoint
 
 ## Testing
+
 - [x] All Docker containers start successfully
 - [x] Grafana dashboard loads without errors
 - [x] All panels display data after test requests
@@ -294,9 +310,11 @@ Adds comprehensive monitoring infrastructure with Grafana dashboard for visualiz
 - [x] Health check endpoint returns 200 OK
 
 ## Screenshots
+
 [Attach screenshots here]
 
 ## Documentation
+
 - [Monitoring README](monitoring/README.md)
 - [Setup Guide](monitoring/SETUP.md)
 ```
@@ -323,6 +341,7 @@ git branch -a
 ## 📚 Documentation Files
 
 All documentation is ready:
+
 - **monitoring/README.md** - Overview and configuration
 - **monitoring/SETUP.md** - Step-by-step setup guide
 - **monitoring/PULL_REQUEST_TEMPLATE.md** - PR template
@@ -331,6 +350,7 @@ All documentation is ready:
 ## ✅ Success Criteria
 
 Implementation is complete when:
+
 - ✅ All files created and committed
 - ✅ Branch pushed to remote
 - ✅ PR created with screenshots
@@ -348,6 +368,7 @@ Implementation is complete when:
 **Documentation Pages:** 4
 
 **Ready for:**
+
 1. Git commit (after identity configuration)
 2. Push to remote
 3. Pull request creation

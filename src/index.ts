@@ -1,16 +1,21 @@
 import express from "express";
+import compression from "compression";
 import dotenv from "dotenv";
 import routes from "./api/routes";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { timeoutMiddleware } from "./middleware/timeout";
+import { requestLogger } from "./middleware/requestLogger";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const COMPRESSION_THRESHOLD = parseInt(process.env.COMPRESSION_THRESHOLD || "1024", 10);
 
 // Middleware
+app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
+app.use(requestLogger);
 app.use(metricsMiddleware);
 app.use(timeoutMiddleware);
 

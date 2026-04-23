@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { Request, Response } from "express";
 import { simulateTransaction } from "../services/simulator";
 import { Network } from "../config/stellar";
@@ -24,11 +25,27 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 
   try {
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
-    
+
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
-    
-    res.status(result.success ? 200 : 422).json(result);
+
+    if (result.success) {
+      const body = JSON.stringify(result);
+      const etag = `"${createHash("sha256").update(body).digest("hex")}"`;
+
+      if (req.headers["if-none-match"] === etag) {
+        res.status(304).end();
+        return;
+      }
+
+      res
+        .status(200)
+        .set("ETag", etag)
+        .set("Cache-Control", "public, max-age=60")
+        .json(result);
+    } else {
+      res.status(422).json(result);
+    }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unexpected error";
     

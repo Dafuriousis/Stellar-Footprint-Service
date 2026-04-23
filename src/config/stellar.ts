@@ -71,7 +71,8 @@ export function getRpcServer(
   }
 
   const { rpcUrl } = getNetworkConfig(network);
-  const server = new StellarSdk.SorobanRpc.Server(rpcUrl, { allowHttp: false });
+  const allowHttp = process.env.ALLOW_HTTP === "true";
+  const server = new StellarSdk.SorobanRpc.Server(rpcUrl, { allowHttp });
   pool.set(network, { server, createdAt: now });
   return server;
 }

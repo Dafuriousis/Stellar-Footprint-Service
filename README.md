@@ -393,14 +393,16 @@ Simulate a Soroban transaction and extract its footprint.
 ```json
 {
   "xdr": "AAAAAgAAAAC...",
-  "network": "testnet"
+  "network": "testnet",
+  "ledgerSequence": 12345678
 }
 ```
 
-| Field     | Type   | Required | Description                                       |
-| --------- | ------ | -------- | ------------------------------------------------- |
-| `xdr`     | string | ✅       | Base64-encoded transaction XDR                    |
-| `network` | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`) |
+| Field             | Type   | Required | Description                                                                 |
+| ----------------- | ------ | -------- | --------------------------------------------------------------------------- |
+| `xdr`             | string | ✅       | Base64-encoded transaction XDR                                              |
+| `network`         | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`)                           |
+| `ledgerSequence`  | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
 
 #### Success Response (200)
 

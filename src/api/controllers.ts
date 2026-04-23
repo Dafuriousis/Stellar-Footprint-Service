@@ -4,7 +4,11 @@ import { Network } from "../config/stellar";
 import metrics from "../middleware/metrics";
 
 export async function simulate(req: Request, res: Response): Promise<void> {
-  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+  const { xdr, network, ledgerSequence } = req.body as {
+    xdr?: string;
+    network?: Network;
+    ledgerSequence?: number;
+  };
 
   if (!xdr) {
     res.status(400).json({ error: "Missing required field: xdr" });
@@ -17,13 +21,19 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  // Validate ledgerSequence if provided
+  if (ledgerSequence !== undefined && (!Number.isInteger(ledgerSequence) || ledgerSequence <= 0)) {
+    res.status(400).json({ error: "Invalid ledgerSequence. Must be a positive integer." });
+    return;
+  }
+
   const net: Network = network === "mainnet" ? "mainnet" : "testnet";
 
   // Track active simulations
   metrics.incrementActiveSimulations();
 
   try {
-    const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
+    const result = await simulateTransaction(xdr, net, res.locals.abortSignal, ledgerSequence);
     
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);

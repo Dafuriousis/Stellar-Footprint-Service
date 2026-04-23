@@ -457,6 +457,7 @@ export async function simulateBatch(
 >>>>>>> theirs
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
+<<<<<<< ours
     metrics.recordSimulationDuration(net, duration);
 >>>>>>> theirs
 
@@ -509,6 +510,11 @@ export async function simulateBatch(
 >>>>>>> theirs
 
     res.status(result.success ? 200 : 422).json(result);
+>>>>>>> theirs
+=======
+    
+    const { raw, ...clientResult } = result;
+    res.status(result.success ? 200 : 422).json(clientResult);
 >>>>>>> theirs
   } catch (err: unknown) {
 <<<<<<< ours

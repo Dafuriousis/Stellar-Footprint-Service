@@ -1,10 +1,13 @@
 import { Router } from "express";
-import { simulate, footprintDiffController, validate } from "./controllers";
+import { simulate, footprintDiffController, validate, networkStatus } from "./controllers";
 
 const router = Router();
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulate);
+
+// GET /network/status — returns current network information
+router.get("/network/status", networkStatus);
 
 // POST /footprint/diff — accepts { before, after } and returns added/removed ledger keys
 router.post("/footprint/diff", footprintDiffController);

@@ -1,5 +1,6 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { Network, getNetworkConfig, getRpcServer } from "@config/stellar";
+import { sanitizeRpcError } from "../utils/rpcErrorSanitizer";
 import {
   parseFootprint,
   extractContracts,
@@ -303,6 +304,8 @@ export interface SimulateResult {
   /** Resource fee calculated from simulation cost and network fee parameters */
   resourceFee?: string;
   error?: string;
+  /** Machine-readable error type discriminator for failed simulations */
+  type?: "simulation_error" | "restoration_required";
   /** Contract ID that was not found (if error is "Contract not found") */
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
@@ -659,6 +662,8 @@ export interface SimulateResult {
   };
   resourceFee?: string;
   error?: string;
+  /** Machine-readable error type discriminator for failed simulations */
+  type?: "simulation_error" | "restoration_required";
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
   requiredSigners?: string[];
@@ -877,12 +882,18 @@ export async function simulateTransaction(
 >>>>>>> theirs
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
-    return { success: false, error: response.error, raw: response };
+    return {
+      success: false,
+      type: "simulation_error" as const,
+      error: sanitizeRpcError(response.error),
+      raw: response,
+    };
   }
 
   if (StellarSdk.SorobanRpc.Api.isSimulationRestore(response)) {
     return {
       success: false,
+      type: "restoration_required" as const,
       error: "Transaction requires ledger entry restoration before simulation.",
       raw: response,
     };

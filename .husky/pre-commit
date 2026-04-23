@@ -1,21 +1,4 @@
-<<<<<<< ours
-<<<<<<< ours
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-pnpm format
-pnpm lint
-pnpm tsc --noEmit
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-pnpm format
->>>>>>> theirs
-=======
-pnpm format
->>>>>>> theirs
+npx lint-staged

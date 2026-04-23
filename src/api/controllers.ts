@@ -53,6 +53,7 @@ export async function simulate(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
   }
+}
 
   const net: Network =
     network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;

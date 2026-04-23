@@ -29,10 +29,12 @@ app.use(bruteForceMiddleware);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
+  const circuit = rpcCircuitBreaker.getState();
   res.status(200).json({
     status: "healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    circuitBreaker: circuit,
   });
 });
 

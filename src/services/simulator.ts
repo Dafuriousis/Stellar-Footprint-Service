@@ -10,6 +10,7 @@ import {
 import { optimizeFootprint } from "./optimizer";
 import { calculateResourceFee } from "./feeEstimator";
 import metrics from "../middleware/metrics";
+import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -44,7 +45,9 @@ async function checkContractExists(
     // Convert contractIdString to LedgerKey for an account
     const accountId = StellarSdk.xdr.AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
-    const response = await server.getLedgerEntries(ledgerKey);
+    const response = await rpcCircuitBreaker.call(() =>
+      server.getLedgerEntries(ledgerKey),
+    );
     const exists = response.entries && response.entries.length > 0;
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });
     return exists;
@@ -112,7 +115,9 @@ async function fetchTtlInfo(
       return StellarSdk.xdr.LedgerKey.fromXDR(xdr, "base64");
     });
 
-    const response = await server.getLedgerEntries(...ledgerKeys);
+    const response = await rpcCircuitBreaker.call(() =>
+      server.getLedgerEntries(...ledgerKeys),
+    );
 
     const ttlMap: Record<string, TtlInfo> = {};
     const currentLedger = response.latestLedger ?? 0;
@@ -176,8 +181,11 @@ export async function simulateTransaction(
 
   let response;
   try {
-    response = await server.simulateTransaction(tx, { signal } as any);
+    response = await rpcCircuitBreaker.call(() =>
+      server.simulateTransaction(tx, { signal } as any),
+    );
   } catch (err) {
+    message: err instanceof Error ? err.message : "Simulate failed";
     metrics.recordRpcError(network, "simulate_transaction_failure");
     throw err;
   }

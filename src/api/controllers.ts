@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { simulateTransaction } from "../services/simulator";
+import { buildRestoreTransaction } from "../services/restorer";
 import { Network } from "../config/stellar";
 import { getNetworkStatus } from "../services/networkStatus";
 import metrics from "../middleware/metrics";
@@ -77,6 +78,20 @@ export async function simulate(
       .status(result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY)
       .json(result);
   } catch (err: unknown) {
+    // Handle circuit breaker open state (from pr-179)
+    if (
+      err instanceof Error &&
+      (err as { circuitOpen?: boolean; retryAfter?: number }).circuitOpen
+    ) {
+      const retryAfter =
+        (err as unknown as { retryAfter: number }).retryAfter ?? 30;
+      res
+        .status(503)
+        .set("Retry-After", String(retryAfter))
+        .json({ error: "Service temporarily unavailable", retryAfter });
+      return;
+    }
+
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
 
@@ -187,6 +202,39 @@ export async function validate(
 ): Promise<void> {
   try {
     res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+}
+
+/**
+ * Handle POST /api/restore requests
+ * Returns a restoration transaction if the transaction requires it
+ * @param req - Express request
+ * @param res - Express response
+ * @param next - Express next function for error handling
+ */
+export async function restore(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+
+  if (!xdr) {
+    return next(
+      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const net: Network =
+    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+
+  try {
+    const result = await buildRestoreTransaction(xdr, net);
+    res.status(HTTP_STATUS.OK).json(result);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;

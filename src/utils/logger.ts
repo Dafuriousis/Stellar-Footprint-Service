@@ -1,11 +1,15 @@
 type LogLevel = "info" | "warn" | "error" | "debug";
 
-function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
+/**
+ * Structured logger utility using JSON output for production-readiness.
+ * Outputs to stdout/stderr using process streams to bypass console buffer.
+ */
+function log(level: LogLevel, message: string, data?: unknown) {
   const entry = {
     timestamp: new Date().toISOString(),
     level,
     message,
-    ...meta,
+    ...(data && typeof data === "object" ? data : { data }),
   };
   const output = JSON.stringify(entry);
   if (level === "error") {
@@ -16,12 +20,8 @@ function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
 }
 
 export const logger = {
-  info: (message: string, meta?: Record<string, unknown>) =>
-    log("info", message, meta),
-  warn: (message: string, meta?: Record<string, unknown>) =>
-    log("warn", message, meta),
-  error: (message: string, meta?: Record<string, unknown>) =>
-    log("error", message, meta),
-  debug: (message: string, meta?: Record<string, unknown>) =>
-    log("debug", message, meta),
+  info: (message: string, data?: unknown) => log("info", message, data),
+  warn: (message: string, data?: unknown) => log("warn", message, data),
+  error: (message: string, data?: unknown) => log("error", message, data),
+  debug: (message: string, data?: unknown) => log("debug", message, data),
 };

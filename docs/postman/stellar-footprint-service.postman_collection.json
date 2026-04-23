@@ -13,12 +13,8 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/health",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "health"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
         }
       },
       "response": []
@@ -39,12 +35,8 @@
         },
         "url": {
           "raw": "{{baseUrl}}/simulate",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "simulate"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["simulate"]
         }
       },
       "response": []
@@ -65,12 +57,8 @@
         },
         "url": {
           "raw": "{{baseUrl}}/decode",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "decode"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["decode"]
         }
       },
       "response": []
@@ -91,12 +79,8 @@
         },
         "url": {
           "raw": "{{baseUrl}}/estimate-fee",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "estimate-fee"
-          ]
+          "host": ["{{baseUrl}}"],
+          "path": ["estimate-fee"]
         }
       },
       "response": []
@@ -107,18 +91,14 @@
       "listen": "prerequest",
       "script": {
         "type": "text/javascript",
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     },
     {
       "listen": "test",
       "script": {
         "type": "text/javascript",
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     }
   ],

@@ -22,8 +22,13 @@ const mockFootprint = {
   readOnly: jest.fn().mockReturnValue([]),
   readWrite: jest.fn().mockReturnValue([]),
 };
-const mockResources = jest.fn().mockReturnValue({ footprint: () => mockFootprint });
-const mockBuild = jest.fn().mockReturnValue({ resources: mockResources, auth: jest.fn().mockReturnValue([]) });
+const mockResources = jest
+  .fn()
+  .mockReturnValue({ footprint: () => mockFootprint });
+const mockBuild = jest.fn().mockReturnValue({
+  resources: mockResources,
+  auth: jest.fn().mockReturnValue([]),
+});
 const mockTransactionData = { build: mockBuild };
 
 const mockTx = {};

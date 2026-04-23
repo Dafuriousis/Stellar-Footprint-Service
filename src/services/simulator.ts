@@ -11,6 +11,13 @@ import { optimizeFootprint } from "./optimizer";
 import { calculateResourceFee } from "./feeEstimator";
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
+import {
+  FootprintStats,
+  AuthEntry,
+  ContractEvent,
+  ContractInvocation,
+  TtlInfo,
+} from "../types";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -52,43 +59,6 @@ async function checkContractExists(
     });
     return false;
   }
-}
-
-export interface TtlInfo {
-  liveUntilLedger: number;
-  expiresInLedgers: number;
-}
-
-/**
- * Result of a transaction simulation
- */
-export interface SimulateResult {
-  success: boolean;
-  footprint?: {
-    readOnly: FootprintEntry[];
-    readWrite: FootprintEntry[];
-  };
-  contracts?: string[];
-  contractType?: ContractType;
-  ttl?: Record<string, TtlInfo>;
-  optimized?: boolean;
-  rawFootprint?: {
-    readOnly: string[];
-    readWrite: string[];
-  };
-  cost?: {
-    cpuInsns: string;
-    memBytes: string;
-  };
-  resourceFee?: string;
-  error?: string;
-  contractId?: string;
-  raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
-  requiredSigners?: string[];
-  threshold?: number;
-  operations?: SimulateResult[];
-  feeBump?: boolean;
-  diagnosticEvents?: string[];
 }
 
 /**
@@ -140,6 +110,90 @@ async function fetchTtlInfo(
 }
 
 /**
+ * Calculate footprint size statistics
+ */
+function calculateFootprintStats(
+  readOnly: string[],
+  readWrite: string[],
+): FootprintStats {
+  const readOnlySize = readOnly.reduce(
+    (sum, xdr) => sum + Buffer.from(xdr, "base64").length,
+    0,
+  );
+  const readWriteSize = readWrite.reduce(
+    (sum, xdr) => sum + Buffer.from(xdr, "base64").length,
+    0,
+  );
+
+  return {
+    readOnlyCount: readOnly.length,
+    readWriteCount: readWrite.length,
+    totalEntries: readOnly.length + readWrite.length,
+    estimatedSizeBytes: readOnlySize + readWriteSize,
+  };
+}
+
+/**
+ * Extract contract invocation details from transaction
+ */
+function extractInvocation(
+  tx: StellarSdk.Transaction<
+    StellarSdk.Memo<StellarSdk.MemoType>,
+    StellarSdk.Operation[]
+  >,
+): ContractInvocation | undefined {
+  try {
+    const op = tx.operations[0];
+    if (!op || op.type !== "invokeHostFunction") {
+      return undefined;
+    }
+
+    // Basic extraction - can be improved to parse xdr.HostFunction
+    return {
+      contractId: "",
+      functionName: "",
+      args: [],
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Extract authorization entries from simulation response
+ */
+function extractAuthEntries(
+  auth: StellarSdk.xdr.SorobanAuthorizationEntry[],
+): AuthEntry[] {
+  return auth.map((entry) => {
+    return {
+      contractId: "",
+      functionName: "",
+      xdr: entry.toXDR("base64"),
+    };
+  });
+}
+
+/**
+ * Extract contract events from simulation response
+ */
+function extractEvents(
+  response: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse,
+): ContractEvent[] {
+  const events =
+    (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
+
+  return events.map((event) => {
+    return {
+      type: event.type().name,
+      contractId: event.contractId()?.toString("hex") || "",
+      topics: [],
+      data: "",
+    };
+  });
+}
+
+/**
  * Extract required signers from auth entries.
  */
 function extractRequiredSigners(auth: any[]): {
@@ -149,7 +203,6 @@ function extractRequiredSigners(auth: any[]): {
   const signers = new Set<string>();
   for (const entry of auth) {
     try {
-      // Logic from PR 184 for better signer extraction
       if (entry.address && typeof entry.address === "function") {
         signers.add(entry.address().toString());
       } else if (entry.credentials && typeof entry.credentials === "function") {
@@ -170,7 +223,43 @@ function extractRequiredSigners(auth: any[]): {
 }
 
 /**
- * Common processing for a single simulation result (used for both single and multi-op)
+ * Result of a transaction simulation
+ */
+export interface SimulateResult {
+  success: boolean;
+  footprint?: {
+    readOnly: FootprintEntry[];
+    readWrite: FootprintEntry[];
+  };
+  contracts?: string[];
+  contractType?: ContractType;
+  ttl?: Record<string, TtlInfo>;
+  optimized?: boolean;
+  rawFootprint?: {
+    readOnly: string[];
+    readWrite: string[];
+  };
+  footprintStats?: FootprintStats;
+  invocation?: ContractInvocation;
+  authEntries?: AuthEntry[];
+  events?: ContractEvent[];
+  cost?: {
+    cpuInsns: string;
+    memBytes: string;
+  };
+  resourceFee?: string;
+  error?: string;
+  contractId?: string;
+  raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
+  requiredSigners?: string[];
+  threshold?: number;
+  operations?: SimulateResult[];
+  feeBump?: boolean;
+  diagnosticEvents?: string[];
+}
+
+/**
+ * Common processing for a single simulation result
  */
 async function processSimulationResult(
   server: StellarSdk.SorobanRpc.Server,
@@ -202,6 +291,11 @@ async function processSimulationResult(
   const auth = (transactionData as any).auth?.() ?? [];
   const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
+  const footprintStats = calculateFootprintStats(
+    rawFootprint.readOnly,
+    rawFootprint.readWrite,
+  );
+
   return {
     success: true,
     footprint: {
@@ -213,6 +307,7 @@ async function processSimulationResult(
     ttl,
     optimized: optimizationResult.optimized,
     rawFootprint,
+    footprintStats,
     cost: {
       cpuInsns: cost?.cpuInsns ?? "0",
       memBytes: cost?.memBytes ?? "0",
@@ -236,7 +331,6 @@ export async function simulateTransaction(
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 
-  // Handle fee-bump transactions (from PR 184)
   if (tx instanceof StellarSdk.FeeBumpTransaction) {
     const innerTx = tx.innerTransaction;
     const innerXdr = innerTx.toXDR();
@@ -291,16 +385,12 @@ export async function simulateTransaction(
     };
   }
 
-  // Calculate overall resource fee
   const resourceFee = calculateResourceFee(
     response as StellarSdk.SorobanRpc.Api.SimulateTransactionSuccessResponse,
     network,
   );
 
-  const diagnosticEvents =
-    response.events
-      ?.filter((e) => e.type().name === "diagnostic")
-      .map((e) => e.toXDR("base64")) || [];
+  const events = extractEvents(response);
 
   if (results.length === 1) {
     const result = results[0];
@@ -311,15 +401,28 @@ export async function simulateTransaction(
       result.cost,
     );
 
+    const invocation = extractInvocation(
+      tx as StellarSdk.Transaction<
+        StellarSdk.Memo<StellarSdk.MemoType>,
+        StellarSdk.Operation[]
+      >,
+    );
+
+    const authEntries = extractAuthEntries(
+      (result.transactionData.build() as any).auth?.() ?? [],
+    );
+
     return {
       ...processed,
       success: true,
       resourceFee,
-      diagnosticEvents,
+      invocation,
+      authEntries,
+      events,
       raw: response,
     } as SimulateResult;
   } else {
-    // Multi-operation (from PR 184)
+    // Multi-operation
     const operations: SimulateResult[] = [];
     let allReadOnly: FootprintEntry[] = [];
     let allReadWrite: FootprintEntry[] = [];
@@ -338,12 +441,10 @@ export async function simulateTransaction(
         res.cost,
       );
 
-      const opResult: SimulateResult = {
+      operations.push({
         success: true,
         ...processed,
-      } as SimulateResult;
-
-      operations.push(opResult);
+      } as SimulateResult);
 
       if (processed.footprint) {
         allReadOnly = [...allReadOnly, ...processed.footprint.readOnly];
@@ -360,7 +461,6 @@ export async function simulateTransaction(
         contractType = processed.contractType;
     }
 
-    // Dedup results for the aggregate footprint
     const dedupReadOnly = allReadOnly.filter(
       (item, index, arr) =>
         arr.findIndex(
@@ -372,6 +472,11 @@ export async function simulateTransaction(
         arr.findIndex(
           (i) => i.contractId === item.contractId && i.key === item.key,
         ) === index,
+    );
+
+    const footprintStats = calculateFootprintStats(
+      allRawReadOnly,
+      allRawReadWrite,
     );
 
     return {
@@ -388,13 +493,14 @@ export async function simulateTransaction(
         readOnly: [...new Set(allRawReadOnly)],
         readWrite: [...new Set(allRawReadWrite)],
       },
+      footprintStats,
       cost: {
         cpuInsns: response.cost?.cpuInsns ?? "0",
         memBytes: response.cost?.memBytes ?? "0",
       },
       resourceFee,
       operations,
-      diagnosticEvents,
+      events,
       raw: response,
     };
   }

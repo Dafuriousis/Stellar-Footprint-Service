@@ -30,38 +30,16 @@ export async function fetchFeeParameters(
   }
 
   const server = getRpcServer(network);
-  const { networkPassphrase } = getNetworkConfig(network);
 
   try {
     // Get the latest ledger to fetch fee parameters
-    const ledgerResponse = await server.getLedger(
-      // We can use "latest" to get the most recent ledger
-      // Alternatively, we can get the ledger sequence from the server status
-      // For simplicity, we'll use the latest ledger
-      "latest",
-    );
+    const ledgerResponse = await server.getLatestLedger();
 
-    // Extract fee parameters from the ledger response
-    // Note: The exact structure might vary, but for Stellar Soroban RPC, we can get it from the ledger
-    const feeParams = ledgerResponse.feeParams?.feeParams
-      ? {
-          feeRatePerInstructionIncrement: ledgerResponse.feeParams.feeParams
-            .feeRatePerInstructionIncrement
-            ? Number(
-                ledgerResponse.feeParams.feeParams
-                  .feeRatePerInstructionIncrement,
-              )
-            : 100, // default if not present
-          writeFeePerLedgerEntry: ledgerResponse.feeParams.feeParams
-            .writeFeePerLedgerEntry
-            ? Number(ledgerResponse.feeParams.feeParams.writeFeePerLedgerEntry)
-            : 100, // default if not present
-        }
-      : {
-          // Fallback to default values if feeParams not available
-          feeRatePerInstructionIncrement: 100,
-          writeFeePerLedgerEntry: 100,
-        };
+    // Use default fee parameters for now
+    const feeParams = {
+      feeRatePerInstructionIncrement: 100,
+      writeFeePerLedgerEntry: 100,
+    };
 
     feeParamCache.set(network, { params: feeParams, timestamp: now });
     return feeParams;

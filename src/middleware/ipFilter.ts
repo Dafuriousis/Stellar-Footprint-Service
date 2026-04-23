@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from "express";
 import { isIPv4, isIPv6 } from "net";
+
+import { Request, Response, NextFunction } from "express";
 
 function ipToInt(ip: string): number {
   return (

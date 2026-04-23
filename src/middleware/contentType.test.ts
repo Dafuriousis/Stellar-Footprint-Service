@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import { contentTypeMiddleware } from "./contentType";
 
 const createMockRequest = (method: string, contentType?: string): Request => {

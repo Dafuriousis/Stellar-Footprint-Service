@@ -1,4 +1,5 @@
 import * as http from "http";
+
 import * as StellarSdk from "@stellar/stellar-sdk";
 
 /**
@@ -33,10 +34,7 @@ export interface MockRpcServerInstance {
 const DEFAULT_RESPONSES = {
   success: {
     transactionData: StellarSdk.xdr.TransactionData.fromXDR(
-      Buffer.from(
-        "AAAAAgAAAABmzb2MAAAAAAAAAAEAAAABAAAAAwAAAAA=",
-        "base64",
-      ),
+      Buffer.from("AAAAAgAAAABmzb2MAAAAAAAAAAEAAAABAAAAAwAAAAA=", "base64"),
     ).toXDR("base64"),
     minResourceFee: "100000",
     events: [],
@@ -185,7 +183,8 @@ function handleSimulateTransaction(
             config.transactionData || DEFAULT_RESPONSES.success.transactionData,
           minResourceFee: DEFAULT_RESPONSES.success.minResourceFee,
           events: DEFAULT_RESPONSES.success.events,
-          latestLedger: config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,
+          latestLedger:
+            config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,
         },
         id: 1,
       }),
@@ -205,9 +204,11 @@ function handleGetLatestLedger(
     JSON.stringify({
       jsonrpc: "2.0",
       result: {
-        sequence: config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,
+        sequence:
+          config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,
         protocolVersion: 21,
-        sorobanLedgerSequence: config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,
+        sorobanLedgerSequence:
+          config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,
       },
       id: 1,
     }),
@@ -227,7 +228,8 @@ function handleGetLedgerEntries(
       jsonrpc: "2.0",
       result: {
         entries: [],
-        latestLedger: config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,
+        latestLedger:
+          config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,
       },
       id: 1,
     }),

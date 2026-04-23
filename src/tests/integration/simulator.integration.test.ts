@@ -1,4 +1,5 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
+
 import { simulateTransaction } from "../../services/simulator";
 import { startMockRpcServer, MockRpcServerInstance } from "../mocks/rpcServer";
 
@@ -36,7 +37,8 @@ describe("simulateTransaction Integration Tests", () => {
     const operation = StellarSdk.Operation.invokeHostFunction({
       func: StellarSdk.xdr.HostFunction.hostFunctionTypeInvokeContract(
         new StellarSdk.xdr.InvokeContractArgs({
-          contractAddress: StellarSdk.Address.fromString(contract).toXDRObject(),
+          contractAddress:
+            StellarSdk.Address.fromString(contract).toXDRObject(),
           functionName: Buffer.from("test"),
           args: [],
         }),

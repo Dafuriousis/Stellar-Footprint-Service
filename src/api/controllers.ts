@@ -164,7 +164,11 @@ export async function simulate(
 >>>>>>> theirs
 =======
 export async function simulate(req: Request, res: Response): Promise<void> {
-  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+  const { xdr, network, ledgerSequence } = req.body as {
+    xdr?: string;
+    network?: Network;
+    ledgerSequence?: number;
+  };
 
   if (!xdr) {
     res.status(400).json({ error: "Missing required field: xdr" });
@@ -187,6 +191,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 >>>>>>> theirs
   }
 
+<<<<<<< ours
   // Enforce max XDR length (100kb)
   if (xdr.length > 100 * 1024) {
     return next(
@@ -206,11 +211,21 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 
   const net: Network =
     network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+=======
+  // Validate ledgerSequence if provided
+  if (ledgerSequence !== undefined && (!Number.isInteger(ledgerSequence) || ledgerSequence <= 0)) {
+    res.status(400).json({ error: "Invalid ledgerSequence. Must be a positive integer." });
+    return;
+  }
+
+  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+>>>>>>> theirs
 
   metrics.incrementActiveSimulations();
   const start = Date.now();
 
   try {
+<<<<<<< ours
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
 
     const duration = (Date.now() - start) / 1000;
@@ -325,6 +340,10 @@ export async function simulateBatch(
   }
 =======
 
+=======
+    const result = await simulateTransaction(xdr, net, res.locals.abortSignal, ledgerSequence);
+    
+>>>>>>> theirs
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
     metrics.recordSimulationDuration(net, duration);

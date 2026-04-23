@@ -21,6 +21,7 @@ import { AppError } from "../utils/AppError";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { ResponseEnvelope } from "../types";
 =======
 import { getCache } from "../services/cache";
@@ -37,6 +38,9 @@ import { getCache } from "../services/cache";
 =======
 import { decodeXdr, type XdrType } from "../services/decoder";
 >>>>>>> theirs
+=======
+import { decodeXdr, type XdrType } from "../services/decoder";
+>>>>>>> theirs
 import {
   NETWORKS,
   DEFAULT_NETWORK,
@@ -44,6 +48,7 @@ import {
   HTTP_STATUS,
   BATCH_MAX_SIZE,
 } from "../constants";
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -80,6 +85,23 @@ import { version } from "../../package.json";
 import { version } from "../../package.json";
 =======
 import { version } from "../../package.json";
+=======
+import { version } from "../../package.json";
+
+/**
+ * Handle GET /api/health requests
+ * Returns service liveness status for load balancers and uptime monitors
+ * Does not require authentication
+ */
+export function health(req: Request, res: Response): void {
+  res.status(HTTP_STATUS.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    version,
+    timestamp: new Date().toISOString(),
+  });
+}
+>>>>>>> theirs
 
 /**
  * Handle GET /api/health requests
@@ -213,6 +235,9 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -369,6 +394,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
   // Validate ledgerSequence if provided
   if (ledgerSequence !== undefined && (!Number.isInteger(ledgerSequence) || ledgerSequence <= 0)) {
@@ -399,6 +425,8 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 >>>>>>> theirs
     return;
   }
+=======
+>>>>>>> theirs
 
   const net: Network = network === "mainnet" ? "mainnet" : "testnet";
 >>>>>>> theirs
@@ -634,6 +662,7 @@ export async function simulateBatch(
 =======
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
+<<<<<<< ours
 >>>>>>> theirs
 =======
     // Record simulation metrics
@@ -907,6 +936,8 @@ export async function simulateBatch(
 =======
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
     res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
     res
       .status(
@@ -1001,6 +1032,9 @@ export async function simulateBatch(
     res.setHeader("X-Cache", allHit ? "HIT" : anyHit ? "PARTIAL" : "MISS");
     res.status(HTTP_STATUS.OK).json({ results });
   } catch (err: unknown) {
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -1287,6 +1321,7 @@ export async function invalidateCache(
 }
 
 <<<<<<< ours
+<<<<<<< ours
 /**
  * Handle DELETE /api/cache requests
  * Flushes all entries from the active cache backend (Redis or in-memory)
@@ -1310,6 +1345,8 @@ export async function invalidateCache(
   }
 }
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 /**
@@ -1499,6 +1536,64 @@ export async function invalidateCache(
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+<<<<<<< ours
+=======
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+}
+
+/**
+ * Handle POST /api/estimate-fee requests
+ * Calculates the recommended resource fee from simulation cost output
+ * @param req - Express request with cpuInsns, memBytes, and optional network in body
+ * @param res - Express response
+ * @param next - Express next function for error handling
+ */
+export async function estimateFeeController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const { cpuInsns, memBytes, network } = req.body as {
+    cpuInsns?: string;
+    memBytes?: string;
+    network?: Network;
+  };
+
+  if (!cpuInsns || !memBytes) {
+    return next(
+      new AppError(
+        "Missing required fields: cpuInsns and memBytes",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  if (!/^\d+$/.test(cpuInsns) || !/^\d+$/.test(memBytes)) {
+    return next(
+      new AppError(
+        "cpuInsns and memBytes must be non-negative integer strings",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+    return next(
+      new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const net: Network =
+    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+
+  try {
+    const result = await estimateFee(cpuInsns, memBytes, net);
+    res.status(HTTP_STATUS.OK).json(result);
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+>>>>>>> theirs
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
 =======
 }
@@ -1551,6 +1646,7 @@ export async function restore(req: Request, res: Response): Promise<void> {
   }
 }
 
+<<<<<<< ours
 export async function restore(req: Request, res: Response): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
@@ -1587,6 +1683,8 @@ export async function restore(req: Request, res: Response): Promise<void> {
 >>>>>>> theirs
 }
 
+=======
+>>>>>>> theirs
 /**
  * Handle GET /api/decode requests
  * Decodes a base64 XDR string into a human-readable JSON representation
@@ -1620,7 +1718,16 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
   const result = decodeXdr(xdr, type as XdrType);
 
   if (!result.success) {
+<<<<<<< ours
     return next(new AppError(result.error ?? "Failed to decode XDR", HTTP_STATUS.BAD_REQUEST));
+=======
+    return next(
+      new AppError(
+        result.error ?? "Failed to decode XDR",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+>>>>>>> theirs
   }
 
   res.status(HTTP_STATUS.OK).json(result);

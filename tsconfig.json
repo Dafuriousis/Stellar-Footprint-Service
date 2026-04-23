@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
 <<<<<<< ours
+<<<<<<< ours
     "types": ["jest", "node"]
 =======
     "ignoreDeprecations": "6.0",
@@ -24,6 +25,9 @@
     }
 >>>>>>> theirs
     "types": ["node"]
+=======
+    "types": ["node", "jest"]
+>>>>>>> theirs
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/__tests__/**"]

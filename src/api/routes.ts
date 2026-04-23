@@ -1,5 +1,6 @@
 import { Router } from "express";
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -15,6 +16,19 @@ import {
   invalidateCache,
 >>>>>>> theirs
 } from "./controllers";
+=======
+import {
+  health,
+  simulate,
+  simulateBatch,
+  footprintDiffController,
+  validate,
+  networkStatus,
+  decode,
+  estimateFeeController,
+} from "./controllers";
+import { simulateRateLimiter } from "../middleware/rateLimiter";
+>>>>>>> theirs
 
 const router = Router();
 
@@ -31,8 +45,15 @@ router.get("/health", health);
  */
 =======
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
+<<<<<<< ours
 >>>>>>> theirs
 router.post("/simulate", simulate);
+=======
+router.post("/simulate", simulateRateLimiter, simulate);
+
+// POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
+router.post("/simulate/batch", simulateBatch);
+>>>>>>> theirs
 
 /**
  * @route GET /api/v1/network/status
@@ -66,6 +87,7 @@ router.post("/footprint/diff", footprintDiffController);
 router.post("/validate", validate);
 
 <<<<<<< ours
+<<<<<<< ours
 /**
  * @route POST /api/v1/restore
  * @desc Returns a restoration transaction if the transaction requires it
@@ -74,6 +96,13 @@ router.post("/restore", restore);
 =======
 // DELETE /cache — flush all cache entries (Redis or in-memory)
 router.delete("/cache", invalidateCache);
+>>>>>>> theirs
+=======
+// GET /decode — accepts ?xdr=&type= and returns human-readable JSON of the XDR
+router.get("/decode", decode);
+
+// POST /estimate-fee — accepts { cpuInsns, memBytes, network } and returns fee breakdown
+router.post("/estimate-fee", estimateFeeController);
 >>>>>>> theirs
 
 export default router;

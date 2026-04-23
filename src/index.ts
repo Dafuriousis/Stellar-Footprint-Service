@@ -17,7 +17,10 @@ import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
+<<<<<<< ours
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+=======
+>>>>>>> theirs
 import { logger } from "./utils/logger";
 
 dotenv.config();

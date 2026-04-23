@@ -8,6 +8,7 @@ import {
   type ContractType,
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
+<<<<<<< ours
 import { calculateResourceFee } from "./feeEstimator";
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
@@ -18,6 +19,13 @@ import {
   ContractInvocation,
   TtlInfo,
 } from "../types";
+=======
+import { LRUCache, buildCacheKey } from "./cache";
+import {
+  SIMULATION_CACHE_TTL_MS,
+  SIMULATION_CACHE_MAX_SIZE,
+} from "../constants";
+>>>>>>> theirs
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -60,10 +68,21 @@ async function _checkContractExists(
   metrics.recordCacheMiss("contract_existence");
 
   try {
+<<<<<<< ours
     // Convert contractIdString to LedgerKey for an account
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accountId = (StellarSdk.xdr as any).AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
+=======
+    // Build a LedgerKey for the account using the contract's public key
+    const keypair = StellarSdk.Keypair.fromPublicKey(contractIdString);
+    const accountId = StellarSdk.xdr.PublicKey.publicKeyTypeEd25519(
+      keypair.rawPublicKey(),
+    );
+    const ledgerKey = StellarSdk.xdr.LedgerKey.account(
+      new StellarSdk.xdr.LedgerKeyAccount({ accountId }),
+    );
+>>>>>>> theirs
     const response = await server.getLedgerEntries(ledgerKey);
     const accountId =
       StellarSdk.StrKey.decodeEd25519PublicKey(contractIdString);
@@ -124,6 +143,7 @@ export interface SimulateResult {
   /** Contract ID that was not found (if error is "Contract not found") */
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
+<<<<<<< ours
   /** Per-operation results for multi-operation transactions */
   operations?: SimulateResult[];
   /** Whether this is a fee-bump transaction */
@@ -131,6 +151,18 @@ export interface SimulateResult {
   /** Diagnostic events from contract execution */
   diagnosticEvents?: string[];
 }
+
+>>>>>>> theirs
+=======
+  /** Whether this result was served from cache */
+  cacheHit?: boolean;
+}
+
+/** Shared simulation result LRU cache (singleton) */
+export const simulationCache = new LRUCache<SimulateResult>(
+  SIMULATION_CACHE_MAX_SIZE,
+  SIMULATION_CACHE_TTL_MS,
+);
 
 >>>>>>> theirs
 /**
@@ -505,6 +537,7 @@ export async function simulateTransaction(
 
   const events = extractEvents(response);
 
+<<<<<<< ours
   if (results.length === 1) {
     const result = results[0];
     const processed = await processSimulationResult(
@@ -796,6 +829,28 @@ export async function simulateTransaction(
       raw: response,
     };
   }
+=======
+  const result: SimulateResult = {
+    success: true,
+    footprint: {
+      readOnly: extracted.optimizationResult.readOnly,
+      readWrite: extracted.optimizationResult.readWrite,
+    },
+    contracts: extracted.contracts,
+    contractType: extracted.contractType,
+    ttl,
+    optimized: extracted.optimizationResult.optimized,
+    rawFootprint: extracted.rawFootprint,
+    cost: {
+      cpuInsns: response.cost?.cpuInsns ?? "0",
+      memBytes: response.cost?.memBytes ?? "0",
+    },
+    raw: response,
+  };
+
+  simulationCache.set(cacheKey, result);
+  return { ...result, cacheHit: false };
+>>>>>>> theirs
 }
 =======
       operations,

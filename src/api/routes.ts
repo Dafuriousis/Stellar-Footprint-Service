@@ -1,6 +1,7 @@
 import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -17,6 +18,8 @@ import {
 >>>>>>> theirs
 } from "./controllers";
 =======
+=======
+>>>>>>> theirs
 import {
   health,
   simulate,
@@ -24,6 +27,7 @@ import {
   footprintDiffController,
   validate,
   networkStatus,
+<<<<<<< ours
   decode,
   estimateFeeController,
 } from "./controllers";
@@ -44,6 +48,15 @@ router.get("/health", health);
  * @desc Simulates a Soroban transaction and returns its footprint and cost
  */
 =======
+=======
+} from "./controllers";
+
+const router = Router();
+
+// GET /health — liveness check for load balancers and uptime monitors
+router.get("/health", health);
+
+>>>>>>> theirs
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 <<<<<<< ours
 >>>>>>> theirs
@@ -69,6 +82,9 @@ router.post("/simulate", simulate);
 
 // POST /simulate/async — accepts { xdr, network, webhookUrl }, returns 202 with jobId
 router.post("/simulate/async", simulateAsync);
+
+// POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
+router.post("/simulate/batch", simulateBatch);
 
 // GET /network/status — returns current network information
 >>>>>>> theirs

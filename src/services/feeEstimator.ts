@@ -1,9 +1,13 @@
 <<<<<<< ours
+<<<<<<< ours
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { Network, getNetworkConfig, getRpcServer } from "@config/stellar";
 import { Network, getRpcServer } from "../config/stellar";
 =======
 import { getRpcServer } from "../config/stellar";
+import { Network } from "../config/stellar";
+>>>>>>> theirs
+=======
 import { Network } from "../config/stellar";
 >>>>>>> theirs
 
@@ -67,6 +71,7 @@ function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
     DEFAULT_FEE_RATE_PER_INSTRUCTION_INCREMENT;
 
 <<<<<<< ours
+<<<<<<< ours
   const server = getRpcServer(network);
 
   try {
@@ -76,11 +81,19 @@ function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
 
     // In a real scenario, we'd extract from ledgerResponse.feeParams
     // For now, use these well-known defaults as per PR 196 request
+=======
+  try {
+    // SDK 12 does not expose a getLedger() or fee parameter endpoint directly.
+    // Fall back to well-known Stellar network defaults.
+>>>>>>> theirs
     const feeParams: FeeParameters = {
       feeRatePerInstructionIncrement: 100,
       writeFeePerLedgerEntry: 100,
     };
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
     feeParamCache.set(network, { params: feeParams, timestamp: now });
     return feeParams;
   } catch {

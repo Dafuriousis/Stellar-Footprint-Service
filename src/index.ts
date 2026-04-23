@@ -18,7 +18,10 @@ import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
 <<<<<<< ours
+<<<<<<< ours
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 import { logger } from "./utils/logger";
@@ -98,6 +101,7 @@ if (require.main === module) {
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
+<<<<<<< ours
 // Only start the server when this file is run directly (not imported in tests)
 if (require.main === module) {
   app.listen(PORT, () => {
@@ -108,5 +112,13 @@ if (require.main === module) {
     });
   });
 }
+=======
+app.listen(PORT, () => {
+  logger.info("stellar-footprint-service started", {
+    port: PORT,
+    environment: process.env.NODE_ENV || "development",
+  });
+});
+>>>>>>> theirs
 
 export default app;

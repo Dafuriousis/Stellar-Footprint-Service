@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 <<<<<<< ours
+<<<<<<< ours
 import Redis from "ioredis";
 import { logger } from "../utils/logger";
 
@@ -176,6 +177,8 @@ export function buildCacheKey(data: Record<string, unknown>): string {
   );
   return createHash("sha256").update(canonical).digest("hex");
 =======
+=======
+>>>>>>> theirs
 
 /**
  * Doubly-linked list node for O(1) LRU eviction
@@ -298,5 +301,8 @@ export class LRUCache<V> {
  */
 export function buildCacheKey(xdr: string, network: string): string {
   return createHash("sha256").update(`${xdr}:${network}`).digest("hex");
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 }

@@ -9,6 +9,7 @@ import {
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 <<<<<<< ours
+<<<<<<< ours
 import { calculateResourceFee } from "./feeEstimator";
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
@@ -20,11 +21,16 @@ import {
   TtlInfo,
 } from "../types";
 =======
+=======
+>>>>>>> theirs
 import { LRUCache, buildCacheKey } from "./cache";
 import {
   SIMULATION_CACHE_TTL_MS,
   SIMULATION_CACHE_MAX_SIZE,
 } from "../constants";
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
@@ -69,11 +75,14 @@ async function _checkContractExists(
 
   try {
 <<<<<<< ours
+<<<<<<< ours
     // Convert contractIdString to LedgerKey for an account
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accountId = (StellarSdk.xdr as any).AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
 =======
+=======
+>>>>>>> theirs
     // Build a LedgerKey for the account using the contract's public key
     const keypair = StellarSdk.Keypair.fromPublicKey(contractIdString);
     const accountId = StellarSdk.xdr.PublicKey.publicKeyTypeEd25519(
@@ -82,6 +91,9 @@ async function _checkContractExists(
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(
       new StellarSdk.xdr.LedgerKeyAccount({ accountId }),
     );
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     const response = await server.getLedgerEntries(ledgerKey);
     const accountId =
@@ -144,6 +156,7 @@ export interface SimulateResult {
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
 <<<<<<< ours
+<<<<<<< ours
   /** Per-operation results for multi-operation transactions */
   operations?: SimulateResult[];
   /** Whether this is a fee-bump transaction */
@@ -154,6 +167,8 @@ export interface SimulateResult {
 
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
   /** Whether this result was served from cache */
   cacheHit?: boolean;
 }
@@ -164,6 +179,9 @@ export const simulationCache = new LRUCache<SimulateResult>(
   SIMULATION_CACHE_TTL_MS,
 );
 
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 /**
  * Fetch TTL information for footprint entries via RPC
@@ -465,6 +483,16 @@ export async function simulateTransaction(
   signal?: AbortSignal,
   ledgerSequence?: number,
 ): Promise<SimulateResult> {
+<<<<<<< ours
+=======
+  const cacheKey = buildCacheKey(xdr, network);
+  const cached = simulationCache.get(cacheKey);
+  if (cached) {
+    return { ...cached, cacheHit: true };
+  }
+
+  const server = getRpcServer(network);
+>>>>>>> theirs
   const { networkPassphrase } = getNetworkConfig(network);
   const server = getRpcServer(network);
 
@@ -588,6 +616,7 @@ export async function simulateTransaction(
       readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
     };
 
+<<<<<<< ours
     // Parse footprint entries to extract contract IDs and classify types
     const parsedFootprint = parseFootprint(rawFootprint);
 
@@ -830,6 +859,8 @@ export async function simulateTransaction(
     };
   }
 =======
+=======
+>>>>>>> theirs
   const result: SimulateResult = {
     success: true,
     footprint: {
@@ -850,6 +881,9 @@ export async function simulateTransaction(
 
   simulationCache.set(cacheKey, result);
   return { ...result, cacheHit: false };
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 }
 =======

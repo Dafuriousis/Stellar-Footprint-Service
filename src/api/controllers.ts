@@ -10,6 +10,21 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
 } from "../constants";
+import { version } from "../../package.json";
+
+/**
+ * Handle GET /api/health requests
+ * Returns service liveness status for load balancers and uptime monitors
+ * Does not require authentication
+ */
+export function health(req: Request, res: Response): void {
+  res.status(HTTP_STATUS.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    version,
+    timestamp: new Date().toISOString(),
+  });
+}
 
 /**
  * Handle POST /api/simulate requests

@@ -1,7 +1,10 @@
 import { Router } from "express";
-import { simulate, footprintDiffController, validate, networkStatus } from "./controllers";
+import { health, simulate, footprintDiffController, validate, networkStatus } from "./controllers";
 
 const router = Router();
+
+// GET /health — liveness check for load balancers and uptime monitors
+router.get("/health", health);
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulate);

@@ -37,18 +37,45 @@ This service centralizes the "pre-flight" heavy lifting:
 
 ## 🏗️ Architecture
 
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Service as Footprint Service
+    participant Cache as Redis Cache
+    participant RPC as Stellar RPC
+
+    Client->>Service: POST /api/simulate { xdr, network }
+
+    Service->>Service: Validate request (XDR present, content-type)
+    alt Validation fails
+        Service-->>Client: 400 Bad Request
+    end
+
+    Service->>Cache: GET cache key (hash of xdr + network)
+    alt Cache hit
+        Cache-->>Service: Cached result
+        Service-->>Client: 200 OK (footprint + cost) [from cache]
+    else Cache miss
+        Service->>RPC: simulateTransaction(tx)
+
+        alt RPC circuit breaker open
+            Service-->>Client: 503 Service Unavailable
+        else RPC error
+            RPC-->>Service: Simulation error
+            Service-->>Client: 422 Unprocessable Entity { error }
+        else Restoration required
+            RPC-->>Service: RestoreFootprint response
+            Service-->>Client: 422 Unprocessable Entity { error: "restoration required" }
+        else Success
+            RPC-->>Service: Simulation result (footprint + cost)
+            Service->>Service: Extract & optimize footprint
+            Service->>Cache: SET cache key → result (TTL)
+            Service-->>Client: 200 OK { footprint, cost }
+        end
+    end
 ```
-┌─────────────┐         ┌──────────────────────┐         ┌─────────────────┐
-│   Frontend  │────────▶│  Footprint Service   │────────▶│  Stellar RPC    │
-│  (React/JS) │  XDR    │  (This Service)      │  Sim    │  (Testnet/Main) │
-└─────────────┘         └──────────────────────┘         └─────────────────┘
-                                  │
-                                  ▼
-                        ┌──────────────────────┐
-                        │  Optimized Footprint │
-                        │  + Resource Costs    │
-                        └──────────────────────┘
-```
+
+For a detailed explanation of each component and design decisions, see [docs/architecture.md](./docs/architecture.md).
 
 ---
 

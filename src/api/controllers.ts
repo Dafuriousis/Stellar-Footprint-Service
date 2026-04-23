@@ -4,6 +4,7 @@ import { Network } from "../config/stellar";
 import { getNetworkStatus } from "../services/networkStatus";
 import metrics from "../middleware/metrics";
 import { AppError } from "../utils/AppError";
+import { decodeXdr, type XdrType } from "../services/decoder";
 import {
   NETWORKS,
   DEFAULT_NETWORK,
@@ -234,4 +235,43 @@ export async function validate(
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
+}
+
+/**
+ * Handle GET /api/decode requests
+ * Decodes a base64 XDR string into a human-readable JSON representation
+ * without simulating the transaction. Useful for debugging.
+ * @param req - Express request with xdr and optional type query parameters
+ * @param res - Express response
+ * @param next - Express next function for error handling
+ */
+export function decode(req: Request, res: Response, next: NextFunction): void {
+  const { xdr, type = "transaction" } = req.query as {
+    xdr?: string;
+    type?: string;
+  };
+
+  if (!xdr) {
+    return next(
+      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const validTypes: XdrType[] = ["transaction", "operation", "ledger_key"];
+  if (!validTypes.includes(type as XdrType)) {
+    return next(
+      new AppError(
+        `Invalid type. Supported types: ${validTypes.join(", ")}`,
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  const result = decodeXdr(xdr, type as XdrType);
+
+  if (!result.success) {
+    return next(new AppError(result.error ?? "Failed to decode XDR", HTTP_STATUS.BAD_REQUEST));
+  }
+
+  res.status(HTTP_STATUS.OK).json(result);
 }

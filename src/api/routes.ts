@@ -6,6 +6,7 @@ import {
   footprintDiffController,
   validate,
   networkStatus,
+  decode,
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
 
@@ -28,5 +29,8 @@ router.post("/footprint/diff", footprintDiffController);
 
 // POST /validate — accepts { xdr, type } and returns parse result without simulating
 router.post("/validate", validate);
+
+// GET /decode — accepts ?xdr=&type= and returns human-readable JSON of the XDR
+router.get("/decode", decode);
 
 export default router;

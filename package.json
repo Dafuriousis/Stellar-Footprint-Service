@@ -24,8 +24,11 @@
   "dependencies": {
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "@stellar/stellar-sdk": "^15.0.1",
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
     "@stellar/stellar-sdk": "^12.0.0",
@@ -34,9 +37,14 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
 <<<<<<< ours
+<<<<<<< ours
 =======
     "prom-client": "^15.1.0",
     "tsconfig-paths": "^4.2.0"
+=======
+    "express-rate-limit": "^8.4.0",
+    "prom-client": "^15.1.0"
+>>>>>>> theirs
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",
@@ -56,6 +64,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
     "validate-branch-name": "^1.3.2"
+<<<<<<< ours
 <<<<<<< ours
     "@stellar/stellar-sdk": "12.0.0",
     "compression": "1.8.1",
@@ -110,6 +119,8 @@
     "*.{js,jsx,json,md}": [
       "prettier --write"
     ]
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======

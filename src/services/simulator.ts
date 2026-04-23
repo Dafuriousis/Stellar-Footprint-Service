@@ -10,6 +10,7 @@ import {
 import { optimizeFootprint } from "./optimizer";
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { calculateResourceFee } from "./feeEstimator";
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
@@ -23,12 +24,17 @@ import {
 =======
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 import { LRUCache, buildCacheKey } from "./cache";
 import {
   SIMULATION_CACHE_TTL_MS,
   SIMULATION_CACHE_MAX_SIZE,
 } from "../constants";
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -76,11 +82,14 @@ async function _checkContractExists(
   try {
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     // Convert contractIdString to LedgerKey for an account
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accountId = (StellarSdk.xdr as any).AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
     // Build a LedgerKey for the account using the contract's public key
@@ -92,6 +101,9 @@ async function _checkContractExists(
       new StellarSdk.xdr.LedgerKeyAccount({ accountId }),
     );
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -157,6 +169,7 @@ export interface SimulateResult {
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   /** Per-operation results for multi-operation transactions */
   operations?: SimulateResult[];
   /** Whether this is a fee-bump transaction */
@@ -167,6 +180,8 @@ export interface SimulateResult {
 
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
   /** Whether this result was served from cache */
@@ -180,6 +195,9 @@ export const simulationCache = new LRUCache<SimulateResult>(
 );
 
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -484,7 +502,10 @@ export async function simulateTransaction(
   ledgerSequence?: number,
 ): Promise<SimulateResult> {
 <<<<<<< ours
+<<<<<<< ours
 =======
+=======
+>>>>>>> theirs
   const cacheKey = buildCacheKey(xdr, network);
   const cached = simulationCache.get(cacheKey);
   if (cached) {
@@ -617,6 +638,7 @@ export async function simulateTransaction(
       readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
     };
 
+<<<<<<< ours
 <<<<<<< ours
     // Parse footprint entries to extract contract IDs and classify types
     const parsedFootprint = parseFootprint(rawFootprint);
@@ -862,6 +884,8 @@ export async function simulateTransaction(
 =======
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
   const result: SimulateResult = {
     success: true,
     footprint: {
@@ -883,6 +907,9 @@ export async function simulateTransaction(
   simulationCache.set(cacheKey, result);
   return { ...result, cacheHit: false };
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

@@ -43,3 +43,46 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     metrics.decrementActiveSimulations();
   }
 }
+
+export async function footprintDiffController(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const { before, after } = req.body as {
+    before?: string[];
+    after?: string[];
+  };
+
+  if (!before || !after) {
+    res.status(400).json({ error: "Missing required fields: before, after" });
+    return;
+  }
+
+  try {
+    const added = after.filter((item) => !before.includes(item));
+    const removed = before.filter((item) => !after.includes(item));
+
+    res.status(200).json({ added, removed });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unexpected error";
+    res.status(500).json({ error: message });
+  }
+}
+
+export async function validate(req: Request, res: Response): Promise<void> {
+  const { xdr, type } = req.body as { xdr?: string; type?: string };
+
+  if (!xdr) {
+    res.status(400).json({ error: "Missing required field: xdr" });
+    return;
+  }
+
+  try {
+    const isValid = typeof xdr === "string" && xdr.length > 0;
+
+    res.status(200).json({ valid: isValid, type: type || "unknown" });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unexpected error";
+    res.status(500).json({ error: message });
+  }
+}

@@ -14,6 +14,7 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -107,6 +108,9 @@ import { simulateRateLimiter } from "../middleware/rateLimiter";
   estimateFeeController,
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
+>>>>>>> theirs
+=======
+import { simulate, validate } from "./controllers";
 >>>>>>> theirs
 
 const router = Router();
@@ -322,6 +326,12 @@ router.get("/decode", decode);
 
 >>>>>>> theirs
 =======
+
+<<<<<<< ours
+>>>>>>> theirs
+=======
+// POST /validate — accepts { xdr, type } and returns parse result without simulating
+router.post("/validate", validate);
 
 >>>>>>> theirs
 export default router;

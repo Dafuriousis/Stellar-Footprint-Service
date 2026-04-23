@@ -15,6 +15,7 @@ import metrics from "../middleware/metrics";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { AppError } from "../utils/AppError";
 <<<<<<< ours
 <<<<<<< ours
@@ -90,6 +91,9 @@ import { version } from "../../package.json";
 import { version } from "../../package.json";
 =======
 import { createJob, deliverWebhook } from "../services/webhook";
+>>>>>>> theirs
+=======
+import { validateXdr, type XdrInputType } from "../services/validator";
 >>>>>>> theirs
 
 /**
@@ -1104,6 +1108,7 @@ export async function simulateBatch(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 /**
 <<<<<<< ours
  * Handle GET /api/v1/network/status requests
@@ -1649,6 +1654,8 @@ export async function estimateFeeController(
 =======
 }
 
+=======
+>>>>>>> theirs
 export function validate(req: Request, res: Response): void {
   const { xdr, type } = req.body as { xdr?: string; type?: string };
 
@@ -1658,6 +1665,7 @@ export function validate(req: Request, res: Response): void {
   }
 
   if (type && type !== "transaction" && type !== "operation") {
+<<<<<<< ours
     res
       .status(400)
       .json({ error: "Invalid type. Use 'transaction' or 'operation'" });
@@ -1782,4 +1790,12 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
   }
 
   res.status(HTTP_STATUS.OK).json(result);
+=======
+    res.status(400).json({ error: "Invalid type. Use 'transaction' or 'operation'" });
+    return;
+  }
+
+  const result = validateXdr(xdr, (type as XdrInputType) ?? "transaction");
+  res.status(result.valid ? 200 : 400).json(result);
+>>>>>>> theirs
 }

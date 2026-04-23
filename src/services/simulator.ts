@@ -8,7 +8,8 @@ import {
   type ContractType,
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
-
+import { calculateResourceFee } from "./feeEstimator";
+import metrics from "../middleware/metrics";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -31,8 +32,13 @@ async function checkContractExists(
   const now = Date.now();
   const cached = contractExistenceCache.get(contractIdString);
   if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
+    // Record cache hit
+    metrics.recordCacheHit("contract_existence");
     return cached.exists;
   }
+
+  // Record cache miss
+  metrics.recordCacheMiss("contract_existence");
 
   try {
     // Convert contractIdString to LedgerKey for an account
@@ -43,6 +49,9 @@ async function checkContractExists(
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });
     return exists;
   } catch (err) {
+    // Record RPC error
+    metrics.recordRpcError("unknown", "get_ledger_entries_failure");
+
     // If there's an error (e.g., network, invalid ID), assume contract does not exist
     contractExistenceCache.set(contractIdString, {
       exists: false,
@@ -59,18 +68,6 @@ export interface TtlInfo {
 
 /**
  * Result of a transaction simulation
- * @property success - Whether the simulation succeeded
- * @property footprint - Extracted read-only and read-write ledger entries
- * @property contracts - All unique contract IDs touched by the transaction
- * @property contractType - SEP-41 token contract detection result
- * @property ttl - TTL information keyed by XDR hash
- * @property optimized - Whether footprint was optimized
- * @property rawFootprint - Original footprint before optimization
- * @property cost - Resource costs (CPU instructions and memory bytes)
- * @property resourceFee - Resource fee calculated from simulation cost
- * @property error - Error message if simulation failed
- * @property contractId - Contract ID that was not found (if applicable)
- * @property raw - Raw RPC response
  */
 export interface SimulateResult {
   success: boolean;
@@ -94,29 +91,27 @@ export interface SimulateResult {
   error?: string;
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
+  requiredSigners?: string[];
+  threshold?: number;
 }
 
 /**
  * Fetch TTL information for footprint entries via RPC
- * @param server - The RPC server instance
- * @param footprintEntries - Array of base64 XDR entries
- * @returns Map of XDR hash to TTL info
  */
 async function fetchTtlInfo(
   server: StellarSdk.SorobanRpc.Server,
   footprintEntries: string[],
+  network: Network,
 ): Promise<Record<string, TtlInfo>> {
   if (footprintEntries.length === 0) {
     return {};
   }
 
   try {
-    // Convert base64 strings to LedgerKey objects for SDK 12.x
     const ledgerKeys = footprintEntries.map((xdr) => {
       return StellarSdk.xdr.LedgerKey.fromXDR(xdr, "base64");
     });
 
-    // SDK 12.x accepts single key or array
     const response = await server.getLedgerEntries(...ledgerKeys);
 
     const ttlMap: Record<string, TtlInfo> = {};
@@ -141,18 +136,32 @@ async function fetchTtlInfo(
 
     return ttlMap;
   } catch {
-    // If TTL fetching fails, return empty map
+    metrics.recordRpcError(network, "fetch_ttl_failure");
     return {};
   }
 }
 
 /**
+ * Extract required signers from auth entries.
+ */
+function extractRequiredSigners(auth: any[]): {
+  requiredSigners: string[];
+  threshold: number;
+} {
+  const signers = new Set<string>();
+  let threshold = 0;
+
+  for (const entry of auth) {
+    if (entry.address && entry.address()) {
+      signers.add(entry.address().toString());
+    }
+  }
+
+  return { requiredSigners: Array.from(signers), threshold };
+}
+
+/**
  * Simulate a Soroban transaction and extract its footprint
- * @param xdr - Base64-encoded transaction XDR
- * @param network - The network to simulate against ("testnet" or "mainnet")
- * @param signal - Optional AbortSignal for request cancellation
- * @param ledgerSequence - Optional specific ledger sequence to simulate against
- * @returns Simulation result with footprint, contracts, costs, and TTL info
  */
 export async function simulateTransaction(
   xdr: string,
@@ -161,12 +170,17 @@ export async function simulateTransaction(
   ledgerSequence?: number,
 ): Promise<SimulateResult> {
   const { networkPassphrase } = getNetworkConfig(network);
+  const server = getRpcServer(network);
 
-  // Parse XDR
-  const tx = parseXdr(xdr, networkPassphrase);
+  const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 
-  // Simulate via RPC
-  const response = await simulateViaRpc(tx, network, signal, ledgerSequence);
+  let response;
+  try {
+    response = await server.simulateTransaction(tx, { signal } as any);
+  } catch (err) {
+    metrics.recordRpcError(network, "simulate_transaction_failure");
+    throw err;
+  }
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
     return { success: false, error: response.error, raw: response };
@@ -180,44 +194,66 @@ export async function simulateTransaction(
     };
   }
 
-  // Extract footprint
-  let extracted;
-  try {
-    extracted = await extractFootprint(response as StellarSdk.SorobanRpc.Api.SimulateTransactionSuccessResponse, network);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+  // Extract footprint and other data
+  const successResponse =
+    response as StellarSdk.SorobanRpc.Api.SimulateTransactionSuccessResponse;
+  const transactionData = successResponse.transactionData;
+
+  if (!transactionData) {
     return {
       success: false,
-      error:
-        "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+      error: "Simulation succeeded but transactionData is missing.",
       raw: response,
     };
   }
 
-  // Fetch TTL information
-  const ttl = await fetchTtlInfo(server, allXdrEntries);
+  const footprintXdr = transactionData.resources().footprint();
+  const readOnly = footprintXdr.readOnly().map((e) => e.toXDR("base64"));
+  const readWrite = footprintXdr.readWrite().map((e) => e.toXDR("base64"));
 
-  // Detect SEP-41 token contract type for the first invoked contract
+  const parsedFootprint = parseFootprint(readOnly, readWrite);
+  const contracts = extractContracts(parsedFootprint);
+  const optimizationResult = optimizeFootprint(parsedFootprint);
+
+  // Fetch TTL info
+  const allXdrEntries = [...readOnly, ...readWrite];
+  const ttl = await fetchTtlInfo(server, allXdrEntries, network);
+
+  // Detect token contract type
   const contractType =
     contracts.length > 0
       ? await detectTokenContract(contracts[0], server)
       : "unknown";
 
+  // Calculate resource fee
+  const resourceFee = calculateResourceFee(successResponse, network);
+
+  // Extract signers
+  const { requiredSigners, threshold } = extractRequiredSigners(
+    successResponse.results?.flatMap((r) => r.auth || []) || [],
+  );
+
   return {
     success: true,
     footprint: {
-      readOnly: extracted.optimizationResult.readOnly,
-      readWrite: extracted.optimizationResult.readWrite,
+      readOnly: optimizationResult.readOnly,
+      readWrite: optimizationResult.readWrite,
     },
-    contracts: extracted.contracts,
-    contractType: extracted.contractType,
+    contracts,
+    contractType,
     ttl,
-    optimized: extracted.optimizationResult.optimized,
-    rawFootprint: extracted.rawFootprint,
-    cost: {
-      cpuInsns: response.cost?.cpuInsns ?? "0",
-      memBytes: response.cost?.memBytes ?? "0",
+    optimized: optimizationResult.optimized,
+    rawFootprint: {
+      readOnly,
+      readWrite,
     },
+    cost: {
+      cpuInsns: successResponse.cost?.cpuInsns ?? "0",
+      memBytes: successResponse.cost?.memBytes ?? "0",
+    },
+    resourceFee,
+    requiredSigners,
+    threshold,
     raw: response,
   };
 }

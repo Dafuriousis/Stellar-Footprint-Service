@@ -26,7 +26,9 @@ export async function simulate(
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
   if (!xdr) {
-    return next(new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST));
+    return next(
+      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
+    );
   }
 
   // Validate XDR is valid base64
@@ -56,17 +58,39 @@ export async function simulate(
     );
   }
 
-  const net: Network = network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const net: Network =
+    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
+  const start = Date.now();
 
   try {
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
+
+    const duration = (Date.now() - start) / 1000;
+
+    // Record simulation metrics
     metrics.recordSimulation(net, result.success);
-    res.status(result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY).json(result);
+    metrics.recordSimulationDuration(net, duration);
+
+    res
+      .status(result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY)
+      .json(result);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+
+    // Record failed simulation
     metrics.recordSimulation(net, false);
+
+    // Record RPC error if applicable
+    if (
+      message.toLowerCase().includes("rpc") ||
+      message.toLowerCase().includes("connection")
+    ) {
+      metrics.recordRpcError(net, "connection_failure");
+    }
+
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   } finally {
     metrics.decrementActiveSimulations();
@@ -97,11 +121,11 @@ export async function networkStatus(
     const status = await getNetworkStatus(network);
     res.status(HTTP_STATUS.OK).json(status);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }
-
 
 /**
  * Handle POST /api/footprint/diff requests
@@ -115,10 +139,36 @@ export async function footprintDiffController(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
+  const { before, after } = req.body as {
+    before?: {
+      footprint?: {
+        readOnly: any[];
+        readWrite: any[];
+      } | null;
+    };
+    after?: {
+      footprint?: {
+        readOnly: any[];
+        readWrite: any[];
+      } | null;
+    };
+  };
+
+  if (!before || !after) {
+    return next(
+      new AppError(
+        "Missing required fields: before and after",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
   try {
-    res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
+    // This will be implemented fully once optimization logic is merged
+    res.status(HTTP_STATUS.OK).json({ message: "Not fully implemented" });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }
@@ -138,7 +188,8 @@ export async function validate(
   try {
     res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }

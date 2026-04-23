@@ -19,14 +19,16 @@ const COMPRESSION_THRESHOLD = parseInt(
 );
 
 // Middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'none'"],
-      frameAncestors: ["'none'"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
     },
-  },
-}));
+  }),
+);
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
 app.use(ipFilterMiddleware);
@@ -59,7 +61,10 @@ app.use("/api/v1", routes);
 
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
-  res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+  res.redirect(
+    308,
+    `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
+  );
 });
 
 app.listen(PORT, () => {

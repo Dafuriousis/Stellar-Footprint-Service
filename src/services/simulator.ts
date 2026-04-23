@@ -169,7 +169,8 @@ export async function simulateTransaction(
   if (!response.transactionData) {
     return {
       success: false,
-      error: "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+      error:
+        "Simulation succeeded but transactionData is missing; cannot extract footprint.",
       raw: response,
     };
   }

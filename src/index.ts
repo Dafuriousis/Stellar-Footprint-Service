@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import routes from "./api/routes";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { timeoutMiddleware } from "./middleware/timeout";
+import { bruteForceMiddleware } from "./middleware/bruteForce";
 
 dotenv.config();
 
@@ -13,13 +14,14 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(metricsMiddleware);
 app.use(timeoutMiddleware);
+app.use(bruteForceMiddleware);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
-  res.status(200).json({ 
-    status: "healthy", 
+  res.status(200).json({
+    status: "healthy",
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 

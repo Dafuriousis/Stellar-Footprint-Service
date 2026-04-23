@@ -7,6 +7,7 @@ import {
   validate,
   networkStatus,
 } from "./controllers";
+import { simulateRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
@@ -14,7 +15,7 @@ const router = Router();
 router.get("/health", health);
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
-router.post("/simulate", simulate);
+router.post("/simulate", simulateRateLimiter, simulate);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);

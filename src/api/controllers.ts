@@ -4,6 +4,7 @@ import { simulateTransaction } from "../services/simulator";
 import { Network } from "../config/stellar";
 import { footprintDiff } from "../services/footprintDiff";
 import metrics from "../middleware/metrics";
+import { validateXdr, type XdrInputType } from "../services/validator";
 
 export async function simulate(req: Request, res: Response): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
@@ -107,4 +108,21 @@ export async function footprintDiffController(req: Request, res: Response): Prom
     const message = err instanceof Error ? err.message : "Unexpected error";
     res.status(500).json({ error: message });
   }
+}
+
+export function validate(req: Request, res: Response): void {
+  const { xdr, type } = req.body as { xdr?: string; type?: string };
+
+  if (!xdr) {
+    res.status(400).json({ error: "Missing required field: xdr" });
+    return;
+  }
+
+  if (type && type !== "transaction" && type !== "operation") {
+    res.status(400).json({ error: "Invalid type. Use 'transaction' or 'operation'" });
+    return;
+  }
+
+  const result = validateXdr(xdr, (type as XdrInputType) ?? "transaction");
+  res.status(result.valid ? 200 : 400).json(result);
 }

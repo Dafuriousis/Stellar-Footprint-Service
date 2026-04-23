@@ -7,6 +7,7 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
+import { logger } from "./utils/logger";
 
 dotenv.config();
 
@@ -46,7 +47,7 @@ app.get("/metrics", async (req, res) => {
 app.use("/api", routes);
 
 app.listen(PORT, () => {
-  console.warn(`stellar-footprint-service running on port ${PORT}`);
+  logger.warn(`stellar-footprint-service running on port ${PORT}`);
 });
 
 export default app;

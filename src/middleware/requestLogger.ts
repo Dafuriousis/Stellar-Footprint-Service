@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { logger } from "../utils/logger";
 
 const isDebug = process.env.LOG_LEVEL === "debug";
 
@@ -8,7 +9,7 @@ export function requestLogger(req: Request, _res: Response, next: NextFunction):
     if (typeof logged.xdr === "string" && logged.xdr.length > 50) {
       logged.xdr = `${logged.xdr.slice(0, 50)}...`;
     }
-    console.debug(`[debug] ${req.method} ${req.path}`, logged);
+    logger.debug(`${req.method} ${req.path}`, logged);
   }
   next();
 }

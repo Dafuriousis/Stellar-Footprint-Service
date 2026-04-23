@@ -50,4 +50,20 @@ const config = [
   prettierConfig,
 ];
 
-export default config;
+// Strict no-console rule for src/ (except logger utility)
+const srcConfig = {
+  files: ["src/**/*.ts", "src/**/*.tsx"],
+  rules: {
+    "no-console": "error",
+  },
+};
+
+// Exempt logger utility from no-console rule
+const loggerExemption = {
+  files: ["src/utils/logger.ts"],
+  rules: {
+    "no-console": "off",
+  },
+};
+
+export default [...config, srcConfig, loggerExemption];

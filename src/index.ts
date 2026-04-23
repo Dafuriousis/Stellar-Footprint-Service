@@ -1,5 +1,6 @@
 import express from "express";
 import compression from "compression";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import routes from "./api/routes";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
@@ -21,6 +22,14 @@ const COMPRESSION_THRESHOLD = parseInt(
 );
 
 // Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+}));
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
 app.use(ipFilterMiddleware);

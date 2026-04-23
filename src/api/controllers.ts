@@ -2,20 +2,24 @@ import { Request, Response } from "express";
 import { simulateTransaction } from "../services/simulator";
 import { Network } from "../config/stellar";
 import metrics from "../middleware/metrics";
+import { ResponseEnvelope } from "../types";
 
 export async function simulate(req: Request, res: Response): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
   if (!xdr) {
-    res.status(400).json({ error: "Missing required field: xdr" });
+    const response: ResponseEnvelope = { success: false, error: "Missing required field: xdr" };
+    res.status(400).json(response);
     return;
   }
 
   // Validate network parameter
   if (network && network !== "mainnet" && network !== "testnet") {
-    res
-      .status(400)
-      .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+    const response: ResponseEnvelope = {
+      success: false,
+      error: "Invalid network. Use 'testnet' or 'mainnet'",
+    };
+    res.status(400).json(response);
     return;
   }
 
@@ -30,14 +34,19 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
 
-    res.status(result.success ? 200 : 422).json(result);
+    const response: ResponseEnvelope = result.success
+      ? { success: true, data: result }
+      : { success: false, error: result.error };
+
+    res.status(result.success ? 200 : 422).json(response);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unexpected error";
 
     // Record failed simulation
     metrics.recordSimulation(net, false);
 
-    res.status(500).json({ error: message });
+    const response: ResponseEnvelope = { success: false, error: message };
+    res.status(500).json(response);
   } finally {
     // Decrement active simulations
     metrics.decrementActiveSimulations();

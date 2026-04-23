@@ -21,10 +21,6 @@ const CONTRACT_EXISTENCE_CACHE_TTL = 30 * 1000; // 30 seconds
 
 /**
  * Check if a contract exists on the network by looking up its account ledger entry.
- * Uses caching to avoid repeated RPC calls for the same contract within the TTL.
- * @param server - The RPC server instance
- * @param contractIdString - The contract ID in string format (account ID)
- * @returns True if the contract exists, false otherwise
  */
 async function checkContractExists(
   server: StellarSdk.SorobanRpc.Server,
@@ -33,16 +29,13 @@ async function checkContractExists(
   const now = Date.now();
   const cached = contractExistenceCache.get(contractIdString);
   if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
-    // Record cache hit
     metrics.recordCacheHit("contract_existence");
     return cached.exists;
   }
 
-  // Record cache miss
   metrics.recordCacheMiss("contract_existence");
 
   try {
-    // Convert contractIdString to LedgerKey for an account
     const accountId = StellarSdk.xdr.AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
     const response = await rpcCircuitBreaker.call(() =>
@@ -52,10 +45,7 @@ async function checkContractExists(
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });
     return exists;
   } catch (err) {
-    // Record RPC error
     metrics.recordRpcError("unknown", "get_ledger_entries_failure");
-
-    // If there's an error (e.g., network, invalid ID), assume contract does not exist
     contractExistenceCache.set(contractIdString, {
       exists: false,
       timestamp: now,
@@ -96,6 +86,9 @@ export interface SimulateResult {
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
   requiredSigners?: string[];
   threshold?: number;
+  operations?: SimulateResult[];
+  feeBump?: boolean;
+  diagnosticEvents?: string[];
 }
 
 /**
@@ -154,15 +147,79 @@ function extractRequiredSigners(auth: any[]): {
   threshold: number;
 } {
   const signers = new Set<string>();
-  let threshold = 0;
-
   for (const entry of auth) {
-    if (entry.address && entry.address()) {
-      signers.add(entry.address().toString());
+    try {
+      // Logic from PR 184 for better signer extraction
+      if (entry.address && typeof entry.address === "function") {
+        signers.add(entry.address().toString());
+      } else if (entry.credentials && typeof entry.credentials === "function") {
+        const credentials = entry.credentials();
+        if (credentials.switch().name === "sorobanCredentialsAddress") {
+          const address = credentials.address();
+          const accountId = StellarSdk.StrKey.encodeEd25519PublicKey(
+            address.accountId().value(),
+          );
+          signers.add(accountId);
+        }
+      }
+    } catch {
+      // ignore invalid entries
     }
   }
+  return { requiredSigners: Array.from(signers), threshold: signers.size };
+}
 
-  return { requiredSigners: Array.from(signers), threshold };
+/**
+ * Common processing for a single simulation result (used for both single and multi-op)
+ */
+async function processSimulationResult(
+  server: StellarSdk.SorobanRpc.Server,
+  network: Network,
+  transactionData: StellarSdk.xdr.SorobanTransactionData,
+  cost?: { cpuInsns: string; memBytes: string },
+): Promise<Partial<SimulateResult>> {
+  const footprintXdr = transactionData.resources().footprint();
+  const rawFootprint = {
+    readOnly: footprintXdr.readOnly().map((e) => e.toXDR("base64")),
+    readWrite: footprintXdr.readWrite().map((e) => e.toXDR("base64")),
+  };
+
+  const parsed = parseFootprint(rawFootprint);
+  const optimizationResult = optimizeFootprint({
+    readOnly: parsed.readOnly,
+    readWrite: parsed.readWrite,
+  });
+
+  const allXdrEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
+  const contracts = extractContracts(allXdrEntries);
+  const ttl = await fetchTtlInfo(server, allXdrEntries, network);
+
+  const contractType =
+    contracts.length > 0
+      ? await detectTokenContract(contracts[0], server)
+      : "unknown";
+
+  const auth = (transactionData as any).auth?.() ?? [];
+  const { requiredSigners, threshold } = extractRequiredSigners(auth);
+
+  return {
+    success: true,
+    footprint: {
+      readOnly: optimizationResult.readOnly,
+      readWrite: optimizationResult.readWrite,
+    },
+    contracts,
+    contractType,
+    ttl,
+    optimized: optimizationResult.optimized,
+    rawFootprint,
+    cost: {
+      cpuInsns: cost?.cpuInsns ?? "0",
+      memBytes: cost?.memBytes ?? "0",
+    },
+    requiredSigners,
+    threshold,
+  };
 }
 
 /**
@@ -179,7 +236,21 @@ export async function simulateTransaction(
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 
-  const simOptions: Record<string, unknown> = { signal };
+  // Handle fee-bump transactions (from PR 184)
+  if (tx instanceof StellarSdk.FeeBumpTransaction) {
+    const innerTx = tx.innerTransaction;
+    const innerXdr = innerTx.toXDR();
+    const result = await simulateTransaction(
+      innerXdr,
+      network,
+      signal,
+      ledgerSequence,
+    );
+    result.feeBump = true;
+    return result;
+  }
+
+  const simOptions: Record<string, unknown> = { signal, includeEvents: true };
   if (ledgerSequence !== undefined) {
     simOptions.ledger = ledgerSequence;
   }
@@ -187,7 +258,7 @@ export async function simulateTransaction(
   let response;
   try {
     response = await rpcCircuitBreaker.call(() =>
-      server.simulateTransaction(tx, simOptions as any),
+      server.simulateTransaction(tx as StellarSdk.Transaction, simOptions as any),
     );
   } catch (err) {
     metrics.recordRpcError(network, "simulate_transaction_failure");
@@ -206,66 +277,125 @@ export async function simulateTransaction(
     };
   }
 
-  // Extract footprint and other data
-  const successResponse =
-    response as StellarSdk.SorobanRpc.Api.SimulateTransactionSuccessResponse;
-  const transactionData = successResponse.transactionData;
+  const results =
+    response.results ||
+    (response.transactionData
+      ? [{ transactionData: response.transactionData, cost: response.cost }]
+      : []);
 
-  if (!transactionData) {
+  if (results.length === 0) {
     return {
       success: false,
-      error: "Simulation succeeded but transactionData is missing.",
+      error: "Simulation succeeded but no transactionData or results found.",
       raw: response,
     };
   }
 
-  const footprintXdr = transactionData.resources().footprint();
-  const readOnly = footprintXdr.readOnly().map((e) => e.toXDR("base64"));
-  const readWrite = footprintXdr.readWrite().map((e) => e.toXDR("base64"));
-
-  const parsedFootprint = parseFootprint(readOnly, readWrite);
-  const contracts = extractContracts(parsedFootprint);
-  const optimizationResult = optimizeFootprint(parsedFootprint);
-
-  // Fetch TTL info
-  const allXdrEntries = [...readOnly, ...readWrite];
-  const ttl = await fetchTtlInfo(server, allXdrEntries, network);
-
-  // Detect token contract type
-  const contractType =
-    contracts.length > 0
-      ? await detectTokenContract(contracts[0], server)
-      : "unknown";
-
-  // Calculate resource fee
-  const resourceFee = calculateResourceFee(successResponse, network);
-
-  // Extract signers
-  const { requiredSigners, threshold } = extractRequiredSigners(
-    successResponse.results?.flatMap((r) => r.auth || []) || [],
+  // Calculate overall resource fee
+  const resourceFee = calculateResourceFee(
+    response as StellarSdk.SorobanRpc.Api.SimulateTransactionSuccessResponse,
+    network,
   );
 
-  return {
-    success: true,
-    footprint: {
-      readOnly: optimizationResult.readOnly,
-      readWrite: optimizationResult.readWrite,
-    },
-    contracts,
-    contractType,
-    ttl,
-    optimized: optimizationResult.optimized,
-    rawFootprint: {
-      readOnly,
-      readWrite,
-    },
-    cost: {
-      cpuInsns: successResponse.cost?.cpuInsns ?? "0",
-      memBytes: successResponse.cost?.memBytes ?? "0",
-    },
-    resourceFee,
-    requiredSigners,
-    threshold,
-    raw: response,
-  };
+  const diagnosticEvents =
+    response.events
+      ?.filter((e) => e.type().name === "diagnostic")
+      .map((e) => e.toXDR("base64")) || [];
+
+  if (results.length === 1) {
+    const result = results[0];
+    const processed = await processSimulationResult(
+      server,
+      network,
+      result.transactionData.build(),
+      result.cost,
+    );
+
+    return {
+      ...processed,
+      success: true,
+      resourceFee,
+      diagnosticEvents,
+      raw: response,
+    } as SimulateResult;
+  } else {
+    // Multi-operation (from PR 184)
+    const operations: SimulateResult[] = [];
+    let allReadOnly: FootprintEntry[] = [];
+    let allReadWrite: FootprintEntry[] = [];
+    let allContracts: string[] = [];
+    let allTtl: Record<string, TtlInfo> = {};
+    let contractType: ContractType = "unknown";
+    let optimized = false;
+    let allRawReadOnly: string[] = [];
+    let allRawReadWrite: string[] = [];
+
+    for (const res of results) {
+      const processed = await processSimulationResult(
+        server,
+        network,
+        res.transactionData.build(),
+        res.cost,
+      );
+
+      const opResult: SimulateResult = {
+        success: true,
+        ...processed,
+      } as SimulateResult;
+
+      operations.push(opResult);
+
+      if (processed.footprint) {
+        allReadOnly = [...allReadOnly, ...processed.footprint.readOnly];
+        allReadWrite = [...allReadWrite, ...processed.footprint.readWrite];
+      }
+      if (processed.contracts) allContracts = [...allContracts, ...processed.contracts];
+      if (processed.ttl) Object.assign(allTtl, processed.ttl);
+      if (processed.optimized) optimized = true;
+      if (processed.rawFootprint) {
+        allRawReadOnly = [...allRawReadOnly, ...processed.rawFootprint.readOnly];
+        allRawReadWrite = [...allRawReadWrite, ...processed.rawFootprint.readWrite];
+      }
+      if (contractType === "unknown" && processed.contractType)
+        contractType = processed.contractType;
+    }
+
+    // Dedup results for the aggregate footprint
+    const dedupReadOnly = allReadOnly.filter(
+      (item, index, arr) =>
+        arr.findIndex(
+          (i) => i.contractId === item.contractId && i.key === item.key,
+        ) === index,
+    );
+    const dedupReadWrite = allReadWrite.filter(
+      (item, index, arr) =>
+        arr.findIndex(
+          (i) => i.contractId === item.contractId && i.key === item.key,
+        ) === index,
+    );
+
+    return {
+      success: true,
+      footprint: {
+        readOnly: dedupReadOnly,
+        readWrite: dedupReadWrite,
+      },
+      contracts: [...new Set(allContracts)],
+      contractType,
+      ttl: allTtl,
+      optimized,
+      rawFootprint: {
+        readOnly: [...new Set(allRawReadOnly)],
+        readWrite: [...new Set(allRawReadWrite)],
+      },
+      cost: {
+        cpuInsns: response.cost?.cpuInsns ?? "0",
+        memBytes: response.cost?.memBytes ?? "0",
+      },
+      resourceFee,
+      operations,
+      diagnosticEvents,
+      raw: response,
+    };
+  }
 }

@@ -29,6 +29,7 @@ export async function simulate(
     );
   }
 
+  // Validate XDR is valid base64
   if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
     return next(
       new AppError(
@@ -38,6 +39,7 @@ export async function simulate(
     );
   }
 
+  // Enforce max XDR length (100kb)
   if (xdr.length > 100 * 1024) {
     return next(
       new AppError("XDR too large: maximum 100kb", HTTP_STATUS.BAD_REQUEST),

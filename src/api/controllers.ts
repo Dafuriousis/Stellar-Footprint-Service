@@ -348,6 +348,7 @@ export async function simulateBatch(
     res.status(HTTP_STATUS.OK).json({ results });
   } catch (err: unknown) {
 <<<<<<< ours
+<<<<<<< ours
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -367,6 +368,23 @@ export async function simulateBatch(
     metrics.decrementActiveSimulations();
   }
 }
+=======
+    // Handle circuit breaker open state
+    if (
+      err instanceof Error &&
+      (err as { circuitOpen?: boolean; retryAfter?: number }).circuitOpen
+    ) {
+      const retryAfter =
+        (err as unknown as { retryAfter: number }).retryAfter ?? 30;
+      res
+        .status(503)
+        .set("Retry-After", String(retryAfter))
+        .json({ error: "Service temporarily unavailable", retryAfter });
+      return;
+    }
+
+    const message = err instanceof Error ? err.message : "Unexpected error";
+>>>>>>> theirs
 
 /**
  * Handle POST /api/simulate/batch requests

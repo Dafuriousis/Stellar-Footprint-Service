@@ -3,6 +3,7 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -41,6 +42,14 @@ import { simulateRateLimiter } from "../middleware/rateLimiter";
 =======
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
+>>>>>>> theirs
+=======
+import {
+  simulate,
+  footprintDiffController,
+  validate,
+  restore,
+} from "./controllers";
 >>>>>>> theirs
 
 const router = Router();
@@ -134,6 +143,7 @@ router.post("/validate", validate);
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 /**
  * @route POST /api/v1/restore
  * @desc Returns a restoration transaction if the transaction requires it
@@ -154,6 +164,11 @@ router.post("/estimate-fee", estimateFeeController);
 =======
 // GET /decode — accepts ?xdr=&type= and returns human-readable JSON of the XDR
 router.get("/decode", decode);
+
+>>>>>>> theirs
+=======
+// POST /restore — accepts { xdr, network } and returns restoreXdr when restoration is needed
+router.post("/restore", restore);
 
 >>>>>>> theirs
 export default router;

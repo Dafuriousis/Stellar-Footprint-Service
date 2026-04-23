@@ -12,6 +12,7 @@ import { optimizeFootprint } from "./optimizer";
 <<<<<<< ours
 <<<<<<< ours
 import { calculateResourceFee } from "./feeEstimator";
+<<<<<<< ours
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import {
@@ -37,6 +38,9 @@ import {
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 >>>>>>> theirs
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })

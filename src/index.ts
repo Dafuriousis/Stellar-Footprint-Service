@@ -86,6 +86,14 @@ app.get("/metrics", async (req, res) => {
 
 // API v1 routes
 app.use("/api/v1", routes);
+<<<<<<< ours
+=======
+
+// Backward-compat: redirect /api/* → /api/v1/*
+app.use("/api/:path(*)", (req, res) => {
+  res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+});
+>>>>>>> theirs
 
 <<<<<<< ours
 // Backward-compat: redirect /api/* → /api/v1/*

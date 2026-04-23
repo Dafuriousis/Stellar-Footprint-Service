@@ -13,6 +13,7 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -140,6 +141,12 @@ const router = Router();
 router.get("/health", health);
 
 >>>>>>> theirs
+=======
+import { simulate, simulateAsync, footprintDiffController, validate, networkStatus } from "./controllers";
+
+const router = Router();
+
+>>>>>>> theirs
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 <<<<<<< ours
 <<<<<<< ours
@@ -223,6 +230,9 @@ router.post("/simulate/batch", simulateBatch);
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+
+// POST /simulate/async — accepts { xdr, network, webhookUrl }, returns 202 with jobId
+router.post("/simulate/async", simulateAsync);
 
 // GET /network/status — returns current network information
 >>>>>>> theirs

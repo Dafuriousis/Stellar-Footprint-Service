@@ -73,6 +73,7 @@ app.get("/metrics", async (req, res) => {
 // API v1 routes
 app.use("/api/v1", routes);
 
+<<<<<<< ours
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,6 +83,14 @@ app.use("/api/:path(*)", (req, res) => {
     `/api/v1/${path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
   );
 });
+=======
+// Only start the server when this file is run directly (not imported in tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.warn(`stellar-footprint-service running on port ${PORT}`);
+  });
+}
+>>>>>>> theirs
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

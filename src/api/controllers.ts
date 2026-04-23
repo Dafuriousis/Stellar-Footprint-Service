@@ -4,6 +4,7 @@ import { Network } from "../config/stellar";
 import { getNetworkStatus } from "../services/networkStatus";
 import metrics from "../middleware/metrics";
 import { AppError } from "../utils/AppError";
+import { getCache } from "../services/cache";
 import {
   NETWORKS,
   DEFAULT_NETWORK,
@@ -121,6 +122,28 @@ export async function validate(
 ): Promise<void> {
   try {
     res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+}
+
+/**
+ * Handle DELETE /api/cache requests
+ * Flushes all entries from the active cache backend (Redis or in-memory)
+ */
+export async function invalidateCache(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const cache = getCache();
+    await cache.flush();
+    res.status(HTTP_STATUS.OK).json({
+      message: "Cache invalidated",
+      backend: cache.backend,
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));

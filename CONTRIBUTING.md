@@ -49,10 +49,14 @@ This project follows a code of conduct to ensure a welcoming environment for all
 1. **Install dependencies:**
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
    ```bash
    npm ci
@@ -61,10 +65,14 @@ This project follows a code of conduct to ensure a welcoming environment for all
 2. **Set up environment variables:**
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
    ```bash
    cp .env.example .env
@@ -74,10 +82,14 @@ This project follows a code of conduct to ensure a welcoming environment for all
 3. **Build the project:**
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
    ```bash
    npm run build
@@ -148,10 +160,14 @@ This project uses several tools to maintain code quality:
 ### ESLint
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 - Configured in `eslint.config.mjs`
 - Run `npm run lint` to check for issues
@@ -161,10 +177,14 @@ This project uses several tools to maintain code quality:
 ### Prettier
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 - Configured in `prettier.config.cjs`
 - Run `npm run format` to format code
@@ -173,10 +193,14 @@ This project uses several tools to maintain code quality:
 ### TypeScript
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 - Strict type checking enabled
 - Configuration in `tsconfig.json`
@@ -185,10 +209,14 @@ This project uses several tools to maintain code quality:
 ### Pre-commit Hooks
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 - Husky is used to run pre-commit checks
 - Commits will be rejected if linting fails
@@ -199,10 +227,14 @@ This project uses several tools to maintain code quality:
 ### Running Tests
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 ```bash
 npm test
@@ -211,10 +243,14 @@ npm test
 ### Test Coverage
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 - Aim for high test coverage
 - Include unit tests for all new functions
@@ -224,10 +260,14 @@ npm test
 ### Testing Guidelines
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 - Write tests before implementing features (TDD when possible)
 - Use descriptive test names
@@ -243,10 +283,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 1. **Check for updates:**
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
    ```bash
    npm outdated
@@ -255,10 +299,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 2. **Update package.json** with new exact versions:
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
    ```json
    {
@@ -269,10 +317,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 3. **Update lockfile:**
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
    ```bash
    npm install
@@ -287,10 +339,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 1. **Install the package:**
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
    ```bash
    npm install --save exact-package@1.2.3
@@ -306,10 +362,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 2. **Run all checks** locally:
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
    ```bash
    npm run lint
@@ -387,10 +447,14 @@ Branch names must follow this pattern:
 Examples:
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 - `feature/add-batch-simulation`
 - `fix/memory-leak-issue`
@@ -445,7 +509,11 @@ For new features, please:
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
+=======
+Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
+>>>>>>> theirs
 =======
 Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
 >>>>>>> theirs

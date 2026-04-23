@@ -11,6 +11,7 @@ import { optimizeFootprint } from "./optimizer";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { calculateResourceFee } from "./feeEstimator";
 <<<<<<< ours
 <<<<<<< ours
@@ -32,6 +33,8 @@ import {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 import { LRUCache, buildCacheKey } from "./cache";
 import {
   SIMULATION_CACHE_TTL_MS,
@@ -39,6 +42,7 @@ import {
 } from "../constants";
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -61,6 +65,8 @@ import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 >>>>>>> theirs
 =======
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
@@ -128,11 +134,14 @@ async function _checkContractExists(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     // Convert contractIdString to LedgerKey for an account
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accountId = (StellarSdk.xdr as any).AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -147,6 +156,9 @@ async function _checkContractExists(
     );
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -264,6 +276,7 @@ export interface SimulateResult {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
   /** Per-operation results for multi-operation transactions */
@@ -295,6 +308,12 @@ export interface SimulateResult {
 >>>>>>> theirs
 }
 
+=======
+  /** Whether this result was served from cache */
+  cacheHit?: boolean;
+}
+
+>>>>>>> theirs
 /** Shared simulation result LRU cache (singleton) */
 export const simulationCache = new LRUCache<SimulateResult>(
   SIMULATION_CACHE_MAX_SIZE,
@@ -303,6 +322,9 @@ export const simulationCache = new LRUCache<SimulateResult>(
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -688,7 +710,10 @@ export async function simulateTransaction(
 ): Promise<SimulateResult> {
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
   const cacheKey = buildCacheKey(xdr, network);
@@ -1203,7 +1228,11 @@ export async function simulateTransaction(
   // Extract contract events
   const events = extractEvents(response);
 
+<<<<<<< ours
   return {
+>>>>>>> theirs
+=======
+  const result: SimulateResult = {
 >>>>>>> theirs
     success: true,
     footprint: {
@@ -1235,6 +1264,9 @@ export async function simulateTransaction(
   return { ...result, cacheHit: false };
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

@@ -574,6 +574,7 @@ export async function simulateBatch(
     res.status(result.success ? 200 : 422).json(response);
 >>>>>>> theirs
   } catch (err: unknown) {
+<<<<<<< ours
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     metrics.recordSimulation(net, false);
@@ -587,6 +588,8 @@ export async function simulateBatch(
   }
 }
 =======
+=======
+>>>>>>> theirs
     // Handle circuit breaker open state
     if (
       err instanceof Error &&

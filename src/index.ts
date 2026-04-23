@@ -82,6 +82,7 @@ app.get("/health", (req, res) => {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   const circuit = rpcCircuitBreaker.getState();
   res.status(200).json({
     status: "healthy",
@@ -108,16 +109,23 @@ app.get("/api/health", (req, res) => {
     uptime: process.uptime(),
 >>>>>>> theirs
 =======
+=======
+  const circuit = rpcCircuitBreaker.getState();
+>>>>>>> theirs
   res.status(200).json({
     status: "healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+<<<<<<< ours
 >>>>>>> theirs
 =======
   res.status(200).json({
     status: "healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+>>>>>>> theirs
+=======
+    circuitBreaker: circuit,
 >>>>>>> theirs
   });
 });
@@ -135,7 +143,15 @@ app.get("/metrics", async (req, res) => {
 // API v1 routes
 app.use("/api/v1", routes);
 <<<<<<< ours
+<<<<<<< ours
 =======
+=======
+
+// Backward-compat: redirect /api/* → /api/v1/*
+app.use("/api/:path(*)", (req, res) => {
+  res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+});
+>>>>>>> theirs
 
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {

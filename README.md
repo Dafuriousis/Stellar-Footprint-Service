@@ -1,5 +1,10 @@
 # 🚀 Stellar Footprint Service
 
+[![CI](https://github.com/josunday002/Stellar-Footprint-Service/actions/workflows/ci.yml/badge.svg)](https://github.com/josunday002/Stellar-Footprint-Service/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/josunday002/Stellar-Footprint-Service/branch/main/graph/badge.svg)](https://codecov.io/gh/josunday002/Stellar-Footprint-Service)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
+
 **Pre-flight Simulation & Developer Experience (DX) for Soroban Smart Contracts**
 
 A backend service that automates the complex footprint extraction process for Stellar/Soroban transactions, acting as a middleman between your frontend and the Stellar RPC network.

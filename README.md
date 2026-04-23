@@ -1,5 +1,10 @@
 # 🚀 Stellar Footprint Service
 
+[![CI](https://github.com/josunday002/Stellar-Footprint-Service/actions/workflows/ci.yml/badge.svg)](https://github.com/josunday002/Stellar-Footprint-Service/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/josunday002/Stellar-Footprint-Service/branch/main/graph/badge.svg)](https://codecov.io/gh/josunday002/Stellar-Footprint-Service)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
+
 **Pre-flight Simulation & Developer Experience (DX) for Soroban Smart Contracts**
 
 A backend service that automates the complex footprint extraction process for Stellar/Soroban transactions, acting as a middleman between your frontend and the Stellar RPC network.
@@ -942,6 +947,21 @@ See the full [Deployment Guide](./docs/deployment.md) for environment variable r
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+---
+
+## 🚢 Deployment
+
+Step-by-step guides for deploying to common platforms:
+
+| Platform | Guide |
+|---|---|
+| Railway | [docs/deployment.md#1-railway](./docs/deployment.md#1-railway) |
+| Render | [docs/deployment.md#2-render](./docs/deployment.md#2-render) |
+| Fly.io | [docs/deployment.md#3-flyio](./docs/deployment.md#3-flyio) |
+| Bare VPS + PM2 | [docs/deployment.md#4-bare-vps-with-pm2](./docs/deployment.md#4-bare-vps-with-pm2) |
+
+See the full [Deployment Guide](./docs/deployment.md) for environment variable reference and health check configuration.
+
 ---
 
 ## 🚢 Deployment

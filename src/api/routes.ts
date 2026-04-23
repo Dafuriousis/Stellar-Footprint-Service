@@ -1,4 +1,5 @@
 import { Router } from "express";
+<<<<<<< ours
 import {
   health,
   simulate,
@@ -26,6 +27,19 @@ router.post("/simulate", simulate);
  * @route GET /api/v1/network/status
  * @desc Returns current network information including latest ledger and RPC latency
  */
+=======
+import { simulate, simulateAsync, footprintDiffController, validate, networkStatus } from "./controllers";
+
+const router = Router();
+
+// POST /simulate — accepts { xdr, network } and returns footprint + cost
+router.post("/simulate", simulate);
+
+// POST /simulate/async — accepts { xdr, network, webhookUrl }, returns 202 with jobId
+router.post("/simulate/async", simulateAsync);
+
+// GET /network/status — returns current network information
+>>>>>>> theirs
 router.get("/network/status", networkStatus);
 
 /**

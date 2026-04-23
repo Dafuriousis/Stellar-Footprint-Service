@@ -13,7 +13,11 @@ import {
   HTTP_STATUS,
   BATCH_MAX_SIZE,
 } from "../constants";
+<<<<<<< ours
 import { version } from "../../package.json";
+=======
+import { createJob, deliverWebhook } from "../services/webhook";
+>>>>>>> theirs
 
 /**
  * Handle GET /api/health requests
@@ -123,7 +127,62 @@ export async function simulate(
 }
 
 /**
+<<<<<<< ours
  * Handle GET /api/v1/network/status requests
+=======
+ * Handle POST /api/simulate/async requests
+ * Accepts a webhookUrl, enqueues simulation, returns 202 with jobId
+ */
+export async function simulateAsync(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const { xdr, network, webhookUrl } = req.body as {
+    xdr?: string;
+    network?: Network;
+    webhookUrl?: string;
+  };
+
+  if (!xdr) {
+    return next(new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST));
+  }
+
+  if (!webhookUrl) {
+    return next(new AppError("Missing required field: webhookUrl", HTTP_STATUS.BAD_REQUEST));
+  }
+
+  if (
+    network &&
+    network !== NETWORKS.MAINNET &&
+    network !== NETWORKS.TESTNET
+  ) {
+    return next(
+      new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const net: Network = network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const jobId = createJob(webhookUrl);
+
+  res.status(HTTP_STATUS.ACCEPTED).json({ jobId });
+
+  // Run simulation and deliver webhook in background
+  simulateTransaction(xdr, net, res.locals.abortSignal)
+    .then((result) => deliverWebhook(jobId, result))
+    .catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+      deliverWebhook(jobId, { success: false, error: message });
+    });
+}
+
+/**
+ * Handle GET /api/network/status requests
+ * Returns current network information including latest ledger and RPC latency
+ * @param req - Express request with optional network query parameter
+ * @param res - Express response
+ * @param next - Express next function for error handling
+>>>>>>> theirs
  */
 export async function networkStatus(
   req: Request,

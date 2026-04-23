@@ -13,9 +13,13 @@ import metrics from "../middleware/metrics";
 import { AppError } from "../utils/AppError";
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { ResponseEnvelope } from "../types";
 =======
 import { getCache } from "../services/cache";
+>>>>>>> theirs
+=======
+import { decodeXdr, type XdrType } from "../services/decoder";
 >>>>>>> theirs
 =======
 import { decodeXdr, type XdrType } from "../services/decoder";
@@ -29,12 +33,30 @@ import {
 } from "../constants";
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { version } from "../../package.json";
 =======
 import { createJob, deliverWebhook } from "../services/webhook";
 >>>>>>> theirs
 =======
 import { version } from "../../package.json";
+=======
+import { version } from "../../package.json";
+
+/**
+ * Handle GET /api/health requests
+ * Returns service liveness status for load balancers and uptime monitors
+ * Does not require authentication
+ */
+export function health(req: Request, res: Response): void {
+  res.status(HTTP_STATUS.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    version,
+    timestamp: new Date().toISOString(),
+  });
+}
+>>>>>>> theirs
 
 /**
  * Handle GET /api/health requests
@@ -81,6 +103,7 @@ export async function simulate(
     );
   }
 
+<<<<<<< ours
   // Validate XDR is valid base64
   if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
 <<<<<<< ours
@@ -129,6 +152,8 @@ export async function simulate(
     );
   }
 
+=======
+>>>>>>> theirs
   if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
@@ -147,6 +172,7 @@ export async function simulate(
     const duration = (Date.now() - start) / 1000;
     metrics.recordSimulation(net, result.success);
 <<<<<<< ours
+<<<<<<< ours
     metrics.recordSimulationDuration(net, duration);
 
     const response: ResponseEnvelope = result.success
@@ -156,11 +182,15 @@ export async function simulate(
 =======
     res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
 >>>>>>> theirs
+=======
+    res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
+>>>>>>> theirs
     res
       .status(
         result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY,
       )
       .json(result);
+<<<<<<< ours
 <<<<<<< ours
   } catch (err: unknown) {
       .json(response);
@@ -181,6 +211,9 @@ export async function simulate(
 
 =======
   } catch (err: unknown) {
+=======
+  } catch (err: unknown) {
+>>>>>>> theirs
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     metrics.recordSimulation(net, false);
@@ -268,6 +301,9 @@ export async function simulateBatch(
     res.setHeader("X-Cache", allHit ? "HIT" : anyHit ? "PARTIAL" : "MISS");
     res.status(HTTP_STATUS.OK).json({ results });
   } catch (err: unknown) {
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -369,6 +405,7 @@ export async function networkStatus(
   }
 }
 
+<<<<<<< ours
 /**
  * Handle POST /api/v1/footprint/diff requests
  */
@@ -404,6 +441,8 @@ export async function footprintDiffController(
   }
 }
 
+=======
+>>>>>>> theirs
 /**
  * Handle POST /api/v1/validate requests
  */
@@ -483,7 +522,8 @@ export async function invalidateCache(
       backend: cache.backend,
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }
@@ -599,12 +639,16 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
   const result = decodeXdr(xdr, type as XdrType);
 
   if (!result.success) {
+<<<<<<< ours
     return next(
       new AppError(
         result.error ?? "Failed to decode XDR",
         HTTP_STATUS.BAD_REQUEST,
       ),
     );
+=======
+    return next(new AppError(result.error ?? "Failed to decode XDR", HTTP_STATUS.BAD_REQUEST));
+>>>>>>> theirs
   }
 
   res.status(HTTP_STATUS.OK).json(result);

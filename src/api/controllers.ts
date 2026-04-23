@@ -136,6 +136,7 @@ export async function simulate(
 import * as StellarSdk from "@stellar/stellar-sdk";
 
 export async function simulate(req: Request, res: Response): Promise<void> {
+<<<<<<< ours
   const { xdr, network, dryRun } = req.body as {
     xdr?: string;
     network?: Network;
@@ -229,11 +230,18 @@ export async function simulate(req: Request, res: Response): Promise<void> {
   // Enforce max XDR length (100kb)
   if (xdr.length > 100 * 1024) {
     res.status(400).json({ error: "XDR too large: maximum 100kb" });
+=======
+  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+
+  if (!xdr) {
+    res.status(400).json({ error: "Missing required field: xdr" });
+>>>>>>> theirs
     return;
   }
 
   // Validate network parameter
   if (network && network !== "mainnet" && network !== "testnet") {
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -302,6 +310,9 @@ export async function simulate(req: Request, res: Response): Promise<void> {
       .status(400)
       .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
 >>>>>>> theirs
+=======
+    res.status(400).json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+>>>>>>> theirs
     return;
   }
 
@@ -346,6 +357,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
 
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -530,6 +542,13 @@ export async function simulateBatch(
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
 >>>>>>> theirs
+=======
+    const duration = (Date.now() - start) / 1000;
+
+    // Record simulation metrics
+    metrics.recordSimulation(net, result.success);
+    metrics.recordSimulationDuration(net, duration);
+>>>>>>> theirs
 
     res.status(result.success ? 200 : 422).json(result);
 >>>>>>> theirs
@@ -712,6 +731,11 @@ export async function simulateBatch(
     metrics.recordSimulation(net, false);
 >>>>>>> theirs
 
+    // Record RPC error if applicable
+    if (message.toLowerCase().includes('rpc') || message.toLowerCase().includes('connection')) {
+        metrics.recordRpcError(net, 'connection_failure');
+    }
+
     res.status(500).json({ error: message });
 >>>>>>> theirs
 =======
@@ -723,6 +747,7 @@ export async function simulateBatch(
   }
 }
 
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 /**
@@ -1059,6 +1084,8 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
 
   res.status(HTTP_STATUS.OK).json(result);
 =======
+=======
+>>>>>>> theirs
 export async function footprintDiffController(req: Request, res: Response): Promise<void> {
   const { before, after } = req.body as {
     before?: {
@@ -1106,6 +1133,7 @@ export async function footprintDiffController(req: Request, res: Response): Prom
     const message = err instanceof Error ? err.message : "Unexpected error";
     res.status(500).json({ error: message });
   }
+<<<<<<< ours
 >>>>>>> theirs
 =======
  * Handle DELETE /api/cache requests
@@ -1127,5 +1155,7 @@ export async function invalidateCache(
     const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 }

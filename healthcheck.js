@@ -9,6 +9,7 @@ const options = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   path: "/api/health",
 =======
   path: '/api/health',
@@ -27,6 +28,9 @@ const options = {
 >>>>>>> theirs
 =======
   path: "/health",
+>>>>>>> theirs
+=======
+  path: '/api/health',
 >>>>>>> theirs
   timeout: 2000,
 };

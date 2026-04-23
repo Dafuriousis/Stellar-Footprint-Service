@@ -76,6 +76,7 @@ app.use(contentTypeMiddleware);
 
 // Health check endpoint
 <<<<<<< ours
+<<<<<<< ours
 app.get("/health", (req, res) => {
 <<<<<<< ours
 <<<<<<< ours
@@ -85,6 +86,8 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     status: "healthy",
 =======
+=======
+>>>>>>> theirs
 app.get("/api/health", (req, res) => {
   res.status(200).json({ 
     status: "healthy", 

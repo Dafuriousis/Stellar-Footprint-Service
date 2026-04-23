@@ -1,8 +1,12 @@
 <<<<<<< ours
+<<<<<<< ours
 # Base configuration — extended by docker-compose.dev.yml and docker-compose.prod.yml
 # Usage:
 #   Dev:  docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 #   Prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+=======
+version: '3.8'
+>>>>>>> theirs
 =======
 version: '3.8'
 >>>>>>> theirs
@@ -12,6 +16,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+<<<<<<< ours
 <<<<<<< ours
     environment:
       - PORT=3000
@@ -48,6 +53,8 @@ volumes:
 networks:
   app_net:
 =======
+=======
+>>>>>>> theirs
     ports:
       - "3000:3000"
     environment:
@@ -69,5 +76,8 @@ networks:
 
 networks:
   app-network:
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     driver: bridge

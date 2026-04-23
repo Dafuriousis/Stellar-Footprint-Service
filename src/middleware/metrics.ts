@@ -27,26 +27,38 @@ const httpRequestDuration = new client.Histogram({
 });
 
 <<<<<<< ours
+<<<<<<< ours
 // Simulation metrics from PR 159
 const simulateRequestsTotal = new client.Counter({
   name: "simulate_requests_total",
   help: "Total number of Stellar simulations",
   labelNames: ["network", "status"],
 =======
+=======
+>>>>>>> theirs
 // Required simulation metrics
 const simulateRequestsTotal = new client.Counter({
   name: 'simulate_requests_total',
   help: 'Total number of Stellar simulations',
   labelNames: ['network', 'status'],
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   registers: [register],
 });
 
 const simulateDurationSeconds = new client.Histogram({
 <<<<<<< ours
+<<<<<<< ours
   name: "simulate_duration_seconds",
   help: "Duration of Stellar simulations in seconds",
   labelNames: ["network"],
+=======
+  name: 'simulate_duration_seconds',
+  help: 'Duration of Stellar simulations in seconds',
+  labelNames: ['network'],
+>>>>>>> theirs
 =======
   name: 'simulate_duration_seconds',
   help: 'Duration of Stellar simulations in seconds',
@@ -57,6 +69,7 @@ const simulateDurationSeconds = new client.Histogram({
 });
 
 <<<<<<< ours
+<<<<<<< ours
 // RPC health metrics from PR 159
 const rpcErrorsTotal = new client.Counter({
   name: "rpc_errors_total",
@@ -65,6 +78,8 @@ const rpcErrorsTotal = new client.Counter({
   registers: [register],
 });
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 // Cache metrics
@@ -83,6 +98,7 @@ const cacheMissesTotal = new client.Counter({
 });
 
 <<<<<<< ours
+<<<<<<< ours
 // Stellar-specific simulations Total (from HEAD/main)
 const stellarSimulationsTotal = new client.Counter({
   name: "stellar_simulations_total",
@@ -93,11 +109,16 @@ const stellarSimulationsTotal = new client.Counter({
 <<<<<<< ours
 <<<<<<< ours
 =======
+=======
+>>>>>>> theirs
 // RPC health metrics
 const rpcErrorsTotal = new client.Counter({
   name: 'rpc_errors_total',
   help: 'Total number of RPC errors',
   labelNames: ['network', 'error_type'],
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -162,6 +183,7 @@ export const metrics = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
 =======
@@ -195,10 +217,22 @@ export const metrics = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+=======
+  
+  // REQUIRED: Stellar simulation metrics
+  recordSimulation: (network: string, success: boolean) => {
+    simulateRequestsTotal.inc({
+      network,
+      status: success ? 'success' : 'failure',
+    });
+  },
+
+>>>>>>> theirs
   recordSimulationDuration: (network: string, durationInSeconds: number) => {
     simulateDurationSeconds.observe({ network }, durationInSeconds);
   },
 
+<<<<<<< ours
 <<<<<<< ours
   // RPC metrics
   recordRpcError: (network: string, errorType: string) => {
@@ -206,11 +240,16 @@ export const metrics = {
   },
 
 =======
+=======
+>>>>>>> theirs
   // REQUIRED: RPC metrics
   recordRpcError: (network: string, errorType: string) => {
     rpcErrorsTotal.inc({ network, error_type: errorType });
   },
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
   
 >>>>>>> theirs
 =======
@@ -240,6 +279,7 @@ export const metrics = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
 =======
@@ -251,6 +291,8 @@ export const metrics = {
 
   // Get register for custom metrics
   getRegister: () => register,
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 };

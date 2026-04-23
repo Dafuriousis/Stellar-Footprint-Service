@@ -14,6 +14,7 @@ import { optimizeFootprint } from "./optimizer";
 import { calculateResourceFee } from "./feeEstimator";
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import {
@@ -42,6 +43,9 @@ import {
 >>>>>>> theirs
 =======
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
+>>>>>>> theirs
+=======
+import metrics from "../middleware/metrics";
 >>>>>>> theirs
 =======
 import metrics from "../middleware/metrics";
@@ -82,11 +86,21 @@ async function _checkContractExists(
   const cached = contractExistenceCache.get(contractIdString);
   if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
 <<<<<<< ours
+<<<<<<< ours
     metrics.recordCacheHit("contract_existence");
     return cached.exists;
   }
 
   metrics.recordCacheMiss("contract_existence");
+=======
+    // Record cache hit
+    metrics.recordCacheHit('contract_existence');
+    return cached.exists;
+  }
+
+  // Record cache miss
+  metrics.recordCacheMiss('contract_existence');
+>>>>>>> theirs
 =======
     // Record cache hit
     metrics.recordCacheHit('contract_existence');
@@ -198,6 +212,7 @@ export interface SimulateResult {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
   /** Per-operation results for multi-operation transactions */
@@ -222,6 +237,10 @@ export interface SimulateResult {
   /** Whether this result was served from cache */
   cacheHit?: boolean;
 =======
+>>>>>>> theirs
+=======
+  requiredSigners?: string[];
+  threshold?: number;
 >>>>>>> theirs
 }
 
@@ -282,8 +301,11 @@ async function fetchTtlInfo(
     return ttlMap;
   } catch {
 <<<<<<< ours
+<<<<<<< ours
     metrics.recordRpcError(network, "fetch_ttl_failure");
 =======
+=======
+>>>>>>> theirs
     // Record RPC error
     metrics.recordRpcError('unknown', 'fetch_ttl_failure');
     // If TTL fetching fails, return empty map
@@ -293,6 +315,7 @@ async function fetchTtlInfo(
 }
 
 /**
+<<<<<<< ours
 <<<<<<< ours
  * Calculate footprint size statistics
  */
@@ -540,6 +563,8 @@ async function processSimulationResult(
  * Simulate a Soroban transaction and extract its footprint
  */
 =======
+=======
+>>>>>>> theirs
  * Extract required signers from auth entries.
  * Note: This is an internal helper that was previously missing.
  */
@@ -556,6 +581,9 @@ function extractRequiredSigners(auth: any[]): { requiredSigners: string[], thres
     return { requiredSigners: Array.from(signers), threshold };
 }
 
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 export async function simulateTransaction(
   xdr: string,
@@ -580,6 +608,7 @@ export async function simulateTransaction(
   const server = getRpcServer(network);
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
+<<<<<<< ours
 <<<<<<< ours
 
 <<<<<<< ours
@@ -635,6 +664,16 @@ export async function simulateTransaction(
     simOptions.ledger = ledgerSequence;
   }
   const response = await server.simulateTransaction(tx, simOptions as never);
+>>>>>>> theirs
+=======
+
+  let response;
+  try {
+    response = await server.simulateTransaction(tx, { signal } as never);
+  } catch (err) {
+    metrics.recordRpcError(network, 'simulate_transaction_failure');
+    throw err;
+  }
 >>>>>>> theirs
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {

@@ -4,11 +4,7 @@ import { Network } from "../config/stellar";
 import metrics from "../middleware/metrics";
 
 export async function simulate(req: Request, res: Response): Promise<void> {
-  const { xdr, network, ledgerSequence } = req.body as {
-    xdr?: string;
-    network?: Network;
-    ledgerSequence?: number;
-  };
+  const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
   if (!xdr) {
     res.status(400).json({ error: "Missing required field: xdr" });
@@ -23,25 +19,18 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Validate ledgerSequence if provided
-  if (ledgerSequence !== undefined && (!Number.isInteger(ledgerSequence) || ledgerSequence <= 0)) {
-    res.status(400).json({ error: "Invalid ledgerSequence. Must be a positive integer." });
-    return;
-  }
-
   const net: Network = network === "mainnet" ? "mainnet" : "testnet";
 
   // Track active simulations
   metrics.incrementActiveSimulations();
 
   try {
-    const result = await simulateTransaction(xdr, net, res.locals.abortSignal, ledgerSequence);
-    
+    const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
+
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
-    
-    const { raw, ...clientResult } = result;
-    res.status(result.success ? 200 : 422).json(clientResult);
+
+    res.status(result.success ? 200 : 422).json(result);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unexpected error";
 

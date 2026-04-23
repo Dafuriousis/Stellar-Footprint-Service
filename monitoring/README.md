@@ -205,7 +205,7 @@ active_simulations
 To add custom metrics to the service, install `prom-client`:
 
 ```bash
-pnpm add prom-client
+npm install prom-client
 ```
 
 Example implementation:

@@ -6,7 +6,7 @@ Get the Grafana dashboard running in 5 minutes!
 
 - Docker and Docker Compose installed
 - Git configured with user identity
-- Node.js and pnpm installed
+- Node.js and npm installed
 
 ## 📝 Step 1: Configure Git (If Not Done)
 
@@ -36,10 +36,10 @@ git push origin feature/grafana-dashboard
 
 ```bash
 # Install prom-client
-pnpm add prom-client
+npm install prom-client
 
 # Install all dependencies
-pnpm install
+npm install
 ```
 
 ## 🐳 Step 4: Start Services

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { simulateTransaction } from "../services/simulator";
 import { Network } from "../config/stellar";
 import { getNetworkStatus } from "../services/networkStatus";
+import { estimateFee } from "../services/feeEstimator";
 import metrics from "../middleware/metrics";
 import { AppError } from "../utils/AppError";
 import { decodeXdr, type XdrType } from "../services/decoder";
@@ -238,6 +239,61 @@ export async function validate(
 }
 
 /**
+ * Handle POST /api/estimate-fee requests
+ * Calculates the recommended resource fee from simulation cost output
+ * @param req - Express request with cpuInsns, memBytes, and optional network in body
+ * @param res - Express response
+ * @param next - Express next function for error handling
+ */
+export async function estimateFeeController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const { cpuInsns, memBytes, network } = req.body as {
+    cpuInsns?: string;
+    memBytes?: string;
+    network?: Network;
+  };
+
+  if (!cpuInsns || !memBytes) {
+    return next(
+      new AppError(
+        "Missing required fields: cpuInsns and memBytes",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  if (!/^\d+$/.test(cpuInsns) || !/^\d+$/.test(memBytes)) {
+    return next(
+      new AppError(
+        "cpuInsns and memBytes must be non-negative integer strings",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+    return next(
+      new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const net: Network =
+    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+
+  try {
+    const result = await estimateFee(cpuInsns, memBytes, net);
+    res.status(HTTP_STATUS.OK).json(result);
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+}
+
+/**
  * Handle GET /api/decode requests
  * Decodes a base64 XDR string into a human-readable JSON representation
  * without simulating the transaction. Useful for debugging.
@@ -270,7 +326,12 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
   const result = decodeXdr(xdr, type as XdrType);
 
   if (!result.success) {
-    return next(new AppError(result.error ?? "Failed to decode XDR", HTTP_STATUS.BAD_REQUEST));
+    return next(
+      new AppError(
+        result.error ?? "Failed to decode XDR",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
   }
 
   res.status(HTTP_STATUS.OK).json(result);

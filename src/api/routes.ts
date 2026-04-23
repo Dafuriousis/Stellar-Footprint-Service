@@ -7,6 +7,7 @@ import {
   validate,
   networkStatus,
   decode,
+  estimateFeeController,
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
 
@@ -32,5 +33,8 @@ router.post("/validate", validate);
 
 // GET /decode — accepts ?xdr=&type= and returns human-readable JSON of the XDR
 router.get("/decode", decode);
+
+// POST /estimate-fee — accepts { cpuInsns, memBytes, network } and returns fee breakdown
+router.post("/estimate-fee", estimateFeeController);
 
 export default router;

@@ -1,111 +1,108 @@
+import { getRpcServer } from "../config/stellar";
 import { Network } from "../config/stellar";
 
-interface FeeParameters {
-  feeRatePerInstructionIncrement: number;
-  writeFeePerLedgerEntry: number;
+// Stellar fee constants (CAP-0046)
+// 1 XLM = 10_000_000 stroops
+const STROOPS_PER_XLM = 10_000_000n;
+
+// Soroban resource fee rate constants (network defaults, used as fallback)
+// These match Stellar's published defaults for fee calculation
+const DEFAULT_FEE_RATE_PER_INSTRUCTION_INCREMENT = 25n; // stroops per 10k instructions
+const INSTRUCTION_INCREMENT = 10_000n;
+const DEFAULT_WRITE_FEE_PER_BYTE = 1_000n; // stroops per byte of write bandwidth
+const DEFAULT_READ_FEE_PER_BYTE = 250n; // stroops per byte of read bandwidth
+const DEFAULT_HISTORICAL_FEE_RATE = 100n; // stroops per byte of historical data
+const DEFAULT_METADATA_FEE_RATE = 100n; // stroops per byte of metadata
+
+// Typical overhead bytes for a Soroban transaction (approximate)
+const TYPICAL_TX_OVERHEAD_BYTES = 300n;
+
+export interface FeeEstimate {
+  baseFee: string;
+  resourceFee: string;
+  totalFee: string;
+  feeInXLM: string;
 }
 
 /**
- * Cache for fee parameters (network -> { params: FeeParameters, timestamp: number })
+ * Fetch the recommended inclusion fee (p50 of recent Soroban transactions)
+ * from the RPC getFeeStats endpoint.
  */
-const feeParamCache = new Map<
-  string,
-  { params: FeeParameters; timestamp: number }
->();
-const FEE_PARAM_CACHE_TTL = 60 * 1000; // 60 seconds
-
-/**
- * Fetch current network fee parameters from the RPC
- * @param network - The network to fetch fee parameters for
- * @returns Fee parameters object
- */
-export async function fetchFeeParameters(
-  network: Network = "testnet",
-): Promise<FeeParameters> {
-  const now = Date.now();
-  const cached = feeParamCache.get(network);
-  if (cached && now - cached.timestamp < FEE_PARAM_CACHE_TTL) {
-    return cached.params;
-  }
-
+async function fetchRecommendedInclusionFee(
+  network: Network,
+): Promise<bigint> {
   try {
-    // SDK 12 does not expose a getLedger() or fee parameter endpoint directly.
-    // Fall back to well-known Stellar network defaults.
-    const feeParams: FeeParameters = {
-      feeRatePerInstructionIncrement: 100,
-      writeFeePerLedgerEntry: 100,
-    };
-    feeParamCache.set(network, { params: feeParams, timestamp: now });
-    return feeParams;
-  } catch (err) {
-    // If fetching fails, return default values and still cache them to avoid hammering the RPC
-    const defaultParams: FeeParameters = {
-      feeRatePerInstructionIncrement: 100,
-      writeFeePerLedgerEntry: 100,
-    };
-    feeParamCache.set(network, { params: defaultParams, timestamp: now });
-    return defaultParams;
+    const server = getRpcServer(network);
+    const stats = await server.getFeeStats();
+    // Use p50 of soroban inclusion fees as the recommended base fee
+    const p50 = BigInt(stats.sorobanInclusionFee.p50 ?? "100");
+    return p50 > 0n ? p50 : 100n;
+  } catch {
+    return 100n; // fallback: 100 stroops (Stellar minimum base fee)
   }
 }
 
 /**
- * Calculate the resource fee based on simulation cost and network fee parameters
- * @param cpuInsns - CPU instructions used in simulation (as string)
- * @param memBytes - Memory bytes used in simulation (as string)
- * @param network - The network to get fee parameters for
- * @returns Calculated fee in stroops (as string)
+ * Estimate the Soroban resource fee from CPU instructions and memory bytes.
+ *
+ * Uses Stellar's CAP-0046 resource fee formula:
+ *   cpuFee  = ceil(cpuInsns / 10_000) * feeRatePerInstructionIncrement
+ *   memFee  = memBytes * writeFeePerByte
+ *   overhead = TYPICAL_TX_OVERHEAD_BYTES * (historicalFeeRate + metadataFeeRate)
+ *   resourceFee = cpuFee + memFee + overhead
+ *
+ * @param cpuInsns - CPU instructions from simulation cost (as string)
+ * @param memBytes - Memory bytes from simulation cost (as string)
+ * @returns Estimated resource fee in stroops (as bigint)
  */
-export async function calculateResourceFee(
+function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
+  const cpuFee =
+    ((cpuInsns + INSTRUCTION_INCREMENT - 1n) / INSTRUCTION_INCREMENT) *
+    DEFAULT_FEE_RATE_PER_INSTRUCTION_INCREMENT;
+
+  const memFee = memBytes * DEFAULT_WRITE_FEE_PER_BYTE;
+
+  const overhead =
+    TYPICAL_TX_OVERHEAD_BYTES *
+    (DEFAULT_HISTORICAL_FEE_RATE + DEFAULT_METADATA_FEE_RATE);
+
+  // Read bandwidth fee (approximate: memBytes are also read)
+  const readFee = memBytes * DEFAULT_READ_FEE_PER_BYTE;
+
+  return cpuFee + memFee + readFee + overhead;
+}
+
+/**
+ * Estimate fees for a Soroban transaction given simulation cost output.
+ *
+ * @param cpuInsns - CPU instructions used (as string, from simulation cost)
+ * @param memBytes - Memory bytes used (as string, from simulation cost)
+ * @param network  - Stellar network ("testnet" | "mainnet")
+ * @returns Fee breakdown: baseFee, resourceFee, totalFee (all in stroops), feeInXLM
+ */
+export async function estimateFee(
   cpuInsns: string,
   memBytes: string,
   network: Network = "testnet",
-): Promise<string> {
-  const feeParams = await fetchFeeParameters(network);
-  const cpuInsnsNum = BigInt(cpuInsns);
-  const memBytesNum = BigInt(memBytes);
+): Promise<FeeEstimate> {
+  const cpu = BigInt(cpuInsns);
+  const mem = BigInt(memBytes);
 
-  // Stellar fee formula:
-  // fee = (baseFee + (cpuInsns * feeRatePerInstructionIncrement) + (memBytes * writeFeePerLedgerEntry)) * 1000000
-  // However, note that the simulation returns cpuInsns and memBytes as already scaled?
-  // Looking at the existing code, the simulator returns cpuInsns and memBytes as strings from the response.
-  // In the Stellar SDK, the cost from simulateTransaction is in the same units as used in fee calculation.
-  // According to Stellar documentation, the resource fee is calculated as:
-  //   resourceFee = (cpuInsns * feeRatePerInstructionIncrement + memBytes * writeFeePerLedgerEntry) * 100
-  // But note: the base fee (100 stroops) is added per operation, and we are calculating the resource fee only.
-  // However, the existing code in the simulator just returns the raw cpuInsns and memBytes without conversion.
-  // We are going to follow the same approach as the Stellar Laboratory:
-  //   fee = (cpuInsns * feeRatePerInstructionIncrement + memBytes * writeFeePerLedgerEntry)
-  // and then the transaction fee will be baseFee * numberOfOperations + fee.
-  // But note: the simulator's response.cost.cpuInsns and .memBytes are in units that when multiplied by the fee parameters
-  // and then by 100 (or 1000000?) give the fee in stroops.
-  // Let's look at the Stellar SDK source:
-  //   In the JS SDK, the fee is calculated as:
-  //     const fee = BASE_FEE + (cpuInsns * feeRatePerInstructionIncrement + memBytes * writeFeePerLedgerEntry) * 100;
-  //   where BASE_FEE is 100 stroops per operation.
-  //
-  // However, the simulator returns the raw cpuInsns and memBytes from the transaction data.
-  // We are only calculating the variable part (the resource fee) and leaving the base fee to be added by the caller?
-  // Actually, the existing code in the simulator does not calculate any fee, it just returns the raw cpuInsns and memBytes.
-  // The issue says: "Fetch current network fee parameters from the RPC and use them to calculate an accurate resource fee"
-  // So we are to calculate the resource fee (the variable part) and return it.
-  //
-  // We'll calculate: resourceFee = (cpuInsns * feeRatePerInstructionIncrement + memBytes * writeFeePerLedgerEntry)
-  // and then return that as a string (in stroops?).
-  // But note: the fee parameters are such that when multiplied by the units we get stroops?
-  // Actually, the feeRatePerInstructionIncrement and writeFeePerLedgerEntry are in units of stroops per unit of cpuInsns/memBytes?
-  // According to Stellar documentation:
-  //   The fee for a transaction is:
-  //     fee = (base fee * number of operations) + (cpuInsns * feeRatePerInstructionIncrement + memBytes * writeFeePerLedgerEntry)
-  //   where base fee is 100 stroops per operation.
-  //   and feeRatePerInstructionIncrement and writeFeePerLedgerEntry are in stroops per unit.
-  //
-  // Therefore, the resource fee (variable part) is: (cpuInsns * feeRatePerInstructionIncrement + memBytes * writeFeePerLedgerEntry) stroops.
-  //
-  // We'll compute that and return as string.
+  const [baseFee, resourceFee] = await Promise.all([
+    fetchRecommendedInclusionFee(network),
+    Promise.resolve(estimateResourceFee(cpu, mem)),
+  ]);
 
-  const resourceFee =
-    cpuInsnsNum * BigInt(feeParams.feeRatePerInstructionIncrement) +
-    memBytesNum * BigInt(feeParams.writeFeePerLedgerEntry);
+  const totalFee = baseFee + resourceFee;
+  // Convert stroops to XLM with 7 decimal places
+  const xlmWhole = totalFee / STROOPS_PER_XLM;
+  const xlmFrac = totalFee % STROOPS_PER_XLM;
+  const feeInXLM = `${xlmWhole}.${xlmFrac.toString().padStart(7, "0")}`;
 
-  return resourceFee.toString();
+  return {
+    baseFee: baseFee.toString(),
+    resourceFee: resourceFee.toString(),
+    totalFee: totalFee.toString(),
+    feeInXLM,
+  };
 }

@@ -14,12 +14,14 @@ This directory contains monitoring configuration for the Stellar Footprint Servi
 ## 📈 Metrics Tracked
 
 ### Core Service Metrics
+
 - **Request Rate**: HTTP requests per second
 - **Error Rate**: Percentage of 4xx/5xx responses
 - **Latency Percentiles**: P50, P95, P99 response times
 - **Cache Hit Rate**: Simulation cache effectiveness
 
 ### Additional Metrics
+
 - **Active Simulations**: Current concurrent requests
 - **Status Code Distribution**: Breakdown of HTTP responses
 - **Network Usage**: Mainnet vs Testnet usage patterns
@@ -55,20 +57,23 @@ The Grafana dashboard is automatically provisioned, but you can also manually im
 ## 📊 Dashboard Panels
 
 ### Request Rate Panel
+
 - **Metric**: `rate(http_requests_total{job="stellar-footprint-service"}[5m])`
 - **Description**: Shows requests per second by method and route
 - **Alerts**: Consider alerting if rate drops to 0 or spikes unexpectedly
 
 ### Error Rate Panel
+
 - **Metric**: `(rate(http_requests_total{status_code=~"4..|5.."}[5m]) / rate(http_requests_total[5m])) * 100`
 - **Description**: Percentage of failed requests
-- **Thresholds**: 
+- **Thresholds**:
   - Green: < 1%
   - Yellow: 1-5%
   - Red: > 5%
 
 ### Latency Percentiles Panel
-- **Metrics**: 
+
+- **Metrics**:
   - P50: `histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))`
   - P95: `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))`
   - P99: `histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))`
@@ -76,6 +81,7 @@ The Grafana dashboard is automatically provisioned, but you can also manually im
 - **Target**: P95 < 500ms, P99 < 1000ms
 
 ### Cache Hit Rate Panel
+
 - **Metric**: `(rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m]))) * 100`
 - **Description**: Cache effectiveness for simulation results
 - **Target**: > 80% hit rate
@@ -104,15 +110,16 @@ Edit `prometheus.yml` to add more scrape targets:
 
 ```yaml
 scrape_configs:
-  - job_name: 'stellar-footprint-service'
+  - job_name: "stellar-footprint-service"
     static_configs:
-      - targets: ['stellar-footprint-service:3000']
+      - targets: ["stellar-footprint-service:3000"]
     scrape_interval: 5s
 ```
 
 ### Grafana Provisioning
 
 Dashboards are automatically loaded from:
+
 - `grafana/provisioning/dashboards/`
 - `grafana/provisioning/datasources/`
 
@@ -121,6 +128,7 @@ Dashboards are automatically loaded from:
 ### Recommended Alerts
 
 1. **High Error Rate**
+
    ```yaml
    - alert: HighErrorRate
      expr: rate(http_requests_total{status_code=~"5.."}[5m]) > 0.1
@@ -130,6 +138,7 @@ Dashboards are automatically loaded from:
    ```
 
 2. **High Latency**
+
    ```yaml
    - alert: HighLatency
      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
@@ -202,30 +211,30 @@ pnpm add prom-client
 Example implementation:
 
 ```typescript
-import client from 'prom-client';
+import client from "prom-client";
 
 // Create metrics
 const httpRequestsTotal = new client.Counter({
-  name: 'http_requests_total',
-  help: 'Total HTTP requests',
-  labelNames: ['method', 'route', 'status_code']
+  name: "http_requests_total",
+  help: "Total HTTP requests",
+  labelNames: ["method", "route", "status_code"],
 });
 
 // Use in middleware
 app.use((req, res, next) => {
-  res.on('finish', () => {
+  res.on("finish", () => {
     httpRequestsTotal.inc({
       method: req.method,
       route: req.route?.path || req.path,
-      status_code: res.statusCode
+      status_code: res.statusCode,
     });
   });
   next();
 });
 
 // Expose metrics endpoint
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', client.register.contentType);
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", client.register.contentType);
   res.end(await client.register.metrics());
 });
 ```
@@ -241,16 +250,19 @@ app.get('/metrics', async (req, res) => {
 ## 📈 Performance Tuning
 
 ### Prometheus
+
 - Adjust `scrape_interval` based on needs
 - Configure retention policies
 - Use recording rules for complex queries
 
 ### Grafana
+
 - Optimize dashboard queries
 - Use appropriate time ranges
 - Cache dashboard results
 
 ### Service
+
 - Implement metric sampling for high-traffic
 - Use histogram buckets appropriate for your latency distribution
 - Consider metric cardinality impact

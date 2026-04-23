@@ -16,10 +16,10 @@ app.use(timeoutMiddleware);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
-  res.status(200).json({ 
-    status: "healthy", 
+  res.status(200).json({
+    status: "healthy",
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 
@@ -37,7 +37,7 @@ app.get("/metrics", async (req, res) => {
 app.use("/api", routes);
 
 app.listen(PORT, () => {
-  console.log(`stellar-footprint-service running on port ${PORT}`);
+  console.warn(`stellar-footprint-service running on port ${PORT}`);
 });
 
 export default app;

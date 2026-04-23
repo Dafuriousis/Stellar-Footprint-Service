@@ -7,6 +7,7 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
+import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use(requestLogger);
 app.use(metricsMiddleware);
 app.use(timeoutMiddleware);
 app.use(bruteForceMiddleware);
+app.use(contentTypeMiddleware);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

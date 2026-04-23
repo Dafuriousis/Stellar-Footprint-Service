@@ -1,45 +1,54 @@
 import { Request, Response } from "express";
-import { simulateTransaction } from "../services/simulator";
 import { Network } from "../config/stellar";
 import metrics from "../middleware/metrics";
+import type { SimulateResult } from "../services/simulator";
 
-export async function simulate(req: Request, res: Response): Promise<void> {
-  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+export type SimulatorFunction = (
+  xdr: string,
+  network: Network,
+  signal?: AbortSignal,
+  ledgerSequence?: number,
+) => Promise<SimulateResult>;
 
-  if (!xdr) {
-    res.status(400).json({ error: "Missing required field: xdr" });
-    return;
-  }
+export function createSimulateController(simulator: SimulatorFunction) {
+  return async (req: Request, res: Response): Promise<void> => {
+    const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
-  // Validate network parameter
-  if (network && network !== "mainnet" && network !== "testnet") {
-    res
-      .status(400)
-      .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
-    return;
-  }
+    if (!xdr) {
+      res.status(400).json({ error: "Missing required field: xdr" });
+      return;
+    }
 
-  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+    // Validate network parameter
+    if (network && network !== "mainnet" && network !== "testnet") {
+      res
+        .status(400)
+        .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+      return;
+    }
 
-  // Track active simulations
-  metrics.incrementActiveSimulations();
+    const net: Network = network === "mainnet" ? "mainnet" : "testnet";
 
-  try {
-    const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
+    // Track active simulations
+    metrics.incrementActiveSimulations();
 
-    // Record simulation metrics
-    metrics.recordSimulation(net, result.success);
+    try {
+      const result = await simulator(xdr, net, res.locals.abortSignal);
 
-    res.status(result.success ? 200 : 422).json(result);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unexpected error";
+      // Record simulation metrics
+      metrics.recordSimulation(net, result.success);
 
-    // Record failed simulation
-    metrics.recordSimulation(net, false);
+      res.status(result.success ? 200 : 422).json(result);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
 
-    res.status(500).json({ error: message });
-  } finally {
-    // Decrement active simulations
-    metrics.decrementActiveSimulations();
-  }
+      // Record failed simulation
+      metrics.recordSimulation(net, false);
+
+      res.status(500).json({ error: message });
+    } finally {
+      // Decrement active simulations
+      metrics.decrementActiveSimulations();
+    }
+  };
 }

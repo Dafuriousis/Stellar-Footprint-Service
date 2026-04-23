@@ -384,6 +384,10 @@ The service will start on `http://localhost:3000` (or your configured `PORT`).
 
 ## 📡 API Reference
 
+You can also test the API using the [Postman collection](./docs/postman/stellar-footprint-service.postman_collection.json). Import this collection into Postman to get started quickly.
+
+You can also test the API using the [Postman collection](./docs/postman/stellar-footprint-service.postman_collection.json). Import this collection into Postman to get started quickly.
+
 ### `POST /api/simulate`
 
 Simulate a Soroban transaction and extract its footprint.
@@ -393,14 +397,16 @@ Simulate a Soroban transaction and extract its footprint.
 ```json
 {
   "xdr": "AAAAAgAAAAC...",
-  "network": "testnet"
+  "network": "testnet",
+  "ledgerSequence": 12345678
 }
 ```
 
-| Field     | Type   | Required | Description                                       |
-| --------- | ------ | -------- | ------------------------------------------------- |
-| `xdr`     | string | ✅       | Base64-encoded transaction XDR                    |
-| `network` | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`) |
+| Field            | Type   | Required | Description                                                                                                       |
+| ---------------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `xdr`            | string | ✅       | Base64-encoded transaction XDR                                                                                    |
+| `network`        | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`)                                                                 |
+| `ledgerSequence` | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
 
 #### Success Response (200)
 
@@ -706,29 +712,7 @@ export default router;
 
 ## 🔍 Understanding Footprints
 
-### What is a Footprint?
-
-A footprint declares which ledger entries a transaction will access:
-
-- **Read-Only:** Entries the transaction reads but doesn't modify
-- **Read-Write:** Entries the transaction modifies
-
-### Why Optimize?
-
-- Smaller footprints = lower resource fees
-- Unnecessary entries waste user funds
-- This service helps identify and remove redundant entries
-
-### Example Scenario: Voting DApp
-
-1. User clicks "Vote" in your React app
-2. Frontend builds unsigned transaction XDR
-3. Frontend sends XDR to this service
-4. Service simulates and returns optimized footprint
-5. Frontend assembles final transaction with footprint
-6. User signs and submits to network
-
----
+For a beginner-friendly guide explaining what Soroban footprints are, why they are required, and how this service simplifies the process, see [Understanding Soroban Footprints](./docs/guides/understanding-footprints.md).
 
 ## 🧩 Integration Guide
 
@@ -828,6 +812,15 @@ Contributions are welcome! Check out [ISSUES.md](ISSUES.md) for 150+ ideas.
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+### Dependency Management
+
+This project uses exact versions for all dependencies to ensure reproducible builds. When updating dependencies:
+
+1. Update the exact version in `package.json`
+2. Run `npm install` to update `package-lock.json`
+3. Commit both files together
+4. Test that the service builds and runs correctly
 
 ---
 

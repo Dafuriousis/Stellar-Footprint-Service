@@ -26,6 +26,22 @@ const httpRequestDuration = new client.Histogram({
   registers: [register],
 });
 
+// Required simulation metrics
+const simulateRequestsTotal = new client.Counter({
+  name: 'simulate_requests_total',
+  help: 'Total number of Stellar simulations',
+  labelNames: ['network', 'status'],
+  registers: [register],
+});
+
+const simulateDurationSeconds = new client.Histogram({
+  name: 'simulate_duration_seconds',
+  help: 'Duration of Stellar simulations in seconds',
+  labelNames: ['network'],
+  buckets: [0.1, 0.5, 1, 2, 5, 10, 30],
+  registers: [register],
+});
+
 // Cache metrics
 const cacheHitsTotal = new client.Counter({
   name: 'cache_hits_total',
@@ -41,14 +57,15 @@ const cacheMissesTotal = new client.Counter({
   registers: [register],
 });
 
-// Stellar-specific metrics
-const stellarSimulationsTotal = new client.Counter({
-  name: 'stellar_simulations_total',
-  help: 'Total number of Stellar simulations',
-  labelNames: ['network', 'success'],
+// RPC health metrics
+const rpcErrorsTotal = new client.Counter({
+  name: 'rpc_errors_total',
+  help: 'Total number of RPC errors',
+  labelNames: ['network', 'error_type'],
   registers: [register],
 });
 
+// Tracking active simulations
 const activeSimulations = new client.Gauge({
   name: 'active_simulations',
   help: 'Number of currently active simulations',
@@ -92,12 +109,21 @@ export const metrics = {
     cacheMissesTotal.inc({ cache_type: cacheType });
   },
   
-  // Stellar simulation metrics
+  // REQUIRED: Stellar simulation metrics
   recordSimulation: (network: string, success: boolean) => {
-    stellarSimulationsTotal.inc({
+    simulateRequestsTotal.inc({
       network,
-      success: success.toString(),
+      status: success ? 'success' : 'failure',
     });
+  },
+
+  recordSimulationDuration: (network: string, durationInSeconds: number) => {
+    simulateDurationSeconds.observe({ network }, durationInSeconds);
+  },
+
+  // REQUIRED: RPC metrics
+  recordRpcError: (network: string, errorType: string) => {
+    rpcErrorsTotal.inc({ network, error_type: errorType });
   },
   
   // Active simulations
@@ -113,9 +139,6 @@ export const metrics = {
   getMetrics: async (): Promise<string> => {
     return await register.metrics();
   },
-  
-  // Get register for custom metrics
-  getRegister: () => register,
 };
 
 export default metrics;

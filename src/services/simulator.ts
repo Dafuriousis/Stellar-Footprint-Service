@@ -7,6 +7,7 @@ import {
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 import { calculateResourceFee } from "./feeEstimator";
+import metrics from "../middleware/metrics";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -29,8 +30,13 @@ async function checkContractExists(
   const now = Date.now();
   const cached = contractExistenceCache.get(contractIdString);
   if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
+    // Record cache hit
+    metrics.recordCacheHit('contract_existence');
     return cached.exists;
   }
+
+  // Record cache miss
+  metrics.recordCacheMiss('contract_existence');
 
   try {
     // Convert contractIdString to LedgerKey for an account
@@ -41,6 +47,9 @@ async function checkContractExists(
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });
     return exists;
   } catch (err) {
+    // Record RPC error
+    metrics.recordRpcError('unknown', 'get_ledger_entries_failure');
+    
     // If there's an error (e.g., network, invalid ID), assume contract does not exist
     contractExistenceCache.set(contractIdString, {
       exists: false,
@@ -82,6 +91,8 @@ export interface SimulateResult {
   /** Contract ID that was not found (if error is "Contract not found") */
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
+  requiredSigners?: string[];
+  threshold?: number;
 }
 
 /**
@@ -129,9 +140,28 @@ async function fetchTtlInfo(
 
     return ttlMap;
   } catch {
+    // Record RPC error
+    metrics.recordRpcError('unknown', 'fetch_ttl_failure');
     // If TTL fetching fails, return empty map
     return {};
   }
+}
+
+/**
+ * Extract required signers from auth entries.
+ * Note: This is an internal helper that was previously missing.
+ */
+function extractRequiredSigners(auth: any[]): { requiredSigners: string[], threshold: number } {
+    const signers = new Set<string>();
+    let threshold = 0;
+    
+    for (const entry of auth) {
+        if (entry.address && entry.address()) {
+            signers.add(entry.address().toString());
+        }
+    }
+    
+    return { requiredSigners: Array.from(signers), threshold };
 }
 
 export async function simulateTransaction(
@@ -143,7 +173,14 @@ export async function simulateTransaction(
   const { networkPassphrase } = getNetworkConfig(network);
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
-  const response = await server.simulateTransaction(tx, { signal } as never);
+  
+  let response;
+  try {
+    response = await server.simulateTransaction(tx, { signal } as never);
+  } catch (err) {
+    metrics.recordRpcError(network, 'simulate_transaction_failure');
+    throw err;
+  }
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
     return { success: false, error: response.error, raw: response };

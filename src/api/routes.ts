@@ -10,6 +10,7 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -36,6 +37,8 @@ import {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 import {
   health,
   simulate,
@@ -43,6 +46,7 @@ import {
   footprintDiffController,
   validate,
   networkStatus,
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -160,8 +164,21 @@ const router = Router();
 const router = Router();
 
 >>>>>>> theirs
+=======
+} from "./controllers";
+import { simulateRateLimiter } from "../middleware/rateLimiter";
+
+const router = Router();
+
+// GET /health — liveness check for load balancers and uptime monitors
+router.get("/health", health);
+
+>>>>>>> theirs
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
-router.post("/simulate", simulate);
+router.post("/simulate", simulateRateLimiter, simulate);
+
+// POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
+router.post("/simulate/batch", simulateBatch);
 
 // POST /simulate/async — accepts { xdr, network, webhookUrl }, returns 202 with jobId
 router.post("/simulate/async", simulateAsync);

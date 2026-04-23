@@ -3,11 +3,15 @@ type LogLevel = "info" | "warn" | "error" | "debug";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 /**
  * Structured logger utility using JSON output for production-readiness.
  * Outputs to stdout/stderr using process streams to bypass console buffer.
  */
 function log(level: LogLevel, message: string, data?: unknown) {
+=======
+function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
+>>>>>>> theirs
 =======
 function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
 >>>>>>> theirs
@@ -24,7 +28,11 @@ function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     ...(data && typeof data === "object" ? data : { data }),
+=======
+    ...meta,
+>>>>>>> theirs
 =======
     ...meta,
 >>>>>>> theirs
@@ -47,11 +55,14 @@ export const logger = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   info: (message: string, data?: unknown) => log("info", message, data),
   warn: (message: string, data?: unknown) => log("warn", message, data),
   error: (message: string, data?: unknown) => log("error", message, data),
   debug: (message: string, data?: unknown) => log("debug", message, data),
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -66,6 +77,9 @@ export const logger = {
     log("debug", message, meta),
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

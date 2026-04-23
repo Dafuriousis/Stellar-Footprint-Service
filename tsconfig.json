@@ -16,6 +16,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "types": ["jest", "node"]
 =======
 =======
@@ -34,6 +35,9 @@
 =======
 >>>>>>> theirs
     "types": ["node"]
+=======
+    "types": ["node", "jest"]
+>>>>>>> theirs
 =======
     "types": ["node", "jest"]
 >>>>>>> theirs

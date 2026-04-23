@@ -26,6 +26,7 @@ import { errorHandler } from "./middleware/errorHandler";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
 =======
 >>>>>>> theirs
@@ -48,6 +49,9 @@ import { rpcCircuitBreaker } from "./utils/circuitBreaker";
 >>>>>>> theirs
 =======
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+>>>>>>> theirs
+=======
+import { logger } from "./utils/logger";
 >>>>>>> theirs
 =======
 import { logger } from "./utils/logger";
@@ -267,12 +271,16 @@ app.listen(PORT, () => {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
   logger.info("stellar-footprint-service started", {
     port: PORT,
     environment: process.env.NODE_ENV || "development",
   });
+<<<<<<< ours
 <<<<<<< ours
 =======
   console.warn(`stellar-footprint-service running on port ${PORT}`);
@@ -282,6 +290,8 @@ app.listen(PORT, () => {
 >>>>>>> theirs
 =======
   console.warn(`stellar-footprint-service running on port ${PORT}`);
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

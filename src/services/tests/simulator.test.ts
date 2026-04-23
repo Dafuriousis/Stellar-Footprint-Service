@@ -89,12 +89,15 @@ const mockBuild = jest
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
 const mockBuild = jest.fn().mockReturnValue({
   resources: mockResources,
   auth: jest.fn().mockReturnValue([]),
 });
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======

@@ -32,8 +32,11 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "@stellar/stellar-sdk": "^15.0.1",
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -50,10 +53,13 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
     "prom-client": "^15.1.0",
     "tsconfig-paths": "^4.2.0"
 =======
+=======
+>>>>>>> theirs
     "express-rate-limit": "^8.4.0",
     "prom-client": "^15.1.0"
 >>>>>>> theirs
@@ -82,6 +88,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
     "validate-branch-name": "^1.3.2"
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -230,6 +237,8 @@
     "typescript": "5.3.2",
     "validate-branch-name": "1.3.2"
 <<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

@@ -45,6 +45,7 @@ import {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { version } from "../../package.json";
 =======
 import { createJob, deliverWebhook } from "../services/webhook";
@@ -70,6 +71,23 @@ import { buildRestoreTransaction } from "../services/restorer";
 >>>>>>> theirs
 =======
 import { version } from "../../package.json";
+=======
+import { version } from "../../package.json";
+
+/**
+ * Handle GET /api/health requests
+ * Returns service liveness status for load balancers and uptime monitors
+ * Does not require authentication
+ */
+export function health(req: Request, res: Response): void {
+  res.status(HTTP_STATUS.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    version,
+    timestamp: new Date().toISOString(),
+  });
+}
+>>>>>>> theirs
 
 /**
  * Handle GET /api/health requests
@@ -171,6 +189,9 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
     return next(
@@ -178,6 +199,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     );
   }
 
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -306,6 +328,8 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
   if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
@@ -314,6 +338,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 
   const net: Network =
     network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+<<<<<<< ours
 <<<<<<< ours
 =======
   // Validate ledgerSequence if provided
@@ -347,6 +372,8 @@ export async function simulate(req: Request, res: Response): Promise<void> {
   }
 
   const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -401,6 +428,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     metrics.recordSimulationDuration(net, duration);
 
     const response: ResponseEnvelope = result.success
@@ -420,11 +448,15 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 =======
     res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
 >>>>>>> theirs
+=======
+    res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
+>>>>>>> theirs
     res
       .status(
         result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY,
       )
       .json(result);
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -704,18 +736,25 @@ export async function simulateBatch(
     res.status(HTTP_STATUS.OK).json({ results });
   } catch (err: unknown) {
 >>>>>>> theirs
+=======
+  } catch (err: unknown) {
+>>>>>>> theirs
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     metrics.recordSimulation(net, false);
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+<<<<<<< ours
 =======
     const response: ResponseEnvelope = { success: false, error: message };
     res.status(500).json(response);
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   } finally {
     metrics.decrementActiveSimulations();
   }
 }
+<<<<<<< ours
 =======
 =======
 >>>>>>> theirs
@@ -746,6 +785,8 @@ export async function simulateBatch(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 /**
@@ -827,6 +868,9 @@ export async function simulateBatch(
     res.status(HTTP_STATUS.OK).json({ results });
   } catch (err: unknown) {
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -978,6 +1022,7 @@ export async function networkStatus(
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 /**
  * Handle POST /api/v1/footprint/diff requests
  */
@@ -1014,6 +1059,8 @@ export async function footprintDiffController(
 }
 
 <<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======

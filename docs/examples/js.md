@@ -11,29 +11,29 @@ This example demonstrates the full simulate → assemble → sign → submit flo
 ## Code
 
 ```javascript
-const StellarSdk = require('stellar-sdk');
-const fetch = require('node-fetch');
+const StellarSdk = require("stellar-sdk");
+const fetch = require("node-fetch");
 
 // Configuration
-const SERVICE_URL = 'http://localhost:8080';
+const SERVICE_URL = "http://localhost:8080";
 const NETWORK = StellarSdk.Networks.TESTNET;
 
 // Initialize Stellar SDK
-const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
-const sourceKeypair = StellarSdk.Keypair.fromSecret('YOUR_TESTNET_SECRET_SEED'); // Replace with your secret seed
+const server = new StellarSdk.Server("https://horizon-testnet.stellar.org");
+const sourceKeypair = StellarSdk.Keypair.fromSecret("YOUR_TESTNET_SECRET_SEED"); // Replace with your secret seed
 
 async function main() {
   try {
     // Step 1: Simulate the transaction
-    console.log('Step 1: Simulating transaction...');
+    console.log("Step 1: Simulating transaction...");
     const simulateResponse = await fetch(`${SERVICE_URL}/simulate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        network: 'testnet',
+        network: "testnet",
         // Add your transaction simulation parameters here
         // Example: { operation: 'payment', destination: 'GA...', amount: '10' }
-      })
+      }),
     });
 
     if (!simulateResponse.ok) {
@@ -41,14 +41,14 @@ async function main() {
     }
 
     const simulateData = await simulateResponse.json();
-    console.log('Simulation successful:', simulateData);
+    console.log("Simulation successful:", simulateData);
 
     // Step 2: Assemble the transaction
-    console.log('\nStep 2: Assembling transaction...');
+    console.log("\nStep 2: Assembling transaction...");
     const assembleResponse = await fetch(`${SERVICE_URL}/assemble`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(simulateData)
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(simulateData),
     });
 
     if (!assembleResponse.ok) {
@@ -56,21 +56,21 @@ async function main() {
     }
 
     const assembleData = await assembleResponse.json();
-    console.log('Assembly successful:', assembleData);
+    console.log("Assembly successful:", assembleData);
 
     // Step 3: Sign the transaction
-    console.log('\nStep 3: Signing transaction...');
+    console.log("\nStep 3: Signing transaction...");
     const transaction = new StellarSdk.Transaction(assembleData.xdr, NETWORK);
     transaction.sign(sourceKeypair);
     const signedXdr = transaction.toEnvelope().toXDR();
-    console.log('Transaction signed');
+    console.log("Transaction signed");
 
     // Step 4: Submit the transaction
-    console.log('\nStep 4: Submitting transaction...');
+    console.log("\nStep 4: Submitting transaction...");
     const submitResponse = await fetch(`${SERVICE_URL}/submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ signed_xdr: signedXdr })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ signed_xdr: signedXdr }),
     });
 
     if (!submitResponse.ok) {
@@ -78,9 +78,9 @@ async function main() {
     }
 
     const submitData = await submitResponse.json();
-    console.log('Submission successful:', submitData);
+    console.log("Submission successful:", submitData);
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error("Error:", error.message);
   }
 }
 

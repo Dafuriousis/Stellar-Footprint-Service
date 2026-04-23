@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "@utils/AppError";
+import { AppError } from "../utils/AppError";
+import { ResponseEnvelope } from "../types";
 
 /**
  * Express error handling middleware
@@ -11,9 +13,14 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message });
-  } else {
-    res.status(500).json({ error: "Internal server error" });
-  }
+  const statusCode = err instanceof AppError ? err.statusCode : 500;
+  const message =
+    err instanceof AppError ? err.message : "Internal server error";
+
+  const response: ResponseEnvelope = {
+    success: false,
+    error: message,
+  };
+
+  res.status(statusCode).json(response);
 }

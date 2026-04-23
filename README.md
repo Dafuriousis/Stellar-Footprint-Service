@@ -386,7 +386,6 @@ The service will start on `http://localhost:3000` (or your configured `PORT`).
 
 You can also test the API using the [Postman collection](./docs/postman/stellar-footprint-service.postman_collection.json). Import this collection into Postman to get started quickly.
 
-
 You can also test the API using the [Postman collection](./docs/postman/stellar-footprint-service.postman_collection.json). Import this collection into Postman to get started quickly.
 
 ### `POST /api/simulate`
@@ -403,11 +402,11 @@ Simulate a Soroban transaction and extract its footprint.
 }
 ```
 
-| Field             | Type   | Required | Description                                                                 |
-| ----------------- | ------ | -------- | --------------------------------------------------------------------------- |
-| `xdr`             | string | ✅       | Base64-encoded transaction XDR                                              |
-| `network`         | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`)                           |
-| `ledgerSequence`  | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
+| Field            | Type   | Required | Description                                                                                                       |
+| ---------------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `xdr`            | string | ✅       | Base64-encoded transaction XDR                                                                                    |
+| `network`        | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`)                                                                 |
+| `ledgerSequence` | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
 
 #### Success Response (200)
 

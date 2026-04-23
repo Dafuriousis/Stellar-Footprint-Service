@@ -11,6 +11,7 @@ All six improvements have been implemented across separate branches with individ
 **Commit:** `improvement: enforce no-console ESLint rule across src/`
 
 ### Changes:
+
 - Added `no-console` rule to `eslint.config.mjs` for all `src/` files
 - Exempted `src/utils/logger.ts` from the rule
 - Created structured logger utility in `src/utils/logger.ts`
@@ -19,6 +20,7 @@ All six improvements have been implemented across separate branches with individ
   - `src/middleware/requestLogger.ts`
 
 ### PR Description:
+
 ```
 Closes #64
 
@@ -45,6 +47,7 @@ Enforce structured logging across the codebase by adding ESLint's no-console rul
 **Commit:** `improvement: add nodemon for hot-reload in development`
 
 ### Changes:
+
 - Created `nodemon.json` with:
   - Watch configuration for `src/**/*.ts`
   - 500ms delay to prevent thrashing
@@ -55,6 +58,7 @@ Enforce structured logging across the codebase by adding ESLint's no-console rul
   - Changed dev script from `ts-node src/index.ts` to `nodemon`
 
 ### PR Description:
+
 ```
 Closes #63
 
@@ -82,6 +86,7 @@ Replace ts-node with nodemon for automatic server restart on file changes during
 **Commit:** `refactor: normalize all API responses to consistent envelope shape`
 
 ### Changes:
+
 - Created `src/types.ts` with `ResponseEnvelope<T>` interface
 - Updated `src/api/controllers.ts`:
   - Wrapped all responses in envelope format
@@ -91,6 +96,7 @@ Replace ts-node with nodemon for automatic server restart on file changes during
   - Implemented missing `validate` function
 
 ### PR Description:
+
 ```
 Closes #68
 
@@ -119,6 +125,7 @@ Ensure all API responses follow a consistent envelope structure for uniform clie
 **Commit:** `improvement: add X-Response-Time header to all responses`
 
 ### Changes:
+
 - Created `src/middleware/responseTime.ts`:
   - Records request start time
   - Calculates duration in milliseconds
@@ -129,6 +136,7 @@ Ensure all API responses follow a consistent envelope structure for uniform clie
   - Applied middleware early in the stack
 
 ### PR Description:
+
 ```
 Closes #67
 
@@ -156,6 +164,7 @@ Add X-Response-Time header to all responses for client-side performance monitori
 **Commit:** `improvement: add commitlint for Conventional Commits enforcement`
 
 ### Changes:
+
 - Created `commitlint.config.js`:
   - Extends `@commitlint/config-conventional`
   - Enforces format: `type(scope): description`
@@ -167,6 +176,7 @@ Add X-Response-Time header to all responses for client-side performance monitori
   - Added `@commitlint/config-conventional` (v19.0.0)
 
 ### PR Description:
+
 ```
 Closes #66
 
@@ -194,6 +204,7 @@ Enforce Conventional Commits format using commitlint and Husky hooks.
 **Commit:** `improvement: add lint and type-check to pre-commit hook`
 
 ### Changes:
+
 - Updated `.husky/pre-commit`:
   - Added `pnpm lint` step
   - Added `pnpm tsc --noEmit` step
@@ -204,6 +215,7 @@ Enforce Conventional Commits format using commitlint and Husky hooks.
   - Efficient checking of only changed files
 
 ### PR Description:
+
 ```
 Closes #65
 
@@ -226,14 +238,14 @@ Extend pre-commit hook to run ESLint and TypeScript type-checking before allowin
 
 ## Summary of All Changes
 
-| Issue | Branch | Type | Status |
-|-------|--------|------|--------|
-| #64 | `improvement/no-console-lint` | Improvement | ✅ Ready |
-| #63 | `improvement/nodemon-dev` | Improvement | ✅ Ready |
-| #68 | `refactor/response-envelope` | Refactor | ✅ Ready |
-| #67 | `improvement/response-time-header` | Improvement | ✅ Ready |
-| #66 | `improvement/commitlint` | Improvement | ✅ Ready |
-| #65 | `improvement/pre-commit-hooks` | Improvement | ✅ Ready |
+| Issue | Branch                             | Type        | Status   |
+| ----- | ---------------------------------- | ----------- | -------- |
+| #64   | `improvement/no-console-lint`      | Improvement | ✅ Ready |
+| #63   | `improvement/nodemon-dev`          | Improvement | ✅ Ready |
+| #68   | `refactor/response-envelope`       | Refactor    | ✅ Ready |
+| #67   | `improvement/response-time-header` | Improvement | ✅ Ready |
+| #66   | `improvement/commitlint`           | Improvement | ✅ Ready |
+| #65   | `improvement/pre-commit-hooks`     | Improvement | ✅ Ready |
 
 All branches have been pushed to the remote repository and are ready for pull requests.
 

@@ -6,6 +6,8 @@ import * as StellarSdk from "@stellar/stellar-sdk";
 export function parseXdr(
   xdr: string,
   networkPassphrase: string,
-): StellarSdk.Transaction<StellarSdk.Memo, StellarSdk.Operation[]> | StellarSdk.FeeBumpTransaction {
+):
+  | StellarSdk.Transaction<StellarSdk.Memo, StellarSdk.Operation[]>
+  | StellarSdk.FeeBumpTransaction {
   return StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 }

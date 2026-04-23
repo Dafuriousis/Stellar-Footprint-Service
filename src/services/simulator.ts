@@ -179,13 +179,17 @@ export async function simulateTransaction(
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 
+  const simOptions: Record<string, unknown> = { signal };
+  if (ledgerSequence !== undefined) {
+    simOptions.ledger = ledgerSequence;
+  }
+
   let response;
   try {
     response = await rpcCircuitBreaker.call(() =>
-      server.simulateTransaction(tx, { signal } as any),
+      server.simulateTransaction(tx, simOptions as any),
     );
   } catch (err) {
-    message: err instanceof Error ? err.message : "Simulate failed";
     metrics.recordRpcError(network, "simulate_transaction_failure");
     throw err;
   }

@@ -8,6 +8,8 @@ import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { errorHandler } from "./middleware/errorHandler";
+import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+import { logger } from "./utils/logger";
 
 dotenv.config();
 
@@ -48,8 +50,16 @@ app.get("/metrics", async (req, res) => {
   }
 });
 
-// API routes
-app.use("/api", routes);
+// API v1 routes
+app.use("/api/v1", routes);
+
+// Backward-compat: redirect /api/* → /api/v1/*
+app.use("/api/:path(*)", (req, res) => {
+  res.redirect(
+    308,
+    `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
+  );
+});
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

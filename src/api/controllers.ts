@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { simulateTransaction } from "../services/simulator";
-import { Network } from "../config/stellar";
-import { getNetworkStatus } from "../services/networkStatus";
-import metrics from "../middleware/metrics";
-import { AppError } from "../utils/AppError";
+import { simulateTransaction } from "@services/simulator";
+import { Network } from "@config/stellar";
+import { getNetworkStatus } from "@services/networkStatus";
+import metrics from "@middleware/metrics";
+import { AppError } from "@utils/AppError";
 import {
   NETWORKS,
   DEFAULT_NETWORK,
@@ -26,29 +26,33 @@ export async function simulate(
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
   if (!xdr) {
-    return next(new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST));
+    return next(
+      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
+    );
   }
 
-  if (
-    network &&
-    network !== NETWORKS.MAINNET &&
-    network !== NETWORKS.TESTNET
-  ) {
+  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
   }
 
-  const net: Network = network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const net: Network =
+    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
 
   try {
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
     metrics.recordSimulation(net, result.success);
-    res.status(result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY).json(result);
+    res
+      .status(
+        result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      )
+      .json(result);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     metrics.recordSimulation(net, false);
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   } finally {
@@ -80,11 +84,11 @@ export async function networkStatus(
     const status = await getNetworkStatus(network);
     res.status(HTTP_STATUS.OK).json(status);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }
-
 
 /**
  * Handle POST /api/footprint/diff requests
@@ -101,7 +105,8 @@ export async function footprintDiffController(
   try {
     res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }
@@ -121,7 +126,8 @@ export async function validate(
   try {
     res.status(HTTP_STATUS.OK).json({ message: "Not implemented" });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }

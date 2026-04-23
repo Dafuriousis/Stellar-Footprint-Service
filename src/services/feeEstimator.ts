@@ -1,5 +1,5 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
-import { Network, getNetworkConfig, getRpcServer } from "../config/stellar";
+import { Network, getNetworkConfig, getRpcServer } from "@config/stellar";
 
 interface FeeParameters {
   feeRatePerInstructionIncrement: number;

@@ -1,11 +1,11 @@
-import { simulateTransaction } from "../simulator";
+import { simulateTransaction } from "@services/simulator";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
 const mockSimulateTransaction = jest.fn();
 const mockGetLedgerEntries = jest.fn();
 
-jest.mock("../../config/stellar", () => ({
+jest.mock("@config/stellar", () => ({
   getNetworkConfig: jest.fn().mockReturnValue({
     networkPassphrase: "Test SDF Network ; September 2015",
     rpcUrl: "https://soroban-testnet.stellar.org",
@@ -22,8 +22,15 @@ const mockFootprint = {
   readOnly: jest.fn().mockReturnValue([]),
   readWrite: jest.fn().mockReturnValue([]),
 };
-const mockResources = jest.fn().mockReturnValue({ footprint: () => mockFootprint });
-const mockBuild = jest.fn().mockReturnValue({ resources: mockResources, auth: jest.fn().mockReturnValue([]) });
+const mockResources = jest
+  .fn()
+  .mockReturnValue({ footprint: () => mockFootprint });
+const mockBuild = jest
+  .fn()
+  .mockReturnValue({
+    resources: mockResources,
+    auth: jest.fn().mockReturnValue([]),
+  });
 const mockTransactionData = { build: mockBuild };
 
 const mockTx = {};
@@ -165,7 +172,7 @@ describe("simulateTransaction", () => {
   });
 
   it("uses mainnet network config when network is mainnet", async () => {
-    const { getRpcServer } = jest.requireMock("../../config/stellar");
+    const { getRpcServer } = jest.requireMock("@config/stellar");
     mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
 
     await simulateTransaction(DUMMY_XDR, "mainnet");

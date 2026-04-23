@@ -1,5 +1,5 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
-import { Network, getNetworkConfig, getRpcServer } from "../config/stellar";
+import { Network, getNetworkConfig, getRpcServer } from "@config/stellar";
 import {
   parseFootprint,
   extractContracts,
@@ -8,7 +8,6 @@ import {
   type ContractType,
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
-
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<

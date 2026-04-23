@@ -9,7 +9,6 @@ import {
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 import { calculateResourceFee } from "./feeEstimator";
-import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -143,14 +142,17 @@ export async function simulateTransaction(
   xdr: string,
   network: Network = "testnet",
   signal?: AbortSignal,
+  ledgerSequence?: number,
 ): Promise<SimulateResult> {
   const server = getRpcServer(network);
   const { networkPassphrase } = getNetworkConfig(network);
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
-  const response = await rpcCircuitBreaker.call(() =>
-    server.simulateTransaction(tx, { signal } as never),
-  );
+  const simOptions: Record<string, unknown> = { signal };
+  if (ledgerSequence !== undefined) {
+    simOptions.ledger = ledgerSequence;
+  }
+  const response = await server.simulateTransaction(tx, simOptions as never);
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
     return { success: false, error: response.error, raw: response };
@@ -197,10 +199,6 @@ export async function simulateTransaction(
   // Fetch TTL information
   const ttl = await fetchTtlInfo(server, allXdrEntries);
 
-  // Extract required signers from auth entries
-  const auth = response.transactionData?.build().auth() ?? [];
-  const { requiredSigners, threshold } = extractRequiredSigners(auth);
-
   // Detect SEP-41 token contract type for the first invoked contract
   const contractType =
     contracts.length > 0
@@ -222,8 +220,6 @@ export async function simulateTransaction(
       cpuInsns: response.cost?.cpuInsns ?? "0",
       memBytes: response.cost?.memBytes ?? "0",
     },
-    requiredSigners,
-    threshold,
     raw: response,
   };
 }

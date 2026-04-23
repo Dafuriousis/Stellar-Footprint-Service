@@ -88,6 +88,7 @@ curl http://localhost:9090/api/v1/targets
 ### Step 7: Verify Dashboard
 
 The dashboard should show 7 panels:
+
 1. ✅ Request Rate
 2. ✅ Error Rate
 3. ✅ Latency Percentiles (P50, P95, P99)
@@ -173,18 +174,22 @@ After generating test traffic, verify each panel:
 **Problem**: Panels show "No data" message
 
 **Solutions**:
+
 1. Check if metrics endpoint is working:
+
    ```bash
    curl http://localhost:3000/metrics
    ```
 
 2. Verify Prometheus is scraping:
+
    ```bash
    # Check Prometheus targets
    open http://localhost:9090/targets
    ```
 
 3. Check if service is instrumented:
+
    ```bash
    # Should see metrics like http_requests_total
    curl http://localhost:3000/metrics | grep http_requests_total
@@ -197,13 +202,16 @@ After generating test traffic, verify each panel:
 **Problem**: Prometheus shows target as "DOWN"
 
 **Solutions**:
+
 1. Check network connectivity:
+
    ```bash
    docker-compose -f docker-compose.prod.yml exec prometheus \
      wget -qO- http://stellar-footprint-service:3000/metrics
    ```
 
 2. Verify prometheus.yml configuration:
+
    ```bash
    cat monitoring/prometheus.yml
    ```
@@ -218,7 +226,9 @@ After generating test traffic, verify each panel:
 **Problem**: Grafana shows "Data source error"
 
 **Solutions**:
+
 1. Check Prometheus is running:
+
    ```bash
    docker-compose -f docker-compose.prod.yml ps prometheus
    ```
@@ -239,6 +249,7 @@ After generating test traffic, verify each panel:
 **Problem**: Dashboard shows old data
 
 **Solutions**:
+
 1. Check refresh interval (top-right, should be 30s)
 2. Verify service is receiving requests
 3. Check Prometheus scrape interval in prometheus.yml
@@ -309,6 +320,7 @@ git push origin feature/grafana-dashboard
 Before deploying to production:
 
 1. **Change default passwords**:
+
    ```env
    GRAFANA_PASSWORD=your_secure_password_here
    ```
@@ -323,6 +335,7 @@ Before deploying to production:
    - Use firewall rules
 
 4. **Configure retention**:
+
    ```yaml
    # In prometheus.yml
    storage:

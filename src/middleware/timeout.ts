@@ -2,7 +2,11 @@ import { Request, Response, NextFunction } from "express";
 
 const TIMEOUT_MS = parseInt(process.env.SIMULATE_TIMEOUT_MS ?? "30000", 10);
 
-export function timeoutMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function timeoutMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   const controller = new AbortController();
   res.locals.abortSignal = controller.signal;
 

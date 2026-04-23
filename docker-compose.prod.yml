@@ -1,38 +1,83 @@
-# Production environment — nginx reverse proxy + Redis cache
-# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# TLS: place cert.pem and key.pem in ./nginx/certs/ before starting
+version: "3.8"
 
 services:
-  app:
+  # Stellar Footprint Service
+  stellar-footprint-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=production
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      - redis
+      - PORT=3000
+      - TESTNET_RPC_URL=${TESTNET_RPC_URL:-https://soroban-testnet.stellar.org}
+      - MAINNET_RPC_URL=${MAINNET_RPC_URL}
+      - TESTNET_SECRET_KEY=${TESTNET_SECRET_KEY}
+      - MAINNET_SECRET_KEY=${MAINNET_SECRET_KEY}
+    networks:
+      - monitoring
+    labels:
+      - "prometheus.io/scrape=true"
+      - "prometheus.io/port=3000"
+      - "prometheus.io/path=/metrics"
+    restart: unless-stopped
 
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:10.0.0
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # Redis for caching (optional)
   redis:
     image: redis:7-alpine
-    restart: unless-stopped
-    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
-      - app_net
-
-  nginx:
-    image: nginx:1.25-alpine
+      - monitoring
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
-    depends_on:
-      - app
-    networks:
-      - app_net
+    command: redis-server --appendonly yes
 
 volumes:
+  prometheus_data:
+  grafana_data:
   redis_data:
+
+networks:
+  monitoring:
+    driver: bridge

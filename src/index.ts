@@ -8,6 +8,7 @@ import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { errorHandler } from "./middleware/errorHandler";
+import { logger } from "./utils/logger";
 
 dotenv.config();
 
@@ -53,7 +54,10 @@ app.use("/api", routes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.warn(`stellar-footprint-service running on port ${PORT}`);
+  logger.info("stellar-footprint-service started", {
+    port: PORT,
+    environment: process.env.NODE_ENV || "development",
+  });
 });
 
 export default app;

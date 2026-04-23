@@ -1,726 +1,218 @@
 # Contributing to Stellar Footprint Service
 
-Thank you for your interest in contributing to the Stellar Footprint Service! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing! This guide covers everything you need to get started.
 
 ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [Project Structure](#project-structure)
-- [Development Workflow](#development-workflow)
-- [Code Style and Standards](#code-style-and-standards)
-- [Testing](#testing)
-- [Dependency Management](#dependency-management)
+- [Fork and Clone](#fork-and-clone)
+- [Local Development Setup](#local-development-setup)
+- [Code Style](#code-style)
+- [Commit Message Format](#commit-message-format)
 - [Pull Request Process](#pull-request-process)
-- [Commit Guidelines](#commit-guidelines)
-- [Branch Naming](#branch-naming)
-- [Reporting Issues](#reporting-issues)
-- [Documentation](#documentation)
+- [Issue Labels](#issue-labels)
 
-## Code of Conduct
+---
 
-This project follows a code of conduct to ensure a welcoming environment for all contributors. Please be respectful and constructive in all interactions.
+## Fork and Clone
 
-## Getting Started
+1. **Fork** the repository by clicking the **Fork** button on [GitHub](https://github.com/Dafuriousis/Stellar-Footprint-Service).
 
-1. **Fork the repository** on GitHub
-2. **Clone your fork** locally:
+2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/your-username/Stellar-Footprint-Service.git
+   git clone https://github.com/<your-username>/Stellar-Footprint-Service.git
    cd Stellar-Footprint-Service
    ```
-3. **Set up the development environment** (see below)
-4. **Create a feature branch** for your changes
-5. **Make your changes** following the guidelines
-6. **Test your changes** thoroughly
-7. **Submit a pull request**
 
-## Development Setup
+3. **Add the upstream remote** so you can pull in future changes:
+   ```bash
+   git remote add upstream https://github.com/Dafuriousis/Stellar-Footprint-Service.git
+   ```
+
+4. **Create a branch** for your work:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+---
+
+## Local Development Setup
 
 ### Prerequisites
 
-- Node.js 20.x
-- npm (comes with Node.js)
+- Node.js >= 22
+- pnpm (preferred) or npm
 - Git
 
-### Installation
+### Steps
 
 1. **Install dependencies:**
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
    ```bash
-   npm ci
+   pnpm install
    ```
 
-2. **Set up environment variables:**
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
+2. **Configure environment variables:**
    ```bash
    cp .env.example .env
-   # Edit .env with your configuration
+   # Edit .env with your RPC URLs and settings
    ```
 
 3. **Build the project:**
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
    ```bash
-   npm run build
+   pnpm run build
    ```
 
-4. **Start development server:**
+4. **Start the development server:**
    ```bash
-   npm run dev
+   pnpm run dev
+   ```
+
+5. **Run tests:**
+   ```bash
+   pnpm test
    ```
 
 ### Available Scripts
 
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build the TypeScript project
-- `npm run start` - Start the production server
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Run ESLint with auto-fix
-- `npm run format` - Format code with Prettier
-- `npm run format:check` - Check code formatting
-- `npm run solhint` - Lint Solidity files (if applicable)
+| Script | Description |
+|---|---|
+| `pnpm run dev` | Start dev server with hot reload |
+| `pnpm run build` | Compile TypeScript |
+| `pnpm run start` | Start production server |
+| `pnpm run lint` | Run ESLint |
+| `pnpm run lint:fix` | Auto-fix lint issues |
+| `pnpm run format` | Format code with Prettier |
+| `pnpm run format:check` | Check formatting without writing |
+| `pnpm test` | Run test suite |
 
-## Project Structure
+---
 
-```
-├── src/
-│   ├── index.ts              # Application entry point
-│   ├── api/
-│   │   ├── controllers.ts    # API controllers
-│   │   └── routes.ts         # API routes
-│   ├── config/
-│   │   └── stellar.ts        # Stellar network configuration
-│   ├── middleware/
-│   │   ├── metrics.ts        # Prometheus metrics middleware
-│   │   └── timeout.ts        # Request timeout middleware
-│   └── services/
-│       ├── footprintParser.ts # Footprint parsing logic
-│       ├── optimizer.ts       # Optimization algorithms
-│       └── simulator.ts       # Transaction simulation
-├── monitoring/
-│   ├── grafana/              # Grafana dashboards and configuration
-│   ├── prometheus.yml        # Prometheus configuration
-│   └── IMPLEMENTATION_SUMMARY.md
-├── .github/
-│   └── workflows/
-│       └── ci.yml            # GitHub Actions CI pipeline
-├── docker-compose.prod.yml   # Production Docker setup
-├── Dockerfile                # Container definition
-├── healthcheck.js            # Health check script
-└── package.json              # Dependencies and scripts
-```
+## Code Style
 
-## Development Workflow
-
-1. **Choose an issue** from the [issue tracker](https://github.com/Dafuriousis/Stellar-Footprint-Service/issues)
-2. **Create a branch** following the [branch naming conventions](#branch-naming)
-3. **Implement your changes** with proper tests
-4. **Run the test suite** and ensure all tests pass
-5. **Run linting and formatting** checks
-6. **Commit your changes** following [commit guidelines](#commit-guidelines)
-7. **Push your branch** and create a pull request
-8. **Address review feedback** if any
-9. **Merge** once approved
-
-## Code Style and Standards
-
-This project uses several tools to maintain code quality:
+This project enforces consistent style via ESLint, Prettier, and TypeScript strict mode.
 
 ### ESLint
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-- Configured in `eslint.config.mjs`
-- Run `npm run lint` to check for issues
-- Run `npm run lint:fix` to auto-fix issues
-- Only `console.warn` and `console.error` are allowed (not `console.log`)
+- Config: `eslint.config.mjs`
+- Only `console.warn` and `console.error` are allowed — no `console.log`
+- Run: `pnpm run lint`
 
 ### Prettier
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-- Configured in `prettier.config.cjs`
-- Run `npm run format` to format code
-- Run `npm run format:check` to check formatting
+- Config: `prettier.config.cjs`
+- Run: `pnpm run format`
 
 ### TypeScript
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-- Strict type checking enabled
-- Configuration in `tsconfig.json`
-- All new code must be properly typed
+- Strict mode is enabled — all new code must be fully typed
+- Config: `tsconfig.json`
 
 ### Pre-commit Hooks
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
 
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
+Husky runs lint and branch name validation automatically before each commit. Commits are rejected if checks fail.
 
->>>>>>> theirs
-=======
+Branch names must follow one of these patterns:
 
->>>>>>> theirs
-=======
+- Protected: `main`, `develop`, `live`
+- Prefixed: `feature/`, `fix/`, `refactor/`, `hotfix/`, `release/`, `chore/`, `docs/`
 
->>>>>>> theirs
-=======
+---
 
->>>>>>> theirs
-- Husky is used to run pre-commit checks
-- Commits will be rejected if linting fails
-- Branch names are validated automatically
+## Commit Message Format
 
-## Testing
-
-### Running Tests
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-```bash
-npm test
-```
-
-### Test Coverage
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-- Aim for high test coverage
-- Include unit tests for all new functions
-- Include integration tests for API endpoints
-- Test both success and error scenarios
-
-### Testing Guidelines
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-- Write tests before implementing features (TDD when possible)
-- Use descriptive test names
-- Test edge cases and error conditions
-- Mock external dependencies appropriately
-
-## Dependency Management
-
-This project uses exact versions for all dependencies to ensure reproducible builds.
-
-### Updating Dependencies
-
-1. **Check for updates:**
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-   ```bash
-   npm outdated
-   ```
-
-2. **Update package.json** with new exact versions:
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-   ```json
-   {
-     "dependency": "1.2.3"
-   }
-   ```
-
-3. **Update lockfile:**
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-   ```bash
-   npm install
-   ```
-
-4. **Test thoroughly** that everything still works
-
-5. **Commit both** `package.json` and `package-lock.json`
-
-### Adding Dependencies
-
-1. **Install the package:**
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-   ```bash
-   npm install --save exact-package@1.2.3
-   ```
-
-2. **Verify the exact version** is in `package.json`
-
-3. **Test the integration**
-
-## Pull Request Process
-
-1. **Ensure your branch** is up to date with `main`
-2. **Run all checks** locally:
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-   ```bash
-   npm run lint
-   npm run format:check
-   npm run build
-   npm test
-   ```
-
-3. **Create a pull request** with:
-   - Clear title describing the change
-   - Detailed description of what was changed and why
-   - Reference to any related issues
-   - Screenshots/videos if UI changes
-
-4. **Address review comments** promptly
-
-5. **Squash commits** if requested before merging
-
-### PR Review Checklist
-
-- [ ] Code follows style guidelines
-- [ ] Tests are included and passing
-- [ ] Documentation is updated
-- [ ] No linting errors
-- [ ] Dependencies are properly managed
-- [ ] Breaking changes are documented
-
-## Commit Guidelines
-
-This project follows conventional commit format:
+This project follows [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-type(scope): description
+type(scope): short description
 
 [optional body]
 
-[optional footer]
+[optional footer — e.g. Closes #123]
 ```
 
 ### Types
 
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
-- `refactor`: Code refactoring
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
+| Type | When to use |
+|---|---|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, no logic change |
+| `refactor` | Code restructure, no behavior change |
+| `test` | Adding or updating tests |
+| `chore` | Maintenance, dependency updates |
 
 ### Examples
 
 ```
 feat(api): add batch simulation endpoint
 fix(metrics): correct cache hit counter
-docs(readme): update installation instructions
-refactor(optimizer): simplify algorithm complexity
-test(simulator): add edge case coverage
-chore(deps): update TypeScript to 5.3.2
+docs(contributing): add fork and clone instructions
+refactor(optimizer): simplify footprint deduplication
+test(simulator): add edge case for expired ledger entries
+chore(deps): update @stellar/stellar-sdk to 12.1.0
 ```
 
-### Commit Messages
+### Rules
 
-- Use present tense ("add" not "added")
-- Keep the subject line under 50 characters
-- Use the body for detailed explanations if needed
-- Reference issues with `#123`
-
-## Branch Naming
-
-Branch names must follow this pattern:
-
-- `main`, `develop`, `live` (protected branches)
-- Prefixed branches: `feature/`, `fix/`, `refactor/`, `hotfix/`, `release/`, `conflict/`, `chore/`
-
-Examples:
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-=======
-
->>>>>>> theirs
-- `feature/add-batch-simulation`
-- `fix/memory-leak-issue`
-- `chore/update-dependencies`
-- `refactor/simplify-optimizer`
-
-Branch names are validated by pre-commit hooks.
-
-## Reporting Issues
-
-### Bug Reports
-
-When reporting bugs, please include:
-
-- **Clear title** describing the issue
-- **Steps to reproduce** the problem
-- **Expected behavior** vs actual behavior
-- **Environment details** (Node version, OS, etc.)
-- **Error messages** and stack traces
-- **Screenshots** if applicable
-
-### Feature Requests
-
-For new features, please:
-
-- **Describe the problem** you're trying to solve
-- **Explain your proposed solution**
-- **Consider alternative approaches**
-- **Discuss potential impacts**
-
-## Documentation
-
-### Code Documentation
-
-- Use JSDoc comments for functions and classes
-- Keep comments up to date with code changes
-- Explain complex algorithms and business logic
-
-### README Updates
-
-- Update README.md for significant changes
-- Include examples for new features
-- Keep installation and usage instructions current
-
-### API Documentation
-
-- Document all API endpoints in README.md
-- Include request/response examples
-- Specify error codes and messages
+- Use present tense: "add" not "added"
+- Keep the subject line under 72 characters
+- Reference issues in the footer: `Closes #42`
 
 ---
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
-=======
-Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
->>>>>>> theirs
-=======
-Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
->>>>>>> theirs
-=======
-Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
->>>>>>> theirs
-=======
-Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
->>>>>>> theirs
-=======
-Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
->>>>>>> theirs
-=======
-Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
->>>>>>> theirs
+## Pull Request Process
+
+1. **Sync with upstream** before opening a PR:
+   ```bash
+   git fetch upstream
+   git rebase upstream/main
+   ```
+
+2. **Run all checks locally:**
+   ```bash
+   pnpm run lint
+   pnpm run format:check
+   pnpm run build
+   pnpm test
+   ```
+
+3. **Open a pull request** against the `main` branch with:
+   - A clear title using the commit format (e.g. `feat(api): add restore endpoint`)
+   - A description explaining what changed and why
+   - A reference to the related issue (e.g. `Closes #12`)
+
+4. **PR Checklist**
+
+   - [ ] Code follows the style guidelines
+   - [ ] All existing tests pass
+   - [ ] New tests are included for new functionality
+   - [ ] No linting or formatting errors
+   - [ ] Documentation is updated if needed
+   - [ ] Breaking changes are clearly noted in the PR description
+
+5. **Address review feedback** — push additional commits to the same branch; do not open a new PR.
+
+6. **Squash commits** if requested by a maintainer before merging.
+
+---
+
+## Issue Labels
+
+| Label | Description |
+|---|---|
+| `bug` | Something is broken or behaving incorrectly |
+| `enhancement` | A new feature or improvement to existing behavior |
+| `documentation` | Improvements or additions to docs |
+| `good first issue` | Suitable for first-time contributors |
+| `help wanted` | Extra attention or expertise needed |
+| `question` | Further information is requested |
+| `duplicate` | This issue or PR already exists |
+| `wontfix` | This will not be worked on |
+| `performance` | Related to speed, memory, or resource usage |
+| `security` | Security-related concern or fix |
+| `dependencies` | Dependency update or version bump |
+| `testing` | Related to test coverage or test infrastructure |
+
+---
+
+Thank you for contributing to Stellar Footprint Service — every improvement helps the Stellar/Soroban community. 🚀

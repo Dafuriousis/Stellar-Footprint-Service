@@ -27,6 +27,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "@stellar/stellar-sdk": "^15.0.1",
 =======
 =======
@@ -150,6 +151,15 @@
     "@types/compression": "1.8.1",
     "@types/express": "4.17.21",
     "@types/jest": "30.0.0",
+=======
+    "@stellar/stellar-sdk": "12.0.0",
+    "dotenv": "16.3.1",
+    "express": "4.18.2",
+    "prom-client": "15.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.21",
+>>>>>>> theirs
     "@types/node": "20.10.0",
     "@typescript-eslint/eslint-plugin": "8.58.2",
     "@typescript-eslint/parser": "8.58.2",
@@ -157,6 +167,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "husky": "9.1.7",
+<<<<<<< ours
     "jest": "30.3.0",
     "lint-staged": "15.2.0",
     "prettier": "3.8.3",
@@ -169,10 +180,18 @@
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+    "prettier": "3.8.3",
+    "solhint": "6.2.1",
+    "ts-node": "10.9.2",
+    "typescript": "5.3.2",
+    "validate-branch-name": "1.3.2"
+>>>>>>> theirs
   },
   "validate-branch-name": {
     "pattern": "^(main|develop|live)$|^(feature|fix|refactor|hotfix|release|conflict|chore)/.+$",
     "errorMsg": "Branch name must be: main | develop | live\nOr prefixed with: feature/ | fix/ | refactor/ | hotfix/ | release/ | conflict/ | chore/\nExample: feature/my-new-feature"
+<<<<<<< ours
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -182,5 +201,7 @@
     "*.{js,jsx,json,md}": [
       "prettier --write"
     ]
+=======
+>>>>>>> theirs
   }
 }

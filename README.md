@@ -874,6 +874,7 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 3. Commit both files together
 4. Test that the service builds and runs correctly
 
+<<<<<<< ours
 ---
 
 ## 🚢 Deployment
@@ -889,6 +890,8 @@ Step-by-step guides for deploying to common platforms:
 
 See the full [Deployment Guide](./docs/deployment.md) for environment variable reference and health check configuration.
 
+=======
+>>>>>>> theirs
 ---
 
 ## 📝 Roadmap

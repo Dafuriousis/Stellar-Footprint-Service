@@ -1,3 +1,4 @@
+<<<<<<< ours
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
@@ -10,4 +11,7 @@ pnpm tsc --noEmit
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+pnpm format
 >>>>>>> theirs

@@ -12,6 +12,7 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -42,6 +43,8 @@ import {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 import {
   health,
   simulate,
@@ -49,6 +52,7 @@ import {
   footprintDiffController,
   validate,
   networkStatus,
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -97,6 +101,12 @@ import {
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
 >>>>>>> theirs
+=======
+  decode,
+  estimateFeeController,
+} from "./controllers";
+import { simulateRateLimiter } from "../middleware/rateLimiter";
+>>>>>>> theirs
 
 const router = Router();
 
@@ -131,6 +141,7 @@ router.get("/health", health);
 
 >>>>>>> theirs
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -187,10 +198,13 @@ router.get("/health", health);
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 router.post("/simulate", simulateRateLimiter, simulate);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);
+<<<<<<< ours
 <<<<<<< ours
 
 // POST /simulate/async — accepts { xdr, network, webhookUrl }, returns 202 with jobId
@@ -205,6 +219,8 @@ router.post("/simulate/batch", simulateBatch);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 
@@ -234,6 +250,7 @@ router.post("/validate", validate);
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 /**
  * @route POST /api/v1/restore
  * @desc Returns a restoration transaction if the transaction requires it
@@ -244,11 +261,14 @@ router.post("/restore", restore);
 router.delete("/cache", invalidateCache);
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
 // GET /decode — accepts ?xdr=&type= and returns human-readable JSON of the XDR
 router.get("/decode", decode);
 
 // POST /estimate-fee — accepts { cpuInsns, memBytes, network } and returns fee breakdown
 router.post("/estimate-fee", estimateFeeController);
+<<<<<<< ours
 >>>>>>> theirs
 
 =======
@@ -289,6 +309,9 @@ router.post("/restore", restore);
 =======
 // GET /decode — accepts ?xdr=&type= and returns human-readable JSON of the XDR
 router.get("/decode", decode);
+
+>>>>>>> theirs
+=======
 
 >>>>>>> theirs
 export default router;

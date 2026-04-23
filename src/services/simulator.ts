@@ -14,6 +14,7 @@ import { optimizeFootprint } from "./optimizer";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { calculateResourceFee } from "./feeEstimator";
 <<<<<<< ours
 <<<<<<< ours
@@ -41,6 +42,8 @@ import {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 import { LRUCache, buildCacheKey } from "./cache";
 import {
   SIMULATION_CACHE_TTL_MS,
@@ -51,6 +54,7 @@ import {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -73,6 +77,8 @@ import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 >>>>>>> theirs
 =======
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -149,11 +155,14 @@ async function _checkContractExists(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     // Convert contractIdString to LedgerKey for an account
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accountId = (StellarSdk.xdr as any).AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -177,6 +186,9 @@ async function _checkContractExists(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -303,6 +315,7 @@ export interface SimulateResult {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
   /** Per-operation results for multi-operation transactions */
@@ -351,6 +364,12 @@ export interface SimulateResult {
 }
 
 >>>>>>> theirs
+=======
+  /** Whether this result was served from cache */
+  cacheHit?: boolean;
+}
+
+>>>>>>> theirs
 /** Shared simulation result LRU cache (singleton) */
 export const simulationCache = new LRUCache<SimulateResult>(
   SIMULATION_CACHE_MAX_SIZE,
@@ -362,6 +381,9 @@ export const simulationCache = new LRUCache<SimulateResult>(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -915,6 +937,7 @@ export async function simulateTransaction(
     );
 
 <<<<<<< ours
+<<<<<<< ours
     const invocation = extractInvocation(
       tx as StellarSdk.Transaction<
         StellarSdk.Memo<StellarSdk.MemoType>,
@@ -1288,6 +1311,9 @@ export async function simulateTransaction(
 =======
   const result: SimulateResult = {
 >>>>>>> theirs
+=======
+  const result: SimulateResult = {
+>>>>>>> theirs
     success: true,
     footprint: {
       readOnly: extracted.optimizationResult.readOnly,
@@ -1321,6 +1347,9 @@ export async function simulateTransaction(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

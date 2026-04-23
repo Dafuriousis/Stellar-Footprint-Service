@@ -5,6 +5,7 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 >>>>>>> theirs
 import * as StellarSdk from "@stellar/stellar-sdk";
@@ -27,6 +28,10 @@ import { Network } from "../config/stellar";
 import { Network } from "../config/stellar";
 >>>>>>> theirs
 =======
+import { Network } from "../config/stellar";
+>>>>>>> theirs
+=======
+import { getRpcServer } from "../config/stellar";
 import { Network } from "../config/stellar";
 >>>>>>> theirs
 
@@ -89,6 +94,7 @@ function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
     ((cpuInsns + INSTRUCTION_INCREMENT - 1n) / INSTRUCTION_INCREMENT) *
     DEFAULT_FEE_RATE_PER_INSTRUCTION_INCREMENT;
 
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -188,12 +194,30 @@ function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
 }
 
 /**
+=======
+  const memFee = memBytes * DEFAULT_WRITE_FEE_PER_BYTE;
+
+  const overhead =
+    TYPICAL_TX_OVERHEAD_BYTES *
+    (DEFAULT_HISTORICAL_FEE_RATE + DEFAULT_METADATA_FEE_RATE);
+
+  // Read bandwidth fee (approximate: memBytes are also read)
+  const readFee = memBytes * DEFAULT_READ_FEE_PER_BYTE;
+
+  return cpuFee + memFee + readFee + overhead;
+}
+
+/**
+>>>>>>> theirs
  * Estimate fees for a Soroban transaction given simulation cost output.
  *
  * @param cpuInsns - CPU instructions used (as string, from simulation cost)
  * @param memBytes - Memory bytes used (as string, from simulation cost)
  * @param network  - Stellar network ("testnet" | "mainnet")
  * @returns Fee breakdown: baseFee, resourceFee, totalFee (all in stroops), feeInXLM
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
  */
 export async function estimateFee(
@@ -203,6 +227,7 @@ export async function estimateFee(
 ): Promise<FeeEstimate> {
   const cpu = BigInt(cpuInsns);
   const mem = BigInt(memBytes);
+<<<<<<< ours
 
 <<<<<<< ours
   // Resource fee = (cpuInsns * feeRatePerInstructionIncrement + memBytes * writeFeePerLedgerEntry)
@@ -215,11 +240,22 @@ export async function estimateFee(
     Promise.resolve(estimateResourceFee(cpu, mem)),
   ]);
 
+=======
+
+  const [baseFee, resourceFee] = await Promise.all([
+    fetchRecommendedInclusionFee(network),
+    Promise.resolve(estimateResourceFee(cpu, mem)),
+  ]);
+
+>>>>>>> theirs
   const totalFee = baseFee + resourceFee;
   // Convert stroops to XLM with 7 decimal places
   const xlmWhole = totalFee / STROOPS_PER_XLM;
   const xlmFrac = totalFee % STROOPS_PER_XLM;
   const feeInXLM = `${xlmWhole}.${xlmFrac.toString().padStart(7, "0")}`;
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
   return {

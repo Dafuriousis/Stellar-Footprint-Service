@@ -28,6 +28,7 @@ import { errorHandler } from "./middleware/errorHandler";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
 =======
 >>>>>>> theirs
@@ -50,6 +51,9 @@ import { rpcCircuitBreaker } from "./utils/circuitBreaker";
 >>>>>>> theirs
 =======
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+>>>>>>> theirs
+=======
+import { logger } from "./utils/logger";
 >>>>>>> theirs
 =======
 import { logger } from "./utils/logger";
@@ -187,6 +191,7 @@ app.get("/metrics", async (req, res) => {
   } catch (error: unknown) {
     res.status(500).end(error instanceof Error ? error.message : String(error));
 <<<<<<< ours
+<<<<<<< ours
   }
 });
 
@@ -225,6 +230,8 @@ app.use("/api/*", (req, res, next) => {
   if (path === "v1" || path.startsWith("v1/")) {
     next();
     return;
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
   }

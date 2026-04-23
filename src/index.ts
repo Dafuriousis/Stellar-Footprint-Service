@@ -15,6 +15,7 @@ import { timeoutMiddleware } from "./middleware/timeout";
 <<<<<<< ours
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
+<<<<<<< ours
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 <<<<<<< ours
 <<<<<<< ours
@@ -40,6 +41,9 @@ import { responseTimeMiddleware } from "./middleware/responseTime";
 =======
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 >>>>>>> theirs
+=======
+import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+>>>>>>> theirs
 
 dotenv.config();
 
@@ -51,6 +55,7 @@ const COMPRESSION_THRESHOLD = parseInt(
 );
 
 // Middleware
+<<<<<<< ours
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -61,6 +66,16 @@ app.use(
     },
   }),
 );
+=======
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+}));
+>>>>>>> theirs
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
 app.use(responseTimeMiddleware);
@@ -83,6 +98,9 @@ app.get("/health", (req, res) => {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
   const circuit = rpcCircuitBreaker.getState();
   res.status(200).json({
     status: "healthy",
@@ -96,6 +114,7 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     circuitBreaker: circuit,
+<<<<<<< ours
 =======
   res.status(200).json({
     status: "healthy",
@@ -126,6 +145,8 @@ app.get("/api/health", (req, res) => {
 >>>>>>> theirs
 =======
     circuitBreaker: circuit,
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   });
 });
@@ -144,19 +165,25 @@ app.get("/metrics", async (req, res) => {
 app.use("/api/v1", routes);
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 =======
-
-// Backward-compat: redirect /api/* → /api/v1/*
-app.use("/api/:path(*)", (req, res) => {
-  res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
-});
+=======
 >>>>>>> theirs
 
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
   res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
 });
+<<<<<<< ours
+>>>>>>> theirs
+
+// Backward-compat: redirect /api/* → /api/v1/*
+app.use("/api/:path(*)", (req, res) => {
+  res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+});
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 <<<<<<< ours

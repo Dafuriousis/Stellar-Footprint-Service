@@ -560,6 +560,7 @@ export async function simulateBatch(
   } catch (err: unknown) {
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -588,6 +589,8 @@ export async function simulateBatch(
   }
 }
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
     // Handle circuit breaker open state
@@ -750,6 +753,7 @@ export async function simulateBatch(
   }
 }
 
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -1090,6 +1094,12 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
 =======
 >>>>>>> theirs
 export async function footprintDiffController(req: Request, res: Response): Promise<void> {
+=======
+export async function footprintDiffController(
+  req: Request,
+  res: Response,
+): Promise<void> {
+>>>>>>> theirs
   const { before, after } = req.body as {
     before?: {
       footprint?: {
@@ -1106,7 +1116,9 @@ export async function footprintDiffController(req: Request, res: Response): Prom
   };
 
   if (!before || !after) {
-    res.status(400).json({ error: "Missing required fields: before and after" });
+    res
+      .status(400)
+      .json({ error: "Missing required fields: before and after" });
     return;
   }
 
@@ -1137,6 +1149,7 @@ export async function footprintDiffController(req: Request, res: Response): Prom
     res.status(500).json({ error: message });
   }
 <<<<<<< ours
+<<<<<<< ours
 >>>>>>> theirs
 =======
  * Handle DELETE /api/cache requests
@@ -1157,8 +1170,53 @@ export async function invalidateCache(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+=======
+}
+
+export function validate(req: Request, res: Response): void {
+  const { xdr, type } = req.body as { xdr?: string; type?: string };
+
+  if (!xdr) {
+    res.status(400).json({ error: "Missing required field: xdr" });
+    return;
+  }
+
+  if (type && type !== "transaction" && type !== "operation") {
+    res
+      .status(400)
+      .json({ error: "Invalid type. Use 'transaction' or 'operation'" });
+    return;
+>>>>>>> theirs
   }
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+}
+
+import { buildRestoreTransaction } from "../services/restorer";
+
+export async function restore(req: Request, res: Response): Promise<void> {
+  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+
+  if (!xdr) {
+    res.status(400).json({ error: "Missing required field: xdr" });
+    return;
+  }
+
+  if (network && network !== "mainnet" && network !== "testnet") {
+    res
+      .status(400)
+      .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+    return;
+  }
+
+  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+
+  try {
+    const result = await buildRestoreTransaction(xdr, net);
+    res.status(200).json(result);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unexpected error";
+    res.status(500).json({ error: message });
+  }
 }

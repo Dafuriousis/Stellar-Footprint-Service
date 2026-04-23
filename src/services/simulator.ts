@@ -16,6 +16,7 @@ import { calculateResourceFee } from "./feeEstimator";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import {
@@ -50,6 +51,9 @@ import metrics from "../middleware/metrics";
 >>>>>>> theirs
 =======
 import metrics from "../middleware/metrics";
+>>>>>>> theirs
+=======
+import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 >>>>>>> theirs
 =======
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
@@ -614,6 +618,7 @@ export async function simulateTransaction(
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 <<<<<<< ours
 <<<<<<< ours
@@ -678,6 +683,11 @@ export async function simulateTransaction(
     metrics.recordRpcError(network, 'simulate_transaction_failure');
     throw err;
   }
+>>>>>>> theirs
+=======
+  const response = await rpcCircuitBreaker.call(() =>
+    server.simulateTransaction(tx, { signal } as never),
+  );
 >>>>>>> theirs
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {

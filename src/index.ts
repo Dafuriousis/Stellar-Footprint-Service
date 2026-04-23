@@ -243,7 +243,6 @@ app.use("/api/*", (req, res, next) => {
 });
 >>>>>>> theirs
 
-<<<<<<< ours
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -253,6 +252,7 @@ app.use("/api/:path(*)", (req, res) => {
     `/api/v1/${path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
   );
 });
+<<<<<<< ours
 =======
 =======
 >>>>>>> theirs
@@ -263,6 +263,8 @@ if (require.main === module) {
   });
 }
 <<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 // Error handling middleware (must be last)

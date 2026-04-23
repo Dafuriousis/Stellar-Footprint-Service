@@ -46,8 +46,13 @@ app.get("/metrics", async (req, res) => {
   }
 });
 
-// API routes
-app.use("/api", routes);
+// API v1 routes
+app.use("/api/v1", routes);
+
+// Backward-compat: redirect /api/* → /api/v1/*
+app.use("/api/:path(*)", (req, res) => {
+  res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+});
 
 app.listen(PORT, () => {
   console.log(`stellar-footprint-service running on port ${PORT}`);

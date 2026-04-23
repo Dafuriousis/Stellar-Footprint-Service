@@ -36,7 +36,8 @@ async function checkContractExists(
 
   try {
     // Convert contractIdString to LedgerKey for an account
-    const accountId = StellarSdk.xdr.AccountId.fromString(contractIdString);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const accountId = (StellarSdk.xdr as any).AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
     const response = await server.getLedgerEntries(ledgerKey);
     const exists = response.entries && response.entries.length > 0;

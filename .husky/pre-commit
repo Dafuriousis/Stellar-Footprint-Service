@@ -5,6 +5,9 @@ pnpm format
 pnpm lint
 pnpm tsc --noEmit
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs

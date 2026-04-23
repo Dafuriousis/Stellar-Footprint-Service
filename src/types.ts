@@ -4,6 +4,7 @@ export interface ResponseEnvelope<T = unknown> {
   error?: string;
 }
 <<<<<<< ours
+<<<<<<< ours
 
 export interface FootprintStats {
   readOnlyCount: number;
@@ -35,5 +36,7 @@ export interface TtlInfo {
   liveUntilLedger: number;
   expiresInLedgers: number;
 }
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs

@@ -1,4 +1,5 @@
 <<<<<<< ours
+<<<<<<< ours
 import { simulateTransaction } from "../simulator";
 import {
   SOROBAN_INVOKE_XDR,
@@ -7,6 +8,9 @@ import {
   INVALID_BASE64_XDR,
   INVALID_XDR_BYTES,
 } from "../../tests/fixtures/xdr";
+=======
+import { simulateTransaction } from "@services/simulator";
+>>>>>>> theirs
 =======
 import { simulateTransaction } from "@services/simulator";
 >>>>>>> theirs
@@ -83,6 +87,9 @@ const mockBuild = jest
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 const mockBuild = jest.fn().mockReturnValue({
   resources: mockResources,
   auth: jest.fn().mockReturnValue([]),
@@ -239,6 +246,10 @@ describe("simulateTransaction", () => {
 
   it("uses mainnet network config when network is mainnet", async () => {
 <<<<<<< ours
+<<<<<<< ours
+=======
+    const { getRpcServer } = jest.requireMock("@config/stellar");
+>>>>>>> theirs
 =======
     const { getRpcServer } = jest.requireMock("@config/stellar");
 >>>>>>> theirs

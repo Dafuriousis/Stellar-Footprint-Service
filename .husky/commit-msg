@@ -3,6 +3,9 @@
 
 pnpm exec commitlint --edit "$1"
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs

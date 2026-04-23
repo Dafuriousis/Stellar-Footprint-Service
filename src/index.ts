@@ -16,6 +16,7 @@ import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 <<<<<<< ours
+<<<<<<< ours
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
 <<<<<<< ours
@@ -29,6 +30,9 @@ import { rpcCircuitBreaker } from "./utils/circuitBreaker";
 =======
 >>>>>>> theirs
 import { logger } from "./utils/logger";
+=======
+import { responseTimeMiddleware } from "./middleware/responseTime";
+>>>>>>> theirs
 =======
 import { responseTimeMiddleware } from "./middleware/responseTime";
 >>>>>>> theirs

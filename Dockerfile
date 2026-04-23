@@ -1,6 +1,10 @@
 # Stage 1: Build
 <<<<<<< ours
+<<<<<<< ours
 FROM node:22-alpine AS builder
+=======
+FROM node:18-alpine AS builder
+>>>>>>> theirs
 =======
 FROM node:18-alpine AS builder
 >>>>>>> theirs
@@ -24,7 +28,11 @@ RUN pnpm run build
 
 # Stage 2: Production Dependencies
 <<<<<<< ours
+<<<<<<< ours
 FROM node:22-alpine AS prod-deps
+=======
+FROM node:18-alpine AS prod-deps
+>>>>>>> theirs
 =======
 FROM node:18-alpine AS prod-deps
 >>>>>>> theirs
@@ -42,7 +50,11 @@ RUN pnpm install --frozen-lockfile --prod
 
 # Stage 3: Runtime
 <<<<<<< ours
+<<<<<<< ours
 FROM node:22-alpine AS runtime
+=======
+FROM node:18-alpine AS runtime
+>>>>>>> theirs
 =======
 FROM node:18-alpine AS runtime
 >>>>>>> theirs

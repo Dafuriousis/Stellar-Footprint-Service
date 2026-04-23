@@ -11,6 +11,7 @@ import { getNetworkStatus } from "../services/networkStatus";
 import { estimateFee } from "../services/feeEstimator";
 import metrics from "../middleware/metrics";
 <<<<<<< ours
+<<<<<<< ours
 import { AppError } from "../utils/AppError";
 <<<<<<< ours
 <<<<<<< ours
@@ -50,6 +51,9 @@ import { version } from "../../package.json";
 import { version } from "../../package.json";
 =======
 import { version } from "../../package.json";
+=======
+import { ResponseEnvelope } from "../types";
+>>>>>>> theirs
 =======
 import { ResponseEnvelope } from "../types";
 >>>>>>> theirs
@@ -168,29 +172,69 @@ export async function simulate(
 >>>>>>> theirs
 =======
 export async function simulate(req: Request, res: Response): Promise<void> {
-  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+  const { xdr, network, ledgerSequence } = req.body as {
+    xdr?: string;
+    network?: Network;
+    ledgerSequence?: number;
+  };
 
   if (!xdr) {
+<<<<<<< ours
     res.status(400).json({ error: "Missing required field: xdr" });
 >>>>>>> theirs
+=======
+    const response: ResponseEnvelope = { success: false, error: "Missing required field: xdr" };
+    res.status(400).json(response);
+>>>>>>> theirs
+    return;
+  }
+
+  // Validate XDR is valid base64
+  if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
+    res.status(400).json({ error: "Invalid XDR: must be valid base64" });
+    return;
+  }
+
+  // Enforce max XDR length (100kb)
+  if (xdr.length > 100 * 1024) {
+    res.status(400).json({ error: "XDR too large: maximum 100kb" });
+    return;
+  }
+
+  // Validate XDR is valid base64
+  if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
+    res.status(400).json({ error: "Invalid XDR: must be valid base64" });
+    return;
+  }
+
+  // Enforce max XDR length (100kb)
+  if (xdr.length > 100 * 1024) {
+    res.status(400).json({ error: "XDR too large: maximum 100kb" });
     return;
   }
 
   // Validate network parameter
   if (network && network !== "mainnet" && network !== "testnet") {
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
     const response: ResponseEnvelope = {
       success: false,
       error: "Invalid network. Use 'testnet' or 'mainnet'",
     };
     res.status(400).json(response);
+<<<<<<< ours
 =======
     res.status(400).json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     return;
 >>>>>>> theirs
   }
 
+<<<<<<< ours
   // Enforce max XDR length (100kb)
   if (xdr.length > 100 * 1024) {
     return next(
@@ -210,11 +254,21 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 
   const net: Network =
     network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+=======
+  // Validate ledgerSequence if provided
+  if (ledgerSequence !== undefined && (!Number.isInteger(ledgerSequence) || ledgerSequence <= 0)) {
+    res.status(400).json({ error: "Invalid ledgerSequence. Must be a positive integer." });
+    return;
+  }
+
+  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+>>>>>>> theirs
 
   metrics.incrementActiveSimulations();
   const start = Date.now();
 
   try {
+<<<<<<< ours
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
 
     const duration = (Date.now() - start) / 1000;
@@ -247,6 +301,9 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
   } catch (err: unknown) {
       .json(response);
 =======
@@ -329,6 +386,10 @@ export async function simulateBatch(
   }
 =======
 
+=======
+    const result = await simulateTransaction(xdr, net, res.locals.abortSignal, ledgerSequence);
+    
+>>>>>>> theirs
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
     metrics.recordSimulationDuration(net, duration);
@@ -365,6 +426,7 @@ export async function simulateBatch(
       }
     });
 
+<<<<<<< ours
     const anyHit = results.some((r) => "cacheHit" in r && r.cacheHit);
     const allHit = results.every((r) => "cacheHit" in r && r.cacheHit);
     res.setHeader("X-Cache", allHit ? "HIT" : anyHit ? "PARTIAL" : "MISS");
@@ -377,6 +439,13 @@ export async function simulateBatch(
 >>>>>>> theirs
 =======
 =======
+>>>>>>> theirs
+=======
+    const response: ResponseEnvelope = result.success
+      ? { success: true, data: result }
+      : { success: false, error: result.error };
+
+    res.status(result.success ? 200 : 422).json(response);
 >>>>>>> theirs
   } catch (err: unknown) {
     const message =
@@ -496,6 +565,7 @@ export async function simulateBatch(
     metrics.recordSimulation(net, false);
 
 <<<<<<< ours
+<<<<<<< ours
     if (
       message.toLowerCase().includes("rpc") ||
       message.toLowerCase().includes("connection")
@@ -511,6 +581,10 @@ export async function simulateBatch(
     }
 
     res.status(500).json({ error: message });
+>>>>>>> theirs
+=======
+    const response: ResponseEnvelope = { success: false, error: message };
+    res.status(500).json(response);
 >>>>>>> theirs
   } finally {
     metrics.decrementActiveSimulations();

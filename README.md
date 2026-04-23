@@ -907,6 +907,12 @@ await server.sendTransaction(finalTx);
 
 ---
 
+## 📋 Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a full history of changes.
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Check out [ISSUES.md](ISSUES.md) for 150+ ideas.

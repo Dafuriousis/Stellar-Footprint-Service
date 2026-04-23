@@ -7,6 +7,7 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
+import { responseTimeMiddleware } from "./middleware/responseTime";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const COMPRESSION_THRESHOLD = parseInt(process.env.COMPRESSION_THRESHOLD || "102
 // Middleware
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
+app.use(responseTimeMiddleware);
 app.use(ipFilterMiddleware);
 app.use(requestLogger);
 app.use(metricsMiddleware);

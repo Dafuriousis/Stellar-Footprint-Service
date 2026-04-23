@@ -10,6 +10,7 @@ import { Network } from "../config/stellar";
 import { getNetworkStatus } from "../services/networkStatus";
 import { estimateFee } from "../services/feeEstimator";
 import metrics from "../middleware/metrics";
+<<<<<<< ours
 import { AppError } from "../utils/AppError";
 <<<<<<< ours
 <<<<<<< ours
@@ -45,6 +46,9 @@ import { version } from "../../package.json";
 import { version } from "../../package.json";
 =======
 import { version } from "../../package.json";
+=======
+import { ResponseEnvelope } from "../types";
+>>>>>>> theirs
 
 /**
  * Handle GET /api/health requests
@@ -116,6 +120,7 @@ export async function simulate(
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
   if (!xdr) {
+<<<<<<< ours
     return next(
       new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
     );
@@ -152,14 +157,20 @@ export async function simulate(
   // Enforce max XDR length (100kb)
   if (xdr.length > 100 * 1024) {
     res.status(400).json({ error: "XDR too large: maximum 100kb" });
+=======
+    const response: ResponseEnvelope = { success: false, error: "Missing required field: xdr" };
+    res.status(400).json(response);
+>>>>>>> theirs
     return;
   }
 
   // Validate network parameter
   if (network && network !== "mainnet" && network !== "testnet") {
-    res
-      .status(400)
-      .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+    const response: ResponseEnvelope = {
+      success: false,
+      error: "Invalid network. Use 'testnet' or 'mainnet'",
+    };
+    res.status(400).json(response);
     return;
 >>>>>>> theirs
   }
@@ -201,6 +212,7 @@ export async function simulate(
       ? { success: true, data: result }
       : { success: false, error: result.error };
 
+<<<<<<< ours
 =======
     res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
 >>>>>>> theirs
@@ -220,6 +232,13 @@ export async function simulate(
 <<<<<<< ours
   } catch (err: unknown) {
       .json(response);
+=======
+    const response: ResponseEnvelope = result.success
+      ? { success: true, data: result }
+      : { success: false, error: result.error };
+
+    res.status(result.success ? 200 : 422).json(response);
+>>>>>>> theirs
   } catch (err: unknown) {
     if (
       err instanceof Error &&
@@ -249,6 +268,7 @@ export async function simulate(
   }
 }
 
+<<<<<<< ours
 /**
  * Handle POST /api/simulate/batch requests
  * Simulates up to BATCH_MAX_SIZE transactions in parallel, returning per-item results.
@@ -339,6 +359,10 @@ export async function simulateBatch(
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     metrics.recordSimulation(net, false);
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+=======
+    const response: ResponseEnvelope = { success: false, error: message };
+    res.status(500).json(response);
+>>>>>>> theirs
   } finally {
     metrics.decrementActiveSimulations();
   }

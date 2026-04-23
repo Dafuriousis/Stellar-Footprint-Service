@@ -15,6 +15,7 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
+<<<<<<< ours
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
 <<<<<<< ours
@@ -28,6 +29,9 @@ import { rpcCircuitBreaker } from "./utils/circuitBreaker";
 =======
 >>>>>>> theirs
 import { logger } from "./utils/logger";
+=======
+import { responseTimeMiddleware } from "./middleware/responseTime";
+>>>>>>> theirs
 
 dotenv.config();
 
@@ -51,6 +55,7 @@ app.use(
 );
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
+app.use(responseTimeMiddleware);
 app.use(ipFilterMiddleware);
 app.use(requestLogger);
 app.use(metricsMiddleware);

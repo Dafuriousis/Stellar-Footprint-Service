@@ -5,11 +5,11 @@ updates:
     schedule:
       interval: "weekly"
     assignees:
-      - "OxDev-max"
+      - "Dafuriousis"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     assignees:
-      - "OxDev-max"
+      - "Dafuriousis"

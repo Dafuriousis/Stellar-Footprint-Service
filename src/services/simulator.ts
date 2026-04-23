@@ -78,15 +78,10 @@ export interface SimulateResult {
     readOnly: FootprintEntry[];
     readWrite: FootprintEntry[];
   };
-  /** All unique contract IDs touched by the transaction */
   contracts?: string[];
-  /** SEP-41 token contract detection result for the invoked contract */
   contractType?: ContractType;
-  /** TTL information keyed by XDR hash */
   ttl?: Record<string, TtlInfo>;
-  /** Optimization result showing redundant entries removed */
   optimized?: boolean;
-  /** Original footprint before optimization */
   rawFootprint?: {
     readOnly: string[];
     readWrite: string[];
@@ -95,10 +90,8 @@ export interface SimulateResult {
     cpuInsns: string;
     memBytes: string;
   };
-  /** Resource fee calculated from simulation cost and network fee parameters */
   resourceFee?: string;
   error?: string;
-  /** Contract ID that was not found (if error is "Contract not found") */
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
 }
@@ -167,15 +160,13 @@ export async function simulateTransaction(
   signal?: AbortSignal,
   ledgerSequence?: number,
 ): Promise<SimulateResult> {
-  const server = getRpcServer(network);
   const { networkPassphrase } = getNetworkConfig(network);
 
-  const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
-  const simOptions: Record<string, unknown> = { signal };
-  if (ledgerSequence !== undefined) {
-    simOptions.ledger = ledgerSequence;
-  }
-  const response = await server.simulateTransaction(tx, simOptions as never);
+  // Parse XDR
+  const tx = parseXdr(xdr, networkPassphrase);
+
+  // Simulate via RPC
+  const response = await simulateViaRpc(tx, network, signal, ledgerSequence);
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
     return { success: false, error: response.error, raw: response };
@@ -189,7 +180,12 @@ export async function simulateTransaction(
     };
   }
 
-  if (!response.transactionData) {
+  // Extract footprint
+  let extracted;
+  try {
+    extracted = await extractFootprint(response as StellarSdk.SorobanRpc.Api.SimulateTransactionSuccessResponse, network);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
     return {
       success: false,
       error:
@@ -197,28 +193,6 @@ export async function simulateTransaction(
       raw: response,
     };
   }
-
-  const footprint = response.transactionData.build().resources().footprint();
-  const rawFootprint = {
-    readOnly: footprint.readOnly().map((e) => e.toXDR("base64")),
-    readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
-  };
-
-  // Parse footprint entries to extract contract IDs and classify types
-  const parsedFootprint = parseFootprint(rawFootprint);
-
-  // Extract all contracts touched by the transaction
-  const allEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
-  const contracts = extractContracts(allEntries);
-
-  // Optimize footprint by removing redundant read-only entries
-  const optimizationResult = optimizeFootprint(
-    parsedFootprint.readOnly,
-    parsedFootprint.readWrite,
-  );
-
-  // Get all XDR strings for TTL lookup (use original footprint)
-  const allXdrEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
 
   // Fetch TTL information
   const ttl = await fetchTtlInfo(server, allXdrEntries);
@@ -232,14 +206,14 @@ export async function simulateTransaction(
   return {
     success: true,
     footprint: {
-      readOnly: optimizationResult.readOnly,
-      readWrite: optimizationResult.readWrite,
+      readOnly: extracted.optimizationResult.readOnly,
+      readWrite: extracted.optimizationResult.readWrite,
     },
-    contracts,
-    contractType,
+    contracts: extracted.contracts,
+    contractType: extracted.contractType,
     ttl,
-    optimized: optimizationResult.optimized,
-    rawFootprint,
+    optimized: extracted.optimizationResult.optimized,
+    rawFootprint: extracted.rawFootprint,
     cost: {
       cpuInsns: response.cost?.cpuInsns ?? "0",
       memBytes: response.cost?.memBytes ?? "0",

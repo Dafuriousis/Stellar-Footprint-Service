@@ -53,7 +53,7 @@ app.use("/api", routes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.warn(`stellar-footprint-service running on port ${PORT}`);
+  logger.warn(`stellar-footprint-service running on port ${PORT}`);
 });
 
 export default app;

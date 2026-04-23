@@ -16,6 +16,7 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 <<<<<<< ours
+<<<<<<< ours
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 <<<<<<< ours
 <<<<<<< ours
@@ -44,6 +45,9 @@ import { bruteForceMiddleware } from "./middleware/bruteForce";
 =======
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
 >>>>>>> theirs
+=======
+import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+>>>>>>> theirs
 
 dotenv.config();
 
@@ -56,6 +60,9 @@ const COMPRESSION_THRESHOLD = parseInt(
 
 // Middleware
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -66,6 +73,7 @@ app.use(
     },
   }),
 );
+<<<<<<< ours
 =======
 app.use(helmet({
   contentSecurityPolicy: {
@@ -75,6 +83,8 @@ app.use(helmet({
     },
   },
 }));
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
@@ -99,6 +109,9 @@ app.get("/health", (req, res) => {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
   const circuit = rpcCircuitBreaker.getState();
@@ -115,6 +128,7 @@ app.get("/api/health", (req, res) => {
     uptime: process.uptime(),
     circuitBreaker: circuit,
 <<<<<<< ours
+<<<<<<< ours
 =======
   res.status(200).json({
     status: "healthy",
@@ -145,6 +159,8 @@ app.get("/api/health", (req, res) => {
 >>>>>>> theirs
 =======
     circuitBreaker: circuit,
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -166,6 +182,7 @@ app.use("/api/v1", routes);
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 =======
 =======
@@ -184,6 +201,23 @@ app.use("/api/:path(*)", (req, res) => {
 });
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
+// Backward-compat: redirect /api/* → /api/v1/*
+app.use("/api/*", (req, res, next) => {
+  const path = req.params[0];
+
+  if (path === "v1" || path.startsWith("v1/")) {
+    next();
+    return;
+  }
+
+  res.redirect(
+    308,
+    `/api/v1/${path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
+  );
+});
 >>>>>>> theirs
 
 <<<<<<< ours
@@ -223,10 +257,14 @@ if (require.main === module) {
 app.listen(PORT, () => {
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   logger.info("stellar-footprint-service started", {
     port: PORT,
     environment: process.env.NODE_ENV || "development",
   });
+=======
+  console.warn(`stellar-footprint-service running on port ${PORT}`);
+>>>>>>> theirs
 =======
   console.warn(`stellar-footprint-service running on port ${PORT}`);
 >>>>>>> theirs

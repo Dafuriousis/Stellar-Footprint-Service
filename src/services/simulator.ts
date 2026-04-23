@@ -17,6 +17,7 @@ import { calculateResourceFee } from "./feeEstimator";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import {
@@ -51,6 +52,9 @@ import metrics from "../middleware/metrics";
 >>>>>>> theirs
 =======
 import metrics from "../middleware/metrics";
+>>>>>>> theirs
+=======
+import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 >>>>>>> theirs
 =======
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
@@ -619,6 +623,7 @@ export async function simulateTransaction(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 <<<<<<< ours
 <<<<<<< ours
@@ -689,6 +694,11 @@ export async function simulateTransaction(
     server.simulateTransaction(tx, { signal } as never),
   );
 >>>>>>> theirs
+=======
+  const response = await rpcCircuitBreaker.call(() =>
+    server.simulateTransaction(tx, { signal } as never),
+  );
+>>>>>>> theirs
 
   if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
     return { success: false, error: response.error, raw: response };
@@ -717,9 +727,14 @@ export async function simulateTransaction(
     return {
       success: false,
 <<<<<<< ours
+<<<<<<< ours
       error: "Simulation succeeded but no transactionData or results found.",
 =======
       error: "Simulation succeeded but no transactionData or results; cannot extract footprint.",
+>>>>>>> theirs
+=======
+      error:
+        "Simulation succeeded but transactionData is missing; cannot extract footprint.",
 >>>>>>> theirs
       raw: response,
     };

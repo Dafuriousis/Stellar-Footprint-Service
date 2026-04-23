@@ -14,6 +14,7 @@ import metrics from "../middleware/metrics";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { AppError } from "../utils/AppError";
 <<<<<<< ours
 <<<<<<< ours
@@ -61,6 +62,10 @@ import { ResponseEnvelope } from "../types";
 >>>>>>> theirs
 =======
 import { recordFailure } from "../middleware/bruteForce";
+>>>>>>> theirs
+=======
+import { validateXdr, type XdrInputType } from "../services/validator";
+import { buildRestoreTransaction } from "../services/restorer";
 >>>>>>> theirs
 
 <<<<<<< ours
@@ -561,6 +566,7 @@ export async function simulateBatch(
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -597,6 +603,12 @@ export async function simulateBatch(
     if (
       err instanceof Error &&
       (err as { circuitOpen?: boolean; retryAfter?: number }).circuitOpen
+=======
+    // Handle circuit breaker open state
+    if (
+      err instanceof Error &&
+      (err as { circuitOpen?: boolean }).circuitOpen
+>>>>>>> theirs
     ) {
       const retryAfter =
         (err as unknown as { retryAfter: number }).retryAfter ?? 30;
@@ -753,6 +765,7 @@ export async function simulateBatch(
   }
 }
 
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -1095,10 +1108,15 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
 >>>>>>> theirs
 export async function footprintDiffController(req: Request, res: Response): Promise<void> {
 =======
+=======
+>>>>>>> theirs
 export async function footprintDiffController(
   req: Request,
   res: Response,
 ): Promise<void> {
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
   const { before, after } = req.body as {
     before?: {
@@ -1216,6 +1234,38 @@ export async function restore(req: Request, res: Response): Promise<void> {
     const result = await buildRestoreTransaction(xdr, net);
     res.status(200).json(result);
   } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unexpected error";
+    res.status(500).json({ error: message });
+  }
+}
+
+export async function restore(req: Request, res: Response): Promise<void> {
+  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+
+  if (!xdr) {
+    res.status(400).json({ error: "Missing required field: xdr" });
+    return;
+  }
+
+  if (network && network !== "mainnet" && network !== "testnet") {
+    res
+      .status(400)
+      .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+    return;
+  }
+
+  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+
+  try {
+    const result = await buildRestoreTransaction(xdr, net);
+    if (req.aborted || res.headersSent) {
+      return;
+    }
+    res.status(200).json(result);
+  } catch (err: unknown) {
+    if (req.aborted || res.headersSent) {
+      return;
+    }
     const message = err instanceof Error ? err.message : "Unexpected error";
     res.status(500).json({ error: message });
   }

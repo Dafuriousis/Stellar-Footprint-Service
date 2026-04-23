@@ -8,6 +8,7 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -58,6 +59,8 @@ import { simulateRateLimiter } from "../middleware/rateLimiter";
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 import {
   simulate,
   footprintDiffController,
@@ -67,6 +70,9 @@ import {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -178,6 +184,7 @@ router.post("/validate", validate);
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 /**
  * @route POST /api/v1/restore
  * @desc Returns a restoration transaction if the transaction requires it
@@ -208,6 +215,11 @@ router.post("/restore", restore);
 =======
 // DELETE /cache — flush all cache entries (Redis or in-memory)
 router.delete("/cache", invalidateCache);
+
+>>>>>>> theirs
+=======
+// POST /restore — accepts { xdr, network } and returns restoreXdr when restoration is needed
+router.post("/restore", restore);
 
 >>>>>>> theirs
 =======

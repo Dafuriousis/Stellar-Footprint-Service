@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { simulateTransaction } from "../services/simulator";
 import { Network } from "../config/stellar";
 import metrics from "../middleware/metrics";
+import { validateXdr, type XdrInputType } from "../services/validator";
 
 export async function simulate(req: Request, res: Response): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
@@ -40,4 +41,21 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     // Decrement active simulations
     metrics.decrementActiveSimulations();
   }
+}
+
+export function validate(req: Request, res: Response): void {
+  const { xdr, type } = req.body as { xdr?: string; type?: string };
+
+  if (!xdr) {
+    res.status(400).json({ error: "Missing required field: xdr" });
+    return;
+  }
+
+  if (type && type !== "transaction" && type !== "operation") {
+    res.status(400).json({ error: "Invalid type. Use 'transaction' or 'operation'" });
+    return;
+  }
+
+  const result = validateXdr(xdr, (type as XdrInputType) ?? "transaction");
+  res.status(result.valid ? 200 : 400).json(result);
 }

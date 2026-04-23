@@ -52,5 +52,14 @@
   "validate-branch-name": {
     "pattern": "^(main|develop|live)$|^(feature|fix|refactor|hotfix|release|conflict|chore)/.+$",
     "errorMsg": "Branch name must be: main | develop | live\nOr prefixed with: feature/ | fix/ | refactor/ | hotfix/ | release/ | conflict/ | chore/\nExample: feature/my-new-feature"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md}": [
+      "prettier --write"
+    ]
   }
 }

@@ -1,1 +1,5 @@
-pnpm exec validate-branch-name
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+pnpm exec commitlint --edit "$1"
+

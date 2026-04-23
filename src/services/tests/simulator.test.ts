@@ -67,9 +67,54 @@ const mockFootprint = {
   readOnly: jest.fn().mockReturnValue([]),
   readWrite: jest.fn().mockReturnValue([]),
 };
-const mockResources = jest.fn().mockReturnValue({ footprint: () => mockFootprint });
-const mockBuild = jest.fn().mockReturnValue({ resources: mockResources, auth: jest.fn().mockReturnValue([]) });
+const mockResources = jest
+  .fn()
+  .mockReturnValue({ footprint: () => mockFootprint });
+const mockBuild = jest.fn().mockReturnValue({
+  resources: mockResources,
+  auth: jest.fn().mockReturnValue([]),
+});
 const mockTransactionData = { build: mockBuild };
+
+const mockTx = {};
+
+jest.mock("@stellar/stellar-sdk", () => {
+  const isSimulationError = jest.fn();
+  const isSimulationRestore = jest.fn();
+
+  return {
+    TransactionBuilder: {
+      fromXDR: jest.fn().mockReturnValue(mockTx),
+    },
+    SorobanRpc: {
+      Server: jest.fn(),
+      Api: { isSimulationError, isSimulationRestore },
+    },
+    Networks: {
+      TESTNET: "Test SDF Network ; September 2015",
+      PUBLIC: "Public Global Stellar Network ; September 2015",
+    },
+    xdr: {
+      LedgerKey: {
+        fromXDR: jest.fn().mockReturnValue({}),
+        account: jest.fn().mockReturnValue({}),
+        contractCode: jest.fn().mockReturnValue({}),
+      },
+      AccountId: { fromString: jest.fn().mockReturnValue({}) },
+    },
+  };
+});
+
+import * as StellarSdk from "@stellar/stellar-sdk";
+
+const isSimulationError = StellarSdk.SorobanRpc.Api
+  .isSimulationError as unknown as jest.Mock;
+const isSimulationRestore = StellarSdk.SorobanRpc.Api
+  .isSimulationRestore as unknown as jest.Mock;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const DUMMY_XDR = "AAAAAA==";
 
 function makeSuccessResponse() {
   return {

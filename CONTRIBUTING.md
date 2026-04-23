@@ -47,17 +47,20 @@ This project follows a code of conduct to ensure a welcoming environment for all
 ### Installation
 
 1. **Install dependencies:**
+
    ```bash
    npm ci
    ```
 
 2. **Set up environment variables:**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 3. **Build the project:**
+
    ```bash
    npm run build
    ```
@@ -125,22 +128,26 @@ This project follows a code of conduct to ensure a welcoming environment for all
 This project uses several tools to maintain code quality:
 
 ### ESLint
+
 - Configured in `eslint.config.mjs`
 - Run `npm run lint` to check for issues
 - Run `npm run lint:fix` to auto-fix issues
 - Only `console.warn` and `console.error` are allowed (not `console.log`)
 
 ### Prettier
+
 - Configured in `prettier.config.cjs`
 - Run `npm run format` to format code
 - Run `npm run format:check` to check formatting
 
 ### TypeScript
+
 - Strict type checking enabled
 - Configuration in `tsconfig.json`
 - All new code must be properly typed
 
 ### Pre-commit Hooks
+
 - Husky is used to run pre-commit checks
 - Commits will be rejected if linting fails
 - Branch names are validated automatically
@@ -148,17 +155,20 @@ This project uses several tools to maintain code quality:
 ## Testing
 
 ### Running Tests
+
 ```bash
 npm test
 ```
 
 ### Test Coverage
+
 - Aim for high test coverage
 - Include unit tests for all new functions
 - Include integration tests for API endpoints
 - Test both success and error scenarios
 
 ### Testing Guidelines
+
 - Write tests before implementing features (TDD when possible)
 - Use descriptive test names
 - Test edge cases and error conditions
@@ -171,11 +181,13 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 ### Updating Dependencies
 
 1. **Check for updates:**
+
    ```bash
    npm outdated
    ```
 
 2. **Update package.json** with new exact versions:
+
    ```json
    {
      "dependency": "1.2.3"
@@ -183,6 +195,7 @@ This project uses exact versions for all dependencies to ensure reproducible bui
    ```
 
 3. **Update lockfile:**
+
    ```bash
    npm install
    ```
@@ -194,6 +207,7 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 ### Adding Dependencies
 
 1. **Install the package:**
+
    ```bash
    npm install --save exact-package@1.2.3
    ```
@@ -206,6 +220,7 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 
 1. **Ensure your branch** is up to date with `main`
 2. **Run all checks** locally:
+
    ```bash
    npm run lint
    npm run format:check
@@ -280,6 +295,7 @@ Branch names must follow this pattern:
 - Prefixed branches: `feature/`, `fix/`, `refactor/`, `hotfix/`, `release/`, `conflict/`, `chore/`
 
 Examples:
+
 - `feature/add-batch-simulation`
 - `fix/memory-leak-issue`
 - `chore/update-dependencies`

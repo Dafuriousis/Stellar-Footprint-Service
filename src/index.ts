@@ -56,8 +56,8 @@ app.get("/metrics", async (req, res) => {
   try {
     res.set("Content-Type", "text/plain");
     res.end(await metrics.getMetrics());
-  } catch (error) {
-    res.status(500).end(error);
+  } catch (error: unknown) {
+    res.status(500).end(error instanceof Error ? error.message : String(error));
   }
 });
 
@@ -66,9 +66,11 @@ app.use("/api/v1", routes);
 
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const path = (req.params as any)["path"] || "";
   res.redirect(
     308,
-    `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
+    `/api/v1/${path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
   );
 });
 

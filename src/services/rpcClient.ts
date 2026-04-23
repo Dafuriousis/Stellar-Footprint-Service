@@ -5,7 +5,9 @@ import { getRpcServer, Network } from "../config/stellar";
  * Simulate a transaction via RPC
  */
 export async function simulateViaRpc(
-  tx: StellarSdk.Transaction<StellarSdk.Memo, StellarSdk.Operation[]> | StellarSdk.FeeBumpTransaction,
+  tx:
+    | StellarSdk.Transaction<StellarSdk.Memo, StellarSdk.Operation[]>
+    | StellarSdk.FeeBumpTransaction,
   network: Network,
   signal?: AbortSignal,
   ledgerSequence?: number,
@@ -24,7 +26,9 @@ export async function simulateViaRpc(
 export async function fetchTtlInfo(
   network: Network,
   footprintEntries: string[],
-): Promise<Record<string, { liveUntilLedger: number; expiresInLedgers: number }>> {
+): Promise<
+  Record<string, { liveUntilLedger: number; expiresInLedgers: number }>
+> {
   if (footprintEntries.length === 0) {
     return {};
   }
@@ -37,7 +41,10 @@ export async function fetchTtlInfo(
     });
 
     const response = await server.getLedgerEntries(...ledgerKeys);
-    const ttlMap: Record<string, { liveUntilLedger: number; expiresInLedgers: number }> = {};
+    const ttlMap: Record<
+      string,
+      { liveUntilLedger: number; expiresInLedgers: number }
+    > = {};
     const currentLedger = response.latestLedger ?? 0;
 
     if (response.entries) {

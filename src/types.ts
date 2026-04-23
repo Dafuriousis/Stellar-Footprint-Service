@@ -29,3 +29,8 @@ export interface ContractInvocation {
   functionName: string;
   args: string[];
 }
+
+export interface TtlInfo {
+  liveUntilLedger: number;
+  expiresInLedgers: number;
+}

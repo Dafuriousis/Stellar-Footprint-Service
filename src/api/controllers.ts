@@ -61,11 +61,7 @@ export async function simulate(
     );
   }
 
-  if (
-    network &&
-    network !== NETWORKS.MAINNET &&
-    network !== NETWORKS.TESTNET
-  ) {
+  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
@@ -89,7 +85,9 @@ export async function simulate(
       : { success: false, error: result.error };
 
     res
-      .status(result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY)
+      .status(
+        result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      )
       .json(response);
   } catch (err: unknown) {
     if (
@@ -159,8 +157,8 @@ export async function footprintDiffController(
   next: NextFunction,
 ): Promise<void> {
   const { before, after } = req.body as {
-    before?: any;
-    after?: any;
+    before?: unknown;
+    after?: unknown;
   };
 
   if (!before || !after) {

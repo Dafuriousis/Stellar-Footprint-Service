@@ -9,6 +9,7 @@ Use these messages when creating pull requests on GitHub.
 **Title:** Add ESLint no-console rule for production code
 
 **Description:**
+
 ```
 Closes #64
 
@@ -33,6 +34,7 @@ Enforce structured logging across the codebase by adding ESLint's no-console rul
 **Title:** Add nodemon for hot-reload in development
 
 **Description:**
+
 ```
 Closes #63
 
@@ -58,6 +60,7 @@ Replace ts-node with nodemon for automatic server restart on file changes during
 **Title:** Normalize all API responses to consistent envelope shape
 
 **Description:**
+
 ```
 Closes #68
 
@@ -84,6 +87,7 @@ Ensure all API responses follow a consistent envelope structure for uniform clie
 **Title:** Add X-Response-Time header to all responses
 
 **Description:**
+
 ```
 Closes #67
 
@@ -109,6 +113,7 @@ Add X-Response-Time header to all responses for client-side performance monitori
 **Title:** Add commitlint for Conventional Commits enforcement
 
 **Description:**
+
 ```
 Closes #66
 
@@ -134,6 +139,7 @@ Enforce Conventional Commits format using commitlint and Husky hooks.
 **Title:** Add lint and type-check to pre-commit hook
 
 **Description:**
+
 ```
 Closes #65
 
@@ -156,13 +162,13 @@ Extend pre-commit hook to run ESLint and TypeScript type-checking before allowin
 
 ## Summary Table
 
-| Issue | Branch | Commit | Status |
-|-------|--------|--------|--------|
-| #64 | `improvement/no-console-lint` | cd9a6e6 | ✅ Ready |
-| #63 | `improvement/nodemon-dev` | 844b880 | ✅ Ready |
-| #68 | `refactor/response-envelope` | 3995bde | ✅ Ready |
-| #67 | `improvement/response-time-header` | b116bab | ✅ Ready |
-| #66 | `improvement/commitlint` | 5230de7 | ✅ Ready |
-| #65 | `improvement/pre-commit-hooks` | ca8bda2 | ✅ Ready |
+| Issue | Branch                             | Commit  | Status   |
+| ----- | ---------------------------------- | ------- | -------- |
+| #64   | `improvement/no-console-lint`      | cd9a6e6 | ✅ Ready |
+| #63   | `improvement/nodemon-dev`          | 844b880 | ✅ Ready |
+| #68   | `refactor/response-envelope`       | 3995bde | ✅ Ready |
+| #67   | `improvement/response-time-header` | b116bab | ✅ Ready |
+| #66   | `improvement/commitlint`           | 5230de7 | ✅ Ready |
+| #65   | `improvement/pre-commit-hooks`     | ca8bda2 | ✅ Ready |
 
 All branches have been pushed to the remote repository.

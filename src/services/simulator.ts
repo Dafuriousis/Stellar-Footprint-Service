@@ -29,7 +29,7 @@ const CONTRACT_EXISTENCE_CACHE_TTL = 30 * 1000; // 30 seconds
 /**
  * Check if a contract exists on the network by looking up its account ledger entry.
  */
-async function checkContractExists(
+async function _checkContractExists(
   server: StellarSdk.SorobanRpc.Server,
   contractIdString: string,
 ): Promise<boolean> {
@@ -43,15 +43,20 @@ async function checkContractExists(
   metrics.recordCacheMiss("contract_existence");
 
   try {
-    const accountId = StellarSdk.xdr.AccountId.fromString(contractIdString);
-    const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
+    const accountId =
+      StellarSdk.StrKey.decodeEd25519PublicKey(contractIdString);
+    const ledgerKey = StellarSdk.xdr.LedgerKey.account(
+      new StellarSdk.xdr.LedgerKeyAccount({
+        accountId: StellarSdk.xdr.PublicKey.publicKeyTypeEd25519(accountId),
+      }),
+    );
     const response = await rpcCircuitBreaker.call(() =>
       server.getLedgerEntries(ledgerKey),
     );
     const exists = response.entries && response.entries.length > 0;
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });
     return exists;
-  } catch (err) {
+  } catch {
     metrics.recordRpcError("unknown", "get_ledger_entries_failure");
     contractExistenceCache.set(contractIdString, {
       exists: false,
@@ -183,10 +188,12 @@ function extractEvents(
   const events =
     (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
 
-  return events.map((event) => {
+  return events.map((event: unknown) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = event as any;
     return {
-      type: event.type().name,
-      contractId: event.contractId()?.toString("hex") || "",
+      type: e.type?.()?.name || "unknown",
+      contractId: e.contractId?.()?.toString("hex") || "",
       topics: [],
       data: "",
     };
@@ -196,17 +203,19 @@ function extractEvents(
 /**
  * Extract required signers from auth entries.
  */
-function extractRequiredSigners(auth: any[]): {
+function extractRequiredSigners(auth: unknown[]): {
   requiredSigners: string[];
   threshold: number;
 } {
   const signers = new Set<string>();
   for (const entry of auth) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = entry as any;
     try {
-      if (entry.address && typeof entry.address === "function") {
-        signers.add(entry.address().toString());
-      } else if (entry.credentials && typeof entry.credentials === "function") {
-        const credentials = entry.credentials();
+      if (e.address && typeof e.address === "function") {
+        signers.add(e.address().toString());
+      } else if (e.credentials && typeof e.credentials === "function") {
+        const credentials = e.credentials();
         if (credentials.switch().name === "sorobanCredentialsAddress") {
           const address = credentials.address();
           const accountId = StellarSdk.StrKey.encodeEd25519PublicKey(
@@ -274,10 +283,10 @@ async function processSimulationResult(
   };
 
   const parsed = parseFootprint(rawFootprint);
-  const optimizationResult = optimizeFootprint({
-    readOnly: parsed.readOnly,
-    readWrite: parsed.readWrite,
-  });
+  const optimizationResult = optimizeFootprint(
+    parsed.readOnly,
+    parsed.readWrite,
+  );
 
   const allXdrEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
   const contracts = extractContracts(allXdrEntries);
@@ -288,7 +297,8 @@ async function processSimulationResult(
       ? await detectTokenContract(contracts[0], server)
       : "unknown";
 
-  const auth = (transactionData as any).auth?.() ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const auth = (transactionData as any)?.auth?.() ?? [];
   const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
   const footprintStats = calculateFootprintStats(
@@ -352,7 +362,11 @@ export async function simulateTransaction(
   let response;
   try {
     response = await rpcCircuitBreaker.call(() =>
-      server.simulateTransaction(tx as StellarSdk.Transaction, simOptions as any),
+      server.simulateTransaction(
+        tx as StellarSdk.Transaction,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        simOptions as any,
+      ),
     );
   } catch (err) {
     metrics.recordRpcError(network, "simulate_transaction_failure");
@@ -372,7 +386,8 @@ export async function simulateTransaction(
   }
 
   const results =
-    response.results ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (response as any).results ||
     (response.transactionData
       ? [{ transactionData: response.transactionData, cost: response.cost }]
       : []);
@@ -385,8 +400,9 @@ export async function simulateTransaction(
     };
   }
 
-  const resourceFee = calculateResourceFee(
-    response as StellarSdk.SorobanRpc.Api.SimulateTransactionSuccessResponse,
+  const resourceFee = await calculateResourceFee(
+    response.cost?.cpuInsns ?? "0",
+    response.cost?.memBytes ?? "0",
     network,
   );
 
@@ -409,7 +425,8 @@ export async function simulateTransaction(
     );
 
     const authEntries = extractAuthEntries(
-      (result.transactionData.build() as any).auth?.() ?? [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (result.transactionData.build() as any)?.auth?.() ?? [],
     );
 
     return {
@@ -427,7 +444,7 @@ export async function simulateTransaction(
     let allReadOnly: FootprintEntry[] = [];
     let allReadWrite: FootprintEntry[] = [];
     let allContracts: string[] = [];
-    let allTtl: Record<string, TtlInfo> = {};
+    const allTtl: Record<string, TtlInfo> = {};
     let contractType: ContractType = "unknown";
     let optimized = false;
     let allRawReadOnly: string[] = [];
@@ -450,12 +467,19 @@ export async function simulateTransaction(
         allReadOnly = [...allReadOnly, ...processed.footprint.readOnly];
         allReadWrite = [...allReadWrite, ...processed.footprint.readWrite];
       }
-      if (processed.contracts) allContracts = [...allContracts, ...processed.contracts];
+      if (processed.contracts)
+        allContracts = [...allContracts, ...processed.contracts];
       if (processed.ttl) Object.assign(allTtl, processed.ttl);
       if (processed.optimized) optimized = true;
       if (processed.rawFootprint) {
-        allRawReadOnly = [...allRawReadOnly, ...processed.rawFootprint.readOnly];
-        allRawReadWrite = [...allRawReadWrite, ...processed.rawFootprint.readWrite];
+        allRawReadOnly = [
+          ...allRawReadOnly,
+          ...processed.rawFootprint.readOnly,
+        ];
+        allRawReadWrite = [
+          ...allRawReadWrite,
+          ...processed.rawFootprint.readWrite,
+        ];
       }
       if (contractType === "unknown" && processed.contractType)
         contractType = processed.contractType;
@@ -464,13 +488,13 @@ export async function simulateTransaction(
     const dedupReadOnly = allReadOnly.filter(
       (item, index, arr) =>
         arr.findIndex(
-          (i) => i.contractId === item.contractId && i.key === item.key,
+          (i) => i.contractId === item.contractId && i.xdr === item.xdr,
         ) === index,
     );
     const dedupReadWrite = allReadWrite.filter(
       (item, index, arr) =>
         arr.findIndex(
-          (i) => i.contractId === item.contractId && i.key === item.key,
+          (i) => i.contractId === item.contractId && i.xdr === item.xdr,
         ) === index,
     );
 

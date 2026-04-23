@@ -10,7 +10,19 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+<<<<<<< ours
     "types": ["jest", "node"]
+=======
+    "ignoreDeprecations": "6.0",
+    "baseUrl": "./src",
+    "paths": {
+      "@api/*": ["api/*"],
+      "@services/*": ["services/*"],
+      "@config/*": ["config/*"],
+      "@middleware/*": ["middleware/*"],
+      "@utils/*": ["utils/*"]
+    }
+>>>>>>> theirs
     "types": ["node"]
   },
   "include": ["src/**/*"],

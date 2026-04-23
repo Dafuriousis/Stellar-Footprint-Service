@@ -1,0 +1,15 @@
+diff a/src/index.ts b/src/index.ts	(rejected hunks)
+@@ -2,6 +2,13 @@ import express from "express";
+ import compression from "compression";
+ import helmet from "helmet";
+ import dotenv from "dotenv";
++import routes from "@api/routes";
++import { metricsMiddleware, metrics } from "@middleware/metrics";
++import { timeoutMiddleware } from "@middleware/timeout";
++import { ipFilterMiddleware } from "@middleware/ipFilter";
++import { requestLogger } from "@middleware/requestLogger";
++import { bruteForceMiddleware } from "@middleware/bruteForce";
++import { errorHandler } from "@middleware/errorHandler";
+ import routes from "./api/routes";
+ import { metricsMiddleware, metrics } from "./middleware/metrics";
+ import { timeoutMiddleware } from "./middleware/timeout";

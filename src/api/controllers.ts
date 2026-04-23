@@ -168,8 +168,14 @@ export async function restore(req: Request, res: Response): Promise<void> {
 
   try {
     const result = await buildRestoreTransaction(xdr, net);
+    if (req.aborted || res.headersSent) {
+      return;
+    }
     res.status(200).json(result);
   } catch (err: unknown) {
+    if (req.aborted || res.headersSent) {
+      return;
+    }
     const message = err instanceof Error ? err.message : "Unexpected error";
     res.status(500).json({ error: message });
   }

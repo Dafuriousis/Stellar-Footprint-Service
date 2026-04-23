@@ -2,6 +2,7 @@ import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import prettier from "eslint-plugin-prettier";
 import prettierConfig from "eslint-config-prettier";
+import importPlugin from "eslint-plugin-import-x";
 
 /** @type {import('eslint').Linter.Config[]} */
 const config = [
@@ -27,10 +28,21 @@ const config = [
     plugins: {
       "@typescript-eslint": tseslint,
       prettier,
+      "import-x": importPlugin,
     },
     rules: {
       // Prettier
       "prettier/prettier": "error",
+
+      // Import order: builtin → external → internal → relative
+      "import-x/order": [
+        "error",
+        {
+          groups: ["builtin", "external", "internal", ["parent", "sibling", "index"]],
+          "newlines-between": "always",
+          alphabetize: { order: "asc", caseInsensitive: true },
+        },
+      ],
 
       // TypeScript
       "@typescript-eslint/no-unused-vars": [

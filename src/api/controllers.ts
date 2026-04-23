@@ -172,6 +172,18 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  // Validate XDR is valid base64
+  if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
+    res.status(400).json({ error: "Invalid XDR: must be valid base64" });
+    return;
+  }
+
+  // Enforce max XDR length (100kb)
+  if (xdr.length > 100 * 1024) {
+    res.status(400).json({ error: "XDR too large: maximum 100kb" });
+    return;
+  }
+
   // Validate network parameter
   if (network && network !== "mainnet" && network !== "testnet") {
 <<<<<<< ours

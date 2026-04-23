@@ -14,8 +14,11 @@
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     "types": ["jest", "node"]
 =======
+=======
+>>>>>>> theirs
     "ignoreDeprecations": "6.0",
     "baseUrl": "./src",
     "paths": {
@@ -25,6 +28,9 @@
       "@middleware/*": ["middleware/*"],
       "@utils/*": ["utils/*"]
     }
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     "types": ["node"]
 =======

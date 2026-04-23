@@ -13,6 +13,9 @@ const config: Config = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
     "^.+\\.(ts|tsx)$": [
       "ts-jest",
       { tsconfig: "tsconfig.test.json", diagnostics: false },
@@ -45,11 +48,17 @@ const config: Config = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
     "^@api/(.*)$": "<rootDir>/src/api/$1",
     "^@services/(.*)$": "<rootDir>/src/services/$1",
     "^@config/(.*)$": "<rootDir>/src/config/$1",
     "^@middleware/(.*)$": "<rootDir>/src/middleware/$1",
     "^@utils/(.*)$": "<rootDir>/src/utils/$1",
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======

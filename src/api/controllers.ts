@@ -243,6 +243,9 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
   } catch (err: unknown) {
       .json(response);
 =======

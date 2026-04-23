@@ -18,10 +18,13 @@ export const CACHE_TTL = {
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 export const CACHE_CONFIG = {
   MAX_SIZE: 500, // Max entries in LRU in-memory cache
 } as const;
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 /** Simulation result LRU cache — configurable via env vars */
@@ -30,6 +33,9 @@ export const SIMULATION_CACHE_TTL_MS =
 export const SIMULATION_CACHE_MAX_SIZE =
   parseInt(process.env.CACHE_MAX_SIZE ?? "500", 10) || 500;
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

@@ -34,6 +34,7 @@ import {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { version } from "../../package.json";
 =======
 import { createJob, deliverWebhook } from "../services/webhook";
@@ -42,6 +43,23 @@ import { createJob, deliverWebhook } from "../services/webhook";
 import { version } from "../../package.json";
 =======
 import { version } from "../../package.json";
+=======
+import { version } from "../../package.json";
+
+/**
+ * Handle GET /api/health requests
+ * Returns service liveness status for load balancers and uptime monitors
+ * Does not require authentication
+ */
+export function health(req: Request, res: Response): void {
+  res.status(HTTP_STATUS.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    version,
+    timestamp: new Date().toISOString(),
+  });
+}
+>>>>>>> theirs
 
 /**
  * Handle GET /api/health requests
@@ -104,6 +122,7 @@ export async function simulate(
   }
 
 <<<<<<< ours
+<<<<<<< ours
   // Validate XDR is valid base64
   if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
 <<<<<<< ours
@@ -154,6 +173,8 @@ export async function simulate(
 
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
   if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
@@ -173,6 +194,7 @@ export async function simulate(
     metrics.recordSimulation(net, result.success);
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     metrics.recordSimulationDuration(net, duration);
 
     const response: ResponseEnvelope = result.success
@@ -185,11 +207,15 @@ export async function simulate(
 =======
     res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
 >>>>>>> theirs
+=======
+    res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
+>>>>>>> theirs
     res
       .status(
         result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY,
       )
       .json(result);
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
   } catch (err: unknown) {
@@ -306,6 +332,8 @@ export async function simulateBatch(
 =======
 >>>>>>> theirs
 =======
+=======
+>>>>>>> theirs
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -394,6 +422,9 @@ export async function simulateBatch(
     res.setHeader("X-Cache", allHit ? "HIT" : anyHit ? "PARTIAL" : "MISS");
     res.status(HTTP_STATUS.OK).json({ results });
   } catch (err: unknown) {
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -531,6 +562,7 @@ export async function footprintDiffController(
   }
 }
 
+<<<<<<< ours
 =======
 >>>>>>> theirs
 /**
@@ -554,6 +586,8 @@ export async function validate(
   }
 }
 
+=======
+>>>>>>> theirs
 /**
  * Handle POST /api/v1/restore requests
  */

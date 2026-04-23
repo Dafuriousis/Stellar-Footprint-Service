@@ -1,0 +1,13 @@
+diff a/src/constants.ts b/src/constants.ts	(rejected hunks)
+@@ -13,6 +13,11 @@ export const CACHE_TTL = {
+   NETWORK_STATUS_MS: 10000, // 10 seconds
+   CONTRACT_EXISTENCE_MS: 30000, // 30 seconds
+   RPC_POOL_MS: 300000, // 5 minutes
++  SIMULATION_MS: 60000, // 1 minute (for simulation result caching)
++} as const;
++
++export const CACHE_CONFIG = {
++  MAX_SIZE: 500, // Max entries in LRU in-memory cache
+ } as const;
+ 
+ export const ERROR_MESSAGES = {

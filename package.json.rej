@@ -1,0 +1,9 @@
+diff a/package.json b/package.json	(rejected hunks)
+@@ -25,6 +25,7 @@
+     "compression": "1.8.1",
+     "dotenv": "16.3.1",
+     "express": "4.18.2",
++    "ioredis": "^5.10.1",
+     "prom-client": "15.1.0"
+   },
+   "devDependencies": {

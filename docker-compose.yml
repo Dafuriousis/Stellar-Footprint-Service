@@ -15,9 +15,30 @@ services:
       - TESTNET_SECRET_KEY=${TESTNET_SECRET_KEY}
       - MAINNET_SECRET_KEY=${MAINNET_SECRET_KEY}
       - SIMULATE_TIMEOUT_MS=${SIMULATE_TIMEOUT_MS:-30000}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app_net
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - app_net
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis_data:
 
 networks:
   app_net:

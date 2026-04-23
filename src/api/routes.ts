@@ -13,8 +13,8 @@ import { simulateRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
-// GET /health — liveness check for load balancers and uptime monitors
-router.get("/health", health);
+// Create the simulate controller with the real simulator injected
+const simulate = createSimulateController(simulateTransaction);
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulateRateLimiter, simulate);

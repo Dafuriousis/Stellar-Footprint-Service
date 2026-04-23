@@ -49,7 +49,28 @@ export async function simulate(
     );
   }
 
-  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+  // Validate XDR is valid base64
+  if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
+    return next(
+      new AppError(
+        "Invalid XDR: must be valid base64",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  // Enforce max XDR length (100kb)
+  if (xdr.length > 100 * 1024) {
+    return next(
+      new AppError("XDR too large: maximum 100kb", HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  if (
+    network &&
+    network !== NETWORKS.MAINNET &&
+    network !== NETWORKS.TESTNET
+  ) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );

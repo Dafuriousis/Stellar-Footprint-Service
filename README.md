@@ -342,24 +342,47 @@ Your service will be running at `http://localhost:3000`!
 
 Create a `.env` file in the root directory:
 
-```env
-# Stellar Network RPC URLs
-MAINNET_RPC_URL=https://mainnet.stellar.validationcloud.io/v1/<YOUR_API_KEY>
-TESTNET_RPC_URL=https://soroban-testnet.stellar.org
-
-# Secret Keys (for signing, if needed — never commit real keys)
-MAINNET_SECRET_KEY=your_mainnet_secret_key_here
-TESTNET_SECRET_KEY=your_testnet_secret_key_here
-
-# App Configuration
-PORT=3000
-NETWORK=testnet
+```bash
+cp .env.example .env
 ```
 
 ### Getting RPC URLs
 
 - **Testnet (Free):** `https://soroban-testnet.stellar.org`
 - **Mainnet:** Get an API key from [Validation Cloud](https://validationcloud.io/) or [Infstones](https://infstones.com/)
+
+---
+
+## 🔧 Environment Variables
+
+| Variable | Description | Required | Default | Example |
+|---|---|---|---|---|
+| `NODE_ENV` | Runtime environment | ✅ | — | `production` |
+| `PORT` | Port the HTTP server listens on | ✅ | `3000` | `3000` |
+| `TESTNET_RPC_URL` | Stellar testnet Soroban RPC endpoint | ✅ | `https://soroban-testnet.stellar.org` | `https://soroban-testnet.stellar.org` |
+| `MAINNET_RPC_URL` | Stellar mainnet Soroban RPC endpoint | ⚠️ mainnet only | — | `https://mainnet.stellar.validationcloud.io/v1/<KEY>` |
+| `TESTNET_SECRET_KEY` | Stellar secret key for testnet signing | ⚠️ if signing | — | `SXXXXX...` |
+| `MAINNET_SECRET_KEY` | Stellar secret key for mainnet signing | ⚠️ if signing | — | `SXXXXX...` |
+| `NETWORK` | Default network when none is specified in request | ❌ | `testnet` | `mainnet` |
+| `SIMULATE_TIMEOUT_MS` | Timeout for simulation requests in milliseconds | ❌ | `30000` | `15000` |
+| `LOG_LEVEL` | Logging verbosity (`debug` \| `info` \| `warn` \| `error`) | ❌ | `info` | `debug` |
+| `COMPRESSION_THRESHOLD` | Minimum response size in bytes before gzip compression is applied | ❌ | `1024` | `512` |
+| `RPC_POOL_TTL_MS` | How long an RPC server connection is reused before being recreated (ms) | ❌ | `300000` | `60000` |
+| `IP_ALLOWLIST` | Comma-separated list of allowed IPs/CIDRs. If set, all other IPs are blocked | ❌ | — | `192.168.1.0/24,10.0.0.1` |
+| `IP_BLOCKLIST` | Comma-separated list of blocked IPs/CIDRs | ❌ | — | `1.2.3.4,5.6.7.0/24` |
+| `BRUTE_FORCE_DELAY_THRESHOLD` | Number of requests from one IP before responses are delayed | ❌ | `10` | `5` |
+| `BRUTE_FORCE_BLOCK_THRESHOLD` | Number of requests from one IP before the IP is blocked | ❌ | `20` | `15` |
+| `BRUTE_FORCE_WINDOW_MS` | Rolling time window for brute-force counting (ms) | ❌ | `60000` | `30000` |
+| `BRUTE_FORCE_DELAY_MS` | Delay added to responses once delay threshold is hit (ms) | ❌ | `5000` | `2000` |
+| `BRUTE_FORCE_BLOCK_MS` | Duration an IP remains blocked (ms) | ❌ | `300000` | `600000` |
+| `CB_FAILURE_THRESHOLD` | Number of RPC failures before the circuit breaker opens | ❌ | `5` | `3` |
+| `CB_RECOVERY_MS` | Time the circuit breaker waits before attempting recovery (ms) | ❌ | `30000` | `15000` |
+| `GRAFANA_USER` | Grafana admin username (Docker Compose only) | ❌ | `admin` | `admin` |
+| `GRAFANA_PASSWORD` | Grafana admin password (Docker Compose only) | ❌ | `admin` | `s3cur3pass` |
+| `REDIS_HOST` | Redis hostname for caching (Docker Compose only) | ❌ | `redis` | `localhost` |
+| `REDIS_PORT` | Redis port (Docker Compose only) | ❌ | `6379` | `6379` |
+
+> ⚠️ = conditionally required. Never commit real secret keys — use your platform's secrets manager in production.
 
 ---
 

@@ -15,6 +15,7 @@ import { calculateResourceFee } from "./feeEstimator";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import {
@@ -49,6 +50,9 @@ import metrics from "../middleware/metrics";
 >>>>>>> theirs
 =======
 import metrics from "../middleware/metrics";
+>>>>>>> theirs
+=======
+import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 >>>>>>> theirs
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })

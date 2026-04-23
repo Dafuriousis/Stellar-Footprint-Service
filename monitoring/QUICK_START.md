@@ -136,6 +136,7 @@ done
 ## 🐛 Troubleshooting
 
 ### No Data in Dashboard?
+
 ```bash
 # Check if metrics are exposed
 curl http://localhost:3000/metrics | grep http_requests_total
@@ -145,6 +146,7 @@ open http://localhost:9090/targets
 ```
 
 ### Services Not Starting?
+
 ```bash
 # Check logs
 docker-compose -f docker-compose.prod.yml logs
@@ -154,6 +156,7 @@ docker-compose -f docker-compose.prod.yml restart
 ```
 
 ### Port Already in Use?
+
 ```bash
 # Change ports in docker-compose.prod.yml
 # Or stop conflicting services

@@ -9,6 +9,7 @@ This PR adds comprehensive monitoring infrastructure for the Stellar Footprint S
 ## ✨ What's New
 
 ### Grafana Dashboard
+
 - ✅ Request Rate panel - tracks HTTP requests per second
 - ✅ Error Rate panel - monitors 4xx/5xx response percentages
 - ✅ Latency Percentiles panel - displays P50, P95, P99 response times
@@ -18,6 +19,7 @@ This PR adds comprehensive monitoring infrastructure for the Stellar Footprint S
 - ✅ Network Usage Distribution panel - mainnet vs testnet usage
 
 ### Infrastructure
+
 - ✅ Docker Compose production setup with Prometheus, Grafana, and Redis
 - ✅ Prometheus metrics collection and scraping configuration
 - ✅ Automatic Grafana dashboard provisioning
@@ -26,6 +28,7 @@ This PR adds comprehensive monitoring infrastructure for the Stellar Footprint S
 - ✅ Dockerfile for containerized deployment
 
 ### Metrics Instrumentation
+
 - ✅ HTTP request counters with method, route, and status code labels
 - ✅ Request duration histograms for latency percentiles
 - ✅ Cache hit/miss counters
@@ -35,20 +38,25 @@ This PR adds comprehensive monitoring infrastructure for the Stellar Footprint S
 ## 📊 Dashboard Preview
 
 ### Panels Overview
+
 ![Dashboard Overview](screenshots/dashboard-overview.png)
 
 ### Request Rate
+
 ![Request Rate](screenshots/request-rate.png)
 
 ### Latency Percentiles
+
 ![Latency Percentiles](screenshots/latency-percentiles.png)
 
 ### Prometheus Targets
+
 ![Prometheus Targets](screenshots/prometheus-targets.png)
 
 ## 🧪 Testing
 
 ### Manual Testing
+
 ```bash
 # Start monitoring stack
 docker-compose -f docker-compose.prod.yml up -d
@@ -63,6 +71,7 @@ open http://localhost:3001
 ```
 
 ### Verification Checklist
+
 - [x] All Docker containers start successfully
 - [x] Prometheus scrapes metrics from service
 - [x] Grafana dashboard loads without errors
@@ -74,6 +83,7 @@ open http://localhost:3001
 ## 📁 Files Changed
 
 ### New Files
+
 - `monitoring/grafana-dashboard.json` - Main dashboard configuration
 - `monitoring/grafana/dashboards/stellar-footprint-service.json` - Provisioned dashboard
 - `monitoring/grafana/provisioning/datasources/prometheus.yml` - Prometheus data source
@@ -89,6 +99,7 @@ open http://localhost:3001
 - `.dockerignore` - Docker build exclusions
 
 ### Modified Files
+
 - `src/index.ts` - Added metrics middleware and endpoints
 - `src/api/controllers.ts` - Added metrics tracking to simulation endpoint
 - `package.json` - Added prom-client dependency
@@ -96,6 +107,7 @@ open http://localhost:3001
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```env
 # Grafana
 GRAFANA_USER=admin
@@ -107,6 +119,7 @@ TESTNET_RPC_URL=https://soroban-testnet.stellar.org
 ```
 
 ### Prometheus Metrics Exposed
+
 ```
 http_requests_total{method, route, status_code}
 http_request_duration_seconds_bucket{method, route}
@@ -119,6 +132,7 @@ active_simulations
 ## 🚀 Deployment
 
 ### Quick Start
+
 ```bash
 # Clone and setup
 git checkout feature/grafana-dashboard
@@ -137,6 +151,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### Production Considerations
+
 - Change default Grafana password
 - Enable HTTPS with reverse proxy
 - Configure Prometheus retention policies
@@ -152,15 +167,18 @@ docker-compose -f docker-compose.prod.yml up -d
 ## 🔍 Metrics Details
 
 ### Request Rate
+
 - **Query**: `rate(http_requests_total{job="stellar-footprint-service"}[5m])`
 - **Purpose**: Monitor traffic patterns and detect anomalies
 
 ### Error Rate
+
 - **Query**: `(rate(http_requests_total{status_code=~"4..|5.."}[5m]) / rate(http_requests_total[5m])) * 100`
 - **Purpose**: Track service reliability
 - **Thresholds**: Green < 1%, Yellow 1-5%, Red > 5%
 
 ### Latency Percentiles
+
 - **P50**: `histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))`
 - **P95**: `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))`
 - **P99**: `histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))`
@@ -168,6 +186,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - **Target**: P95 < 500ms, P99 < 1000ms
 
 ### Cache Hit Rate
+
 - **Query**: `(rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m]))) * 100`
 - **Purpose**: Optimize caching strategy
 - **Target**: > 80% hit rate
@@ -195,6 +214,7 @@ None. This is a purely additive feature.
 ## 🤝 Reviewers
 
 Please verify:
+
 1. Dashboard loads correctly in Grafana
 2. All panels display data after test requests
 3. Prometheus successfully scrapes metrics

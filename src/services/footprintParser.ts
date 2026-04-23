@@ -141,3 +141,76 @@ export function parseFootprint(footprint: {
     contracts,
   };
 }
+
+/** SEP-41 token interface required function names */
+const SEP41_FUNCTIONS = [
+  "transfer",
+  "transfer_from",
+  "burn",
+  "burn_from",
+  "balance",
+  "allowance",
+  "approve",
+  "decimals",
+  "name",
+  "symbol",
+  "total_supply",
+  "mint",
+];
+
+export type ContractType = "token" | "unknown";
+
+/** Cache of contractId → detected ContractType */
+const contractTypeCache = new Map<string, ContractType>();
+
+/**
+ * Detect whether a contract implements the SEP-41 token interface.
+ * Result is cached per contract ID.
+ *
+ * @param contractId - Hex contract ID
+ * @param server - SorobanRpc server to fetch contract code
+ * @returns "token" if SEP-41 signatures detected, otherwise "unknown"
+ */
+export async function detectTokenContract(
+  contractId: string,
+  server: StellarSdk.SorobanRpc.Server,
+): Promise<ContractType> {
+  if (contractTypeCache.has(contractId)) {
+    return contractTypeCache.get(contractId)!;
+  }
+
+  try {
+    const contractIdBytes = Uint8Array.from(
+      contractId.match(/.{2}/g)!.map((b) => parseInt(b, 16)),
+    );
+    const ledgerKey = StellarSdk.xdr.LedgerKey.contractCode(
+      new StellarSdk.xdr.LedgerKeyContractCode({
+        hash: contractIdBytes as unknown as Buffer,
+      }),
+    );
+
+    const response = await server.getLedgerEntries(ledgerKey);
+    const entry = response.entries?.[0];
+
+    if (!entry) {
+      contractTypeCache.set(contractId, "unknown");
+      return "unknown";
+    }
+
+    const ledgerEntryData = entry.val.contractCode();
+    const wasmBytes = ledgerEntryData.code() as unknown as Uint8Array;
+    const wasmText = new TextDecoder().decode(wasmBytes);
+
+    const matchCount = SEP41_FUNCTIONS.filter((fn) =>
+      wasmText.includes(fn),
+    ).length;
+
+    // Require at least 6 of the SEP-41 function names to be present
+    const result: ContractType = matchCount >= 6 ? "token" : "unknown";
+    contractTypeCache.set(contractId, result);
+    return result;
+  } catch {
+    contractTypeCache.set(contractId, "unknown");
+    return "unknown";
+  }
+}

@@ -139,7 +139,7 @@ git checkout feature/grafana-dashboard
 cp .env.example .env
 
 # Install dependencies
-pnpm install
+npm install
 
 # Start monitoring stack
 docker-compose -f docker-compose.prod.yml up -d

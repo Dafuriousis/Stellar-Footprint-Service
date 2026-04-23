@@ -1,15 +1,15 @@
-# Use Node.js 18 Alpine as base image
-FROM node:18-alpine
+# Stage 1: Build
+FROM node:22-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY pnpm-lock.yaml ./
-
-# Install pnpm and dependencies
+# Install pnpm
 RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install ALL dependencies
 RUN pnpm install --frozen-lockfile
 
 # Copy source code
@@ -18,12 +18,38 @@ COPY . .
 # Build the application
 RUN pnpm run build
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S stellar -u 1001
+# Stage 2: Production Dependencies
+FROM node:22-alpine AS prod-deps
 
-# Change ownership of the app directory
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install ONLY production dependencies
+RUN pnpm install --frozen-lockfile --prod
+
+# Stage 3: Runtime
+FROM node:22-alpine AS runtime
+
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S stellar -u 1001
+
+# Copy built artifacts and production dependencies
+COPY --from=builder /app/dist ./dist
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/healthcheck.js ./healthcheck.js
+
+# Change ownership
 RUN chown -R stellar:nodejs /app
+
 USER stellar
 
 # Expose port

@@ -26,6 +26,30 @@ const httpRequestDuration = new client.Histogram({
   registers: [register],
 });
 
+// Simulation metrics from PR 159
+const simulateRequestsTotal = new client.Counter({
+  name: "simulate_requests_total",
+  help: "Total number of Stellar simulations",
+  labelNames: ["network", "status"],
+  registers: [register],
+});
+
+const simulateDurationSeconds = new client.Histogram({
+  name: "simulate_duration_seconds",
+  help: "Duration of Stellar simulations in seconds",
+  labelNames: ["network"],
+  buckets: [0.1, 0.5, 1, 2, 5, 10, 30],
+  registers: [register],
+});
+
+// RPC health metrics from PR 159
+const rpcErrorsTotal = new client.Counter({
+  name: "rpc_errors_total",
+  help: "Total number of RPC errors",
+  labelNames: ["network", "error_type"],
+  registers: [register],
+});
+
 // Cache metrics
 const cacheHitsTotal = new client.Counter({
   name: "cache_hits_total",
@@ -41,7 +65,7 @@ const cacheMissesTotal = new client.Counter({
   registers: [register],
 });
 
-// Stellar-specific metrics
+// Stellar-specific simulations Total (from HEAD/main)
 const stellarSimulationsTotal = new client.Counter({
   name: "stellar_simulations_total",
   help: "Total number of Stellar simulations",
@@ -49,6 +73,7 @@ const stellarSimulationsTotal = new client.Counter({
   registers: [register],
 });
 
+// Tracking active simulations
 const activeSimulations = new client.Gauge({
   name: "active_simulations",
   help: "Number of currently active simulations",
@@ -100,8 +125,22 @@ export const metrics = {
   recordSimulation: (network: string, success: boolean) => {
     stellarSimulationsTotal.inc({
       network,
-      success: success.toString(),
+      success: success ? "true" : "false",
     });
+    // Also record in the PR 159 counter for backwards compatibility/consistency
+    simulateRequestsTotal.inc({
+      network,
+      status: success ? "success" : "failure",
+    });
+  },
+
+  recordSimulationDuration: (network: string, durationInSeconds: number) => {
+    simulateDurationSeconds.observe({ network }, durationInSeconds);
+  },
+
+  // RPC metrics
+  recordRpcError: (network: string, errorType: string) => {
+    rpcErrorsTotal.inc({ network, error_type: errorType });
   },
 
   // Active simulations

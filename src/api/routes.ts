@@ -11,6 +11,7 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
@@ -39,6 +40,8 @@ import {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
 import {
   health,
   simulate,
@@ -46,6 +49,7 @@ import {
   footprintDiffController,
   validate,
   networkStatus,
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -88,6 +92,11 @@ import {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+  decode,
+} from "./controllers";
+import { simulateRateLimiter } from "../middleware/rateLimiter";
+>>>>>>> theirs
 
 const router = Router();
 
@@ -122,6 +131,7 @@ router.get("/health", health);
 
 >>>>>>> theirs
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 >>>>>>> theirs
@@ -175,10 +185,13 @@ router.get("/health", health);
 
 >>>>>>> theirs
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
+=======
+>>>>>>> theirs
 router.post("/simulate", simulateRateLimiter, simulate);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);
+<<<<<<< ours
 
 // POST /simulate/async — accepts { xdr, network, webhookUrl }, returns 202 with jobId
 router.post("/simulate/async", simulateAsync);
@@ -192,6 +205,8 @@ router.post("/simulate/batch", simulateBatch);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);
+=======
+>>>>>>> theirs
 
 // GET /network/status — returns current network information
 >>>>>>> theirs
@@ -209,6 +224,7 @@ router.post("/footprint/diff", footprintDiffController);
  */
 router.post("/validate", validate);
 
+<<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -268,6 +284,11 @@ router.post("/restore", restore);
 =======
 // POST /restore — accepts { xdr, network } and returns restoreXdr when restoration is needed
 router.post("/restore", restore);
+
+>>>>>>> theirs
+=======
+// GET /decode — accepts ?xdr=&type= and returns human-readable JSON of the XDR
+router.get("/decode", decode);
 
 >>>>>>> theirs
 export default router;

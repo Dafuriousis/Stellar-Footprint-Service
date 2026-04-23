@@ -51,10 +51,14 @@ This project follows a code of conduct to ensure a welcoming environment for all
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -71,10 +75,14 @@ This project follows a code of conduct to ensure a welcoming environment for all
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -92,10 +100,14 @@ This project follows a code of conduct to ensure a welcoming environment for all
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -174,10 +186,14 @@ This project uses several tools to maintain code quality:
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -195,10 +211,14 @@ This project uses several tools to maintain code quality:
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -215,10 +235,14 @@ This project uses several tools to maintain code quality:
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -235,10 +259,14 @@ This project uses several tools to maintain code quality:
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -257,10 +285,14 @@ This project uses several tools to maintain code quality:
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -277,10 +309,14 @@ npm test
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -298,10 +334,14 @@ npm test
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -325,10 +365,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -345,10 +389,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -367,10 +415,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -393,10 +445,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -420,10 +476,14 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -509,10 +569,14 @@ Examples:
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 
 =======
 >>>>>>> theirs
 =======
+>>>>>>> theirs
+=======
+
 >>>>>>> theirs
 =======
 
@@ -575,7 +639,11 @@ For new features, please:
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
+=======
+Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
+>>>>>>> theirs
 =======
 Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
 >>>>>>> theirs

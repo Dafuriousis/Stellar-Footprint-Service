@@ -78,7 +78,11 @@ app.use(errorHandler);
 // Only start the server when this file is run directly (not imported in tests)
 if (require.main === module) {
   app.listen(PORT, () => {
-    logger.warn(`stellar-footprint-service running on port ${PORT}`);
+    logger.info("stellar-footprint-service started", {
+      port: PORT,
+      nodeVersion: process.version,
+      environment: process.env.NODE_ENV || "development",
+    });
   });
 }
 

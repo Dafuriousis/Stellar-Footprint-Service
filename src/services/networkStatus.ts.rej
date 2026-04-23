@@ -1,7 +1,0 @@
-diff a/src/services/networkStatus.ts b/src/services/networkStatus.ts	(rejected hunks)
-@@ -1,3 +1,5 @@
-+import * as StellarSdk from "@stellar/stellar-sdk";
-+import { Network, getRpcServer, getNetworkConfig } from "@config/stellar";
- import { Network, getRpcServer, getNetworkConfig } from "../config/stellar";
- 
- export interface NetworkStatusResult {

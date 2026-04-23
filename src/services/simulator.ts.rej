@@ -1,8 +1,0 @@
-diff a/src/services/simulator.ts b/src/services/simulator.ts	(rejected hunks)
-@@ -1,5 +1,5 @@
- import * as StellarSdk from "@stellar/stellar-sdk";
--import { Network, getNetworkConfig, getRpcServer } from "../config/stellar";
-+import { Network, getNetworkConfig, getRpcServer } from "@config/stellar";
- import {
-   parseFootprint,
-   extractContracts,

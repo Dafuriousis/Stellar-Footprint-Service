@@ -555,3 +555,36 @@ export async function simulateTransaction(
     };
   }
 }
+
+export class SimulationTimeoutError extends Error {
+  constructor() {
+    super("Simulation timed out");
+    this.name = "SimulationTimeoutError";
+  }
+}
+
+const DEFAULT_SIMULATE_TIMEOUT_MS = 30000;
+
+export async function simulateWithTimeout(
+  xdr: string,
+  network: Network = "testnet",
+  signal?: AbortSignal,
+  ledgerSequence?: number,
+): Promise<SimulateResult> {
+  const timeoutMs = parseInt(
+    process.env.SIMULATE_TIMEOUT_MS || String(DEFAULT_SIMULATE_TIMEOUT_MS),
+    10,
+  );
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new SimulationTimeoutError()), timeoutMs);
+  });
+  try {
+    return await Promise.race([
+      simulateTransaction(xdr, network, signal, ledgerSequence),
+      timeoutPromise,
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}

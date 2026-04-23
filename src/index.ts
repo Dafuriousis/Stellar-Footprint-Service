@@ -16,7 +16,12 @@ import { logger } from "./utils/logger";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const _rawPort = process.env.PORT || "3000";
+const _parsedPort = parseInt(_rawPort, 10);
+if (!Number.isInteger(_parsedPort) || _parsedPort <= 0 || String(_parsedPort) !== _rawPort.trim()) {
+  throw new Error(`PORT must be a valid number, got: "${_rawPort}"`);
+}
+const PORT = _parsedPort;
 const COMPRESSION_THRESHOLD = parseInt(
   process.env.COMPRESSION_THRESHOLD || "1024",
   10,
@@ -34,7 +39,8 @@ app.use(
   }),
 );
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
-app.use(express.json());
+app.use(express.json({ limit: process.env.BODY_LIMIT || "100kb" }));
+app.use(responseTimeMiddleware);
 app.use(ipFilterMiddleware);
 app.use(requestLogger);
 app.use(metricsMiddleware);

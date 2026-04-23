@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { simulateTransaction } from "@services/simulator";
+import { simulateTransaction, simulateWithTimeout, SimulationTimeoutError } from "@services/simulator";
 import { Network } from "@config/stellar";
 import { isValidNetwork } from "@config/stellar";
 import { getNetworkStatus } from "@services/networkStatus";
 import metrics from "@middleware/metrics";
 import { AppError } from "@utils/AppError";
-import { simulateTransaction } from "../services/simulator";
+import { simulateTransaction, simulateWithTimeout, SimulationTimeoutError } from "../services/simulator";
 import { buildRestoreTransaction } from "../services/restorer";
 import { Network, isValidNetwork } from "../config/stellar";
 import { getNetworkStatus } from "../services/networkStatus";
@@ -482,7 +482,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 
   try {
 <<<<<<< ours
-    const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
+    const result = await simulateWithTimeout(xdr, net, res.locals.abortSignal);
 
 <<<<<<< ours
 <<<<<<< ours
@@ -542,6 +542,10 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     res.status(result.success ? 200 : 422).json(response);
 >>>>>>> theirs
   } catch (err: unknown) {
+    if (err instanceof SimulationTimeoutError) {
+      res.status(504).json({ error: "Simulation timed out" });
+      return;
+    }
     if (
       err instanceof Error &&
       (err as { circuitOpen?: boolean; retryAfter?: number }).circuitOpen
@@ -615,7 +619,7 @@ export async function simulateBatch(
 =======
 
 =======
-    const result = await simulateTransaction(xdr, net, res.locals.abortSignal, ledgerSequence);
+    const result = await simulateWithTimeout(xdr, net, res.locals.abortSignal, ledgerSequence);
     
 >>>>>>> theirs
     // Record simulation metrics

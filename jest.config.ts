@@ -9,6 +9,7 @@ const config: Config = {
     "**/?(*.)+(spec|test).+(ts|tsx|js)",
   ],
   transform: {
+    "^.+\\.(ts|tsx)$": "ts-jest",
     "^.+\\.(ts|tsx)$": [
       "ts-jest",
       { tsconfig: "tsconfig.test.json", diagnostics: false },
@@ -32,6 +33,11 @@ const config: Config = {
   },
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^@api/(.*)$": "<rootDir>/src/api/$1",
+    "^@services/(.*)$": "<rootDir>/src/services/$1",
+    "^@config/(.*)$": "<rootDir>/src/config/$1",
+    "^@middleware/(.*)$": "<rootDir>/src/middleware/$1",
+    "^@utils/(.*)$": "<rootDir>/src/utils/$1",
   },
 };
 

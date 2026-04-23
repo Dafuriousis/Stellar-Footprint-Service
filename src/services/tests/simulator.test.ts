@@ -1,3 +1,4 @@
+<<<<<<< ours
 import { simulateTransaction } from "../simulator";
 import {
   SOROBAN_INVOKE_XDR,
@@ -6,13 +7,16 @@ import {
   INVALID_BASE64_XDR,
   INVALID_XDR_BYTES,
 } from "../../tests/fixtures/xdr";
+=======
+import { simulateTransaction } from "@services/simulator";
+>>>>>>> theirs
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
 // jest.mock factories are hoisted before variable declarations, so all mock
 // functions must be created inside the factory (not referenced from outside).
 
-jest.mock("../../config/stellar", () => ({
+jest.mock("@config/stellar", () => ({
   getNetworkConfig: jest.fn().mockReturnValue({
     networkPassphrase: "Test SDF Network ; September 2015",
     rpcUrl: "https://soroban-testnet.stellar.org",
@@ -70,6 +74,12 @@ const mockFootprint = {
 const mockResources = jest
   .fn()
   .mockReturnValue({ footprint: () => mockFootprint });
+const mockBuild = jest
+  .fn()
+  .mockReturnValue({
+    resources: mockResources,
+    auth: jest.fn().mockReturnValue([]),
+  });
 const mockBuild = jest.fn().mockReturnValue({
   resources: mockResources,
   auth: jest.fn().mockReturnValue([]),
@@ -219,6 +229,10 @@ describe("simulateTransaction", () => {
   });
 
   it("uses mainnet network config when network is mainnet", async () => {
+<<<<<<< ours
+=======
+    const { getRpcServer } = jest.requireMock("@config/stellar");
+>>>>>>> theirs
     mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
 
     await simulateTransaction(DUMMY_XDR, "mainnet");

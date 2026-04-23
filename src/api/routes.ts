@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { health, simulate, footprintDiffController, validate, networkStatus } from "./controllers";
+import { health, simulate, simulateBatch, footprintDiffController, validate, networkStatus } from "./controllers";
 
 const router = Router();
 
@@ -8,6 +8,9 @@ router.get("/health", health);
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulate);
+
+// POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
+router.post("/simulate/batch", simulateBatch);
 
 // GET /network/status — returns current network information
 router.get("/network/status", networkStatus);

@@ -15,6 +15,8 @@ export const CACHE_TTL = {
   RPC_POOL_MS: 300000, // 5 minutes
 } as const;
 
+export const BATCH_MAX_SIZE = 10;
+
 export const ERROR_MESSAGES = {
   MISSING_XDR: "Missing required field: xdr",
   INVALID_NETWORK: "Invalid network. Use 'testnet' or 'mainnet'",

@@ -54,3 +54,8 @@ yarn-error.log*
 # Misc
 *.bak
 *.tmp
+
+# TLS certificates
+nginx/certs/*.pem
+nginx/certs/*.crt
+nginx/certs/*.key

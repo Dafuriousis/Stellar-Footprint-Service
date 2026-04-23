@@ -1,29 +1,24 @@
-version: '3.8'
+# Base configuration — extended by docker-compose.dev.yml and docker-compose.prod.yml
+# Usage:
+#   Dev:  docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#   Prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     environment:
-      - NODE_ENV=development
       - PORT=3000
-      - REDIS_URL=redis://redis:6379
       - TESTNET_RPC_URL=${TESTNET_RPC_URL:-https://soroban-testnet.stellar.org}
-    depends_on:
-      - redis
+      - MAINNET_RPC_URL=${MAINNET_RPC_URL}
+      - TESTNET_SECRET_KEY=${TESTNET_SECRET_KEY}
+      - MAINNET_SECRET_KEY=${MAINNET_SECRET_KEY}
+      - SIMULATE_TIMEOUT_MS=${SIMULATE_TIMEOUT_MS:-30000}
+    restart: unless-stopped
     networks:
-      - app-network
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    networks:
-      - app-network
+      - app_net
 
 networks:
-  app-network:
+  app_net:
     driver: bridge

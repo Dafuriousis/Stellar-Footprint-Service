@@ -157,10 +157,18 @@ export async function simulateTransaction(
     };
   }
 
-  const footprint = response.transactionData?.build().resources().footprint();
+  if (!response.transactionData) {
+    return {
+      success: false,
+      error: "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+      raw: response,
+    };
+  }
+
+  const footprint = response.transactionData.build().resources().footprint();
   const rawFootprint = {
-    readOnly: footprint?.readOnly().map((e) => e.toXDR("base64")) ?? [],
-    readWrite: footprint?.readWrite().map((e) => e.toXDR("base64")) ?? [],
+    readOnly: footprint.readOnly().map((e) => e.toXDR("base64")),
+    readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
   };
 
   // Parse footprint entries to extract contract IDs and classify types

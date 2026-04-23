@@ -384,6 +384,11 @@ The service will start on `http://localhost:3000` (or your configured `PORT`).
 
 ## 📡 API Reference
 
+You can also test the API using the [Postman collection](./docs/postman/stellar-footprint-service.postman_collection.json). Import this collection into Postman to get started quickly.
+
+
+You can also test the API using the [Postman collection](./docs/postman/stellar-footprint-service.postman_collection.json). Import this collection into Postman to get started quickly.
+
 ### `POST /api/simulate`
 
 Simulate a Soroban transaction and extract its footprint.

@@ -829,6 +829,15 @@ Contributions are welcome! Check out [ISSUES.md](ISSUES.md) for 150+ ideas.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+### Dependency Management
+
+This project uses exact versions for all dependencies to ensure reproducible builds. When updating dependencies:
+
+1. Update the exact version in `package.json`
+2. Run `npm install` to update `package-lock.json`
+3. Commit both files together
+4. Test that the service builds and runs correctly
+
 ---
 
 ## 📝 Roadmap

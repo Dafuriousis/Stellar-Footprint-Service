@@ -8,6 +8,48 @@ import {
 import { optimizeFootprint } from "./optimizer";
 import { calculateResourceFee } from "./feeEstimator";
 
+// Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
+const contractExistenceCache = new Map<
+  string,
+  { exists: boolean; timestamp: number }
+>();
+const CONTRACT_EXISTENCE_CACHE_TTL = 30 * 1000; // 30 seconds
+
+/**
+ * Check if a contract exists on the network by looking up its account ledger entry.
+ * Uses caching to avoid repeated RPC calls for the same contract within the TTL.
+ * @param server - The RPC server instance
+ * @param contractIdString - The contract ID in string format (account ID)
+ * @returns True if the contract exists, false otherwise
+ */
+async function checkContractExists(
+  server: StellarSdk.SorobanRpc.Server,
+  contractIdString: string,
+): Promise<boolean> {
+  const now = Date.now();
+  const cached = contractExistenceCache.get(contractIdString);
+  if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
+    return cached.exists;
+  }
+
+  try {
+    // Convert contractIdString to LedgerKey for an account
+    const accountId = StellarSdk.xdr.AccountId.fromString(contractIdString);
+    const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
+    const response = await server.getLedgerEntries(ledgerKey);
+    const exists = response.entries && response.entries.length > 0;
+    contractExistenceCache.set(contractIdString, { exists, timestamp: now });
+    return exists;
+  } catch (err) {
+    // If there's an error (e.g., network, invalid ID), assume contract does not exist
+    contractExistenceCache.set(contractIdString, {
+      exists: false,
+      timestamp: now,
+    });
+    return false;
+  }
+}
+
 export interface TtlInfo {
   liveUntilLedger: number;
   expiresInLedgers: number;
@@ -39,10 +81,6 @@ export interface SimulateResult {
   error?: string;
   /** Contract ID that was not found (if error is "Contract not found") */
   contractId?: string;
-  /** Required signers for multi-signature transactions */
-  requiredSigners?: string[];
-  /** Threshold for multi-signature transactions */
-  threshold?: number;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
 }
 
@@ -144,12 +182,9 @@ export async function simulateTransaction(
   // Fetch TTL information
   const ttl = await fetchTtlInfo(server, allXdrEntries);
 
-  // Calculate resource fee using live network parameters
-  const resourceFee = await calculateResourceFee(
-    response.cost?.cpuInsns ?? "0",
-    response.cost?.memBytes ?? "0",
-    network,
-  );
+  // Extract required signers from auth entries
+  const auth = response.transactionData?.build().auth() ?? [];
+  const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
   return {
     success: true,
@@ -165,7 +200,6 @@ export async function simulateTransaction(
       cpuInsns: response.cost?.cpuInsns ?? "0",
       memBytes: response.cost?.memBytes ?? "0",
     },
-    resourceFee,
     requiredSigners,
     threshold,
     raw: response,

@@ -91,12 +91,15 @@ const stellarSimulationsTotal = new client.Counter({
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 =======
 // RPC health metrics
 const rpcErrorsTotal = new client.Counter({
   name: 'rpc_errors_total',
   help: 'Total number of RPC errors',
   labelNames: ['network', 'error_type'],
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -158,6 +161,9 @@ export const metrics = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======
@@ -188,6 +194,7 @@ export const metrics = {
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   recordSimulationDuration: (network: string, durationInSeconds: number) => {
     simulateDurationSeconds.observe({ network }, durationInSeconds);
   },
@@ -213,6 +220,8 @@ export const metrics = {
 >>>>>>> theirs
 =======
 >>>>>>> theirs
+=======
+>>>>>>> theirs
   // Active simulations
   incrementActiveSimulations: () => {
     activeSimulations.inc();
@@ -230,6 +239,9 @@ export const metrics = {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 =======

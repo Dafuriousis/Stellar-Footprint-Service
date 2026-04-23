@@ -48,7 +48,10 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 1. **Install dependencies:**
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
    ```bash
@@ -57,7 +60,10 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 2. **Set up environment variables:**
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
    ```bash
@@ -67,7 +73,10 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 3. **Build the project:**
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
    ```bash
@@ -138,7 +147,10 @@ This project uses several tools to maintain code quality:
 
 ### ESLint
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 - Configured in `eslint.config.mjs`
@@ -148,7 +160,10 @@ This project uses several tools to maintain code quality:
 
 ### Prettier
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 - Configured in `prettier.config.cjs`
@@ -157,7 +172,10 @@ This project uses several tools to maintain code quality:
 
 ### TypeScript
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 - Strict type checking enabled
@@ -166,7 +184,10 @@ This project uses several tools to maintain code quality:
 
 ### Pre-commit Hooks
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 - Husky is used to run pre-commit checks
@@ -177,7 +198,10 @@ This project uses several tools to maintain code quality:
 
 ### Running Tests
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 ```bash
@@ -186,7 +210,10 @@ npm test
 
 ### Test Coverage
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 - Aim for high test coverage
@@ -196,7 +223,10 @@ npm test
 
 ### Testing Guidelines
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 - Write tests before implementing features (TDD when possible)
@@ -212,7 +242,10 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 
 1. **Check for updates:**
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
    ```bash
@@ -221,7 +254,10 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 
 2. **Update package.json** with new exact versions:
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
    ```json
@@ -232,7 +268,10 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 
 3. **Update lockfile:**
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
    ```bash
@@ -247,7 +286,10 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 
 1. **Install the package:**
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
    ```bash
@@ -263,7 +305,10 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 1. **Ensure your branch** is up to date with `main`
 2. **Run all checks** locally:
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
    ```bash
@@ -341,7 +386,10 @@ Branch names must follow this pattern:
 
 Examples:
 <<<<<<< ours
+<<<<<<< ours
 
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
 - `feature/add-batch-simulation`
@@ -396,7 +444,11 @@ For new features, please:
 ---
 
 <<<<<<< ours
+<<<<<<< ours
 Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
+=======
+Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
+>>>>>>> theirs
 =======
 Thank you for contributing to Stellar Footprint Service! Your efforts help make this tool better for the entire Stellar community. 🚀
 >>>>>>> theirs

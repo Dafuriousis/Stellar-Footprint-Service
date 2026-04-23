@@ -80,6 +80,7 @@ app.get("/health", (req, res) => {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   const circuit = rpcCircuitBreaker.getState();
   res.status(200).json({
     status: "healthy",
@@ -91,6 +92,12 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     circuitBreaker: circuit,
+=======
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+>>>>>>> theirs
 =======
   res.status(200).json({
     status: "healthy",
@@ -169,10 +176,14 @@ if (require.main === module) {
 =======
 app.listen(PORT, () => {
 <<<<<<< ours
+<<<<<<< ours
   logger.info("stellar-footprint-service started", {
     port: PORT,
     environment: process.env.NODE_ENV || "development",
   });
+=======
+  console.warn(`stellar-footprint-service running on port ${PORT}`);
+>>>>>>> theirs
 =======
   console.warn(`stellar-footprint-service running on port ${PORT}`);
 >>>>>>> theirs

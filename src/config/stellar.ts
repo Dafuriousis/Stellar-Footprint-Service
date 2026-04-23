@@ -1,7 +1,14 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
 
+/** Supported Stellar networks */
 export type Network = "mainnet" | "testnet";
 
+/**
+ * Configuration for a Stellar network
+ * @property rpcUrl - The RPC endpoint URL for the network
+ * @property networkPassphrase - The network passphrase for transaction signing
+ * @property secretKey - The secret key for signing transactions (if needed)
+ */
 interface NetworkConfig {
   rpcUrl: string;
   networkPassphrase: string;
@@ -24,6 +31,12 @@ function createNetworkConfig(): Record<Network, NetworkConfig> {
   };
 }
 
+/**
+ * Get network configuration for the specified network
+ * @param network - The network to configure ("testnet" or "mainnet")
+ * @returns Network configuration object
+ * @throws Error if RPC URL is not configured for the network
+ */
 export function getNetworkConfig(network: Network = "testnet"): NetworkConfig {
   const config = createNetworkConfig()[network];
   if (!config.rpcUrl) {
@@ -41,6 +54,12 @@ interface PoolEntry {
 
 const pool = new Map<Network, PoolEntry>();
 
+/**
+ * Get or create an RPC server instance for the specified network
+ * Uses connection pooling with TTL to reuse server instances
+ * @param network - The network to connect to ("testnet" or "mainnet")
+ * @returns Soroban RPC server instance
+ */
 export function getRpcServer(
   network: Network = "testnet",
 ): StellarSdk.SorobanRpc.Server {

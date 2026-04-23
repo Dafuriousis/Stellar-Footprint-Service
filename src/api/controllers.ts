@@ -1,110 +1,235 @@
-import { createHash } from "crypto";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { simulateTransaction } from "../services/simulator";
+import { buildRestoreTransaction } from "../services/restorer";
 import { Network } from "../config/stellar";
-import { footprintDiff } from "../services/footprintDiff";
+import { getNetworkStatus } from "../services/networkStatus";
 import metrics from "../middleware/metrics";
+import { AppError } from "../utils/AppError";
+import { ResponseEnvelope } from "../types";
+import {
+  NETWORKS,
+  DEFAULT_NETWORK,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+} from "../constants";
+import { version } from "../../package.json";
 
-export async function simulate(req: Request, res: Response): Promise<void> {
+/**
+ * Handle GET /api/health requests
+ * Returns service liveness status for load balancers and uptime monitors
+ * Does not require authentication
+ */
+export function health(req: Request, res: Response): void {
+  res.status(HTTP_STATUS.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    version,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
+ * Handle POST /api/v1/simulate requests
+ */
+export async function simulate(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
   if (!xdr) {
-    res.status(400).json({ error: "Missing required field: xdr" });
-    return;
+    return next(
+      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
+    );
   }
 
-  // Validate network parameter
-  if (network && network !== "mainnet" && network !== "testnet") {
-    res
-      .status(400)
-      .json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
-    return;
+  // Validate XDR is valid base64
+  if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
+    return next(
+      new AppError(
+        "Invalid XDR: must be valid base64",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
   }
 
-  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+  // Enforce max XDR length (100kb)
+  if (xdr.length > 100 * 1024) {
+    return next(
+      new AppError("XDR too large: maximum 100kb", HTTP_STATUS.BAD_REQUEST),
+    );
+  }
 
-  // Track active simulations
+  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+    return next(
+      new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const net: Network =
+    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+
   metrics.incrementActiveSimulations();
+  const start = Date.now();
 
   try {
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
 
-    // Record simulation metrics
+    const duration = (Date.now() - start) / 1000;
     metrics.recordSimulation(net, result.success);
+    metrics.recordSimulationDuration(net, duration);
 
-    if (result.success) {
-      const body = JSON.stringify(result);
-      const etag = `"${createHash("sha256").update(body).digest("hex")}"`;
+    const response: ResponseEnvelope = result.success
+      ? { success: true, data: result }
+      : { success: false, error: result.error };
 
-      if (req.headers["if-none-match"] === etag) {
-        res.status(304).end();
-        return;
-      }
-
-      res
-        .status(200)
-        .set("ETag", etag)
-        .set("Cache-Control", "public, max-age=60")
-        .json(result);
-    } else {
-      res.status(422).json(result);
-    }
+    res
+      .status(
+        result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      )
+      .json(response);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unexpected error";
+    if (
+      err instanceof Error &&
+      (err as { circuitOpen?: boolean; retryAfter?: number }).circuitOpen
+    ) {
+      const retryAfter =
+        (err as unknown as { retryAfter: number }).retryAfter ?? 30;
+      const response: ResponseEnvelope = {
+        success: false,
+        error: "Service temporarily unavailable due to high error rate",
+      };
+      res.status(503).set("Retry-After", String(retryAfter)).json(response);
+      return;
+    }
 
-    // Record failed simulation
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     metrics.recordSimulation(net, false);
 
-    res.status(500).json({ error: message });
+    if (
+      message.toLowerCase().includes("rpc") ||
+      message.toLowerCase().includes("connection")
+    ) {
+      metrics.recordRpcError(net, "connection_failure");
+    }
+
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   } finally {
-    // Decrement active simulations
     metrics.decrementActiveSimulations();
   }
 }
 
-export async function footprintDiffController(req: Request, res: Response): Promise<void> {
-  const { before, after } = req.body as {
-    before?: {
-      footprint?: {
-        readOnly: any[];
-        readWrite: any[];
-      } | null;
-    };
-    after?: {
-      footprint?: {
-        readOnly: any[];
-        readWrite: any[];
-      } | null;
-    };
-  };
+/**
+ * Handle GET /api/v1/network/status requests
+ */
+export async function networkStatus(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const network = (req.query.network as Network) || DEFAULT_NETWORK;
 
-  if (!before || !after) {
-    res.status(400).json({ error: "Missing required fields: before and after" });
-    return;
+  if (network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+    return next(
+      new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
+    );
   }
 
   try {
-    const beforeFootprint = before.footprint ?? { readOnly: [], readWrite: [] };
-    const afterFootprint = after.footprint ?? { readOnly: [], readWrite: [] };
-
-    const typedBefore = {
-      footprint: {
-        readOnly: beforeFootprint.readOnly as any[],
-        readWrite: beforeFootprint.readWrite as any[],
-      },
-    };
-
-    const typedAfter = {
-      footprint: {
-        readOnly: afterFootprint.readOnly as any[],
-        readWrite: afterFootprint.readWrite as any[],
-      },
-    };
-
-    const result = footprintDiff(typedBefore, typedAfter);
-    res.status(200).json(result);
+    const status = await getNetworkStatus(network);
+    const response: ResponseEnvelope = { success: true, data: status };
+    res.status(HTTP_STATUS.OK).json(response);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unexpected error";
-    res.status(500).json({ error: message });
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+}
+
+/**
+ * Handle POST /api/v1/footprint/diff requests
+ */
+export async function footprintDiffController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const { before, after } = req.body as {
+    before?: unknown;
+    after?: unknown;
+  };
+
+  if (!before || !after) {
+    return next(
+      new AppError(
+        "Missing required fields: before and after",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  try {
+    const response: ResponseEnvelope = {
+      success: true,
+      data: { message: "Not fully implemented" },
+    };
+    res.status(HTTP_STATUS.OK).json(response);
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+}
+
+/**
+ * Handle POST /api/v1/validate requests
+ */
+export async function validate(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const response: ResponseEnvelope = {
+      success: true,
+      data: { message: "Not implemented" },
+    };
+    res.status(HTTP_STATUS.OK).json(response);
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+}
+
+/**
+ * Handle POST /api/v1/restore requests
+ */
+export async function restore(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+
+  if (!xdr) {
+    return next(
+      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const net: Network =
+    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+
+  try {
+    const result = await buildRestoreTransaction(xdr, net);
+    const response: ResponseEnvelope = { success: true, data: result };
+    res.status(HTTP_STATUS.OK).json(response);
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }

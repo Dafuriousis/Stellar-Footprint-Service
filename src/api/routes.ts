@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { simulate, footprintDiffController, validate, networkStatus } from "./controllers";
+import { simulate, simulateAsync, footprintDiffController, validate, networkStatus } from "./controllers";
 
 const router = Router();
 
-// Create the simulate controller with the real simulator injected
-const simulate = createSimulateController(simulateTransaction);
-
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulate);
+
+// POST /simulate/async — accepts { xdr, network, webhookUrl }, returns 202 with jobId
+router.post("/simulate/async", simulateAsync);
 
 // GET /network/status — returns current network information
 router.get("/network/status", networkStatus);

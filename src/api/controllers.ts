@@ -10,6 +10,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
 } from "../constants";
+import { createJob, deliverWebhook } from "../services/webhook";
 
 /**
  * Handle POST /api/simulate requests
@@ -38,7 +39,6 @@ export async function simulate(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
   }
-}
 
   const net: Network = network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
 
@@ -55,6 +55,53 @@ export async function simulate(
   } finally {
     metrics.decrementActiveSimulations();
   }
+}
+
+/**
+ * Handle POST /api/simulate/async requests
+ * Accepts a webhookUrl, enqueues simulation, returns 202 with jobId
+ */
+export async function simulateAsync(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const { xdr, network, webhookUrl } = req.body as {
+    xdr?: string;
+    network?: Network;
+    webhookUrl?: string;
+  };
+
+  if (!xdr) {
+    return next(new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST));
+  }
+
+  if (!webhookUrl) {
+    return next(new AppError("Missing required field: webhookUrl", HTTP_STATUS.BAD_REQUEST));
+  }
+
+  if (
+    network &&
+    network !== NETWORKS.MAINNET &&
+    network !== NETWORKS.TESTNET
+  ) {
+    return next(
+      new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const net: Network = network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const jobId = createJob(webhookUrl);
+
+  res.status(HTTP_STATUS.ACCEPTED).json({ jobId });
+
+  // Run simulation and deliver webhook in background
+  simulateTransaction(xdr, net, res.locals.abortSignal)
+    .then((result) => deliverWebhook(jobId, result))
+    .catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+      deliverWebhook(jobId, { success: false, error: message });
+    });
 }
 
 /**

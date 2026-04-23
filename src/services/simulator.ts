@@ -197,12 +197,16 @@ export interface SimulateResult {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
   /** Per-operation results for multi-operation transactions */
   operations?: SimulateResult[];
   /** Whether this is a fee-bump transaction */
   feeBump?: boolean;
   /** Diagnostic events from contract execution */
   diagnosticEvents?: string[];
+<<<<<<< ours
 =======
   requiredSigners?: string[];
   threshold?: number;
@@ -217,6 +221,8 @@ export interface SimulateResult {
 >>>>>>> theirs
   /** Whether this result was served from cache */
   cacheHit?: boolean;
+=======
+>>>>>>> theirs
 }
 
 /** Shared simulation result LRU cache (singleton) */
@@ -576,6 +582,7 @@ export async function simulateTransaction(
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 
 <<<<<<< ours
+<<<<<<< ours
   if (tx instanceof StellarSdk.FeeBumpTransaction) {
     const innerTx = tx.innerTransaction;
     const innerXdr = innerTx.toXDR();
@@ -585,6 +592,13 @@ export async function simulateTransaction(
       signal,
       ledgerSequence,
     );
+=======
+  // Handle fee-bump transactions
+  if (tx instanceof StellarSdk.FeeBumpTransaction) {
+    const innerTx = tx.innerTransaction;
+    const innerXdr = innerTx.toXDR();
+    const result = await simulateTransaction(innerXdr, network, signal, ledgerSequence);
+>>>>>>> theirs
     result.feeBump = true;
     return result;
   }
@@ -627,21 +641,30 @@ export async function simulateTransaction(
     };
   }
 
+<<<<<<< ours
   const results =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (response as any).results ||
     (response.transactionData
       ? [{ transactionData: response.transactionData, cost: response.cost }]
       : []);
+=======
+  const results = response.results || (response.transactionData ? [{ transactionData: response.transactionData, cost: response.cost }] : []);
+>>>>>>> theirs
 
   if (results.length === 0) {
     return {
       success: false,
+<<<<<<< ours
       error: "Simulation succeeded but no transactionData or results found.",
+=======
+      error: "Simulation succeeded but no transactionData or results; cannot extract footprint.",
+>>>>>>> theirs
       raw: response,
     };
   }
 
+<<<<<<< ours
   const resourceFee = await calculateResourceFee(
     response.cost?.cpuInsns ?? "0",
     response.cost?.memBytes ?? "0",
@@ -696,6 +719,19 @@ export async function simulateTransaction(
       };
     }
 
+=======
+  if (results.length === 1) {
+    // Single operation
+    const result = results[0];
+    if (!result.transactionData) {
+      return {
+        success: false,
+        error: "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+        raw: response,
+      };
+    }
+
+>>>>>>> theirs
     const footprint = result.transactionData.build().resources().footprint();
     const rawFootprint = {
       readOnly: footprint.readOnly().map((e) => e.toXDR("base64")),
@@ -704,6 +740,9 @@ export async function simulateTransaction(
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
     // Parse footprint entries to extract contract IDs and classify types
     const parsedFootprint = parseFootprint(rawFootprint);
 
@@ -755,13 +794,20 @@ export async function simulateTransaction(
     };
   } else {
     // Multi operation
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     const operations: SimulateResult[] = [];
     let allReadOnly: FootprintEntry[] = [];
     let allReadWrite: FootprintEntry[] = [];
     let allContracts: string[] = [];
 <<<<<<< ours
+<<<<<<< ours
     const allTtl: Record<string, TtlInfo> = {};
+=======
+    let allTtl: Record<string, TtlInfo> = {};
+>>>>>>> theirs
 =======
     let allTtl: Record<string, TtlInfo> = {};
 >>>>>>> theirs
@@ -770,6 +816,7 @@ export async function simulateTransaction(
     let allRawReadOnly: string[] = [];
     let allRawReadWrite: string[] = [];
 
+<<<<<<< ours
 <<<<<<< ours
     for (const res of results) {
       const processed = await processSimulationResult(
@@ -811,6 +858,8 @@ export async function simulateTransaction(
         arr.findIndex(
           (i) => i.contractId === item.contractId && i.xdr === item.xdr,
 =======
+=======
+>>>>>>> theirs
     for (const result of results) {
       if (!result.transactionData) {
         return {
@@ -885,12 +934,16 @@ export async function simulateTransaction(
       (item, index, arr) =>
         arr.findIndex(
           (i) => i.contractId === item.contractId && i.key === item.key,
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
         ) === index,
     );
     const dedupReadWrite = allReadWrite.filter(
       (item, index, arr) =>
         arr.findIndex(
+<<<<<<< ours
 <<<<<<< ours
           (i) => i.contractId === item.contractId && i.xdr === item.xdr,
         ) === index,
@@ -901,12 +954,17 @@ export async function simulateTransaction(
       allRawReadWrite,
     );
 =======
+=======
+>>>>>>> theirs
           (i) => i.contractId === item.contractId && i.key === item.key,
         ) === index,
     );
     const dedupContracts = [...new Set(allContracts)];
     const dedupRawReadOnly = [...new Set(allRawReadOnly)];
     const dedupRawReadWrite = [...new Set(allRawReadWrite)];
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
     return {
@@ -916,7 +974,11 @@ export async function simulateTransaction(
         readWrite: dedupReadWrite,
       },
 <<<<<<< ours
+<<<<<<< ours
       contracts: [...new Set(allContracts)],
+=======
+      contracts: dedupContracts,
+>>>>>>> theirs
 =======
       contracts: dedupContracts,
 >>>>>>> theirs
@@ -924,6 +986,7 @@ export async function simulateTransaction(
       ttl: allTtl,
       optimized,
       rawFootprint: {
+<<<<<<< ours
 <<<<<<< ours
         readOnly: [...new Set(allRawReadOnly)],
         readWrite: [...new Set(allRawReadWrite)],
@@ -934,10 +997,16 @@ export async function simulateTransaction(
         readWrite: dedupRawReadWrite,
       },
 >>>>>>> theirs
+=======
+        readOnly: dedupRawReadOnly,
+        readWrite: dedupRawReadWrite,
+      },
+>>>>>>> theirs
       cost: {
         cpuInsns: response.cost?.cpuInsns ?? "0",
         memBytes: response.cost?.memBytes ?? "0",
       },
+<<<<<<< ours
 <<<<<<< ours
       resourceFee,
       operations,
@@ -979,9 +1048,14 @@ export async function simulateTransaction(
 >>>>>>> theirs
 }
 =======
+=======
+>>>>>>> theirs
       operations,
       raw: response,
       diagnosticEvents: response.events?.filter(e => e.type().name === 'diagnostic').map(e => e.toXDR('base64')) || [],
     };
   }
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs

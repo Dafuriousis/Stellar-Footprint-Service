@@ -4,7 +4,11 @@ const options = {
   host: "localhost",
   port: process.env.PORT || 3000,
 <<<<<<< ours
+<<<<<<< ours
   path: "/api/health",
+=======
+  path: '/api/health',
+>>>>>>> theirs
 =======
   path: '/api/health',
 >>>>>>> theirs

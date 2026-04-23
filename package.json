@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon",
+    "dev": "ts-node src/index.ts",
     "pm2:start": "pm2 start ecosystem.config.js --env production",
     "pm2:start:staging": "pm2 start ecosystem.config.js --env staging",
     "pm2:stop": "pm2 stop stellar-footprint-service",
@@ -40,7 +40,6 @@
     "husky": "9.1.7",
     "jest": "30.3.0",
     "lint-staged": "15.2.0",
-    "nodemon": "3.0.2",
     "prettier": "3.8.3",
     "solhint": "6.2.1",
     "ts-jest": "29.4.9",

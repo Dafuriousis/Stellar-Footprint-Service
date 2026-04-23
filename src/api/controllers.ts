@@ -122,6 +122,7 @@ export async function simulate(
   }
 }
 
+<<<<<<< ours
 /**
  * Handle GET /api/v1/network/status requests
  */
@@ -233,4 +234,15 @@ export async function restore(
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
+=======
+export async function footprintDiffController(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  res.status(501).json({ error: "Not implemented" });
+}
+
+export async function validate(req: Request, res: Response): Promise<void> {
+  res.status(501).json({ error: "Not implemented" });
+>>>>>>> theirs
 }

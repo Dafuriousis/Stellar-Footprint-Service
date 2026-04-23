@@ -58,9 +58,9 @@ jest.mock("@stellar/stellar-sdk", () => {
 import * as StellarSdk from "@stellar/stellar-sdk";
 
 const isSimulationError = StellarSdk.SorobanRpc.Api
-  .isSimulationError as jest.Mock;
+  .isSimulationError as unknown as jest.Mock;
 const isSimulationRestore = StellarSdk.SorobanRpc.Api
-  .isSimulationRestore as jest.Mock;
+  .isSimulationRestore as unknown as jest.Mock;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

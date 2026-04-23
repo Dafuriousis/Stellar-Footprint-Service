@@ -35,9 +35,14 @@ async function checkContractExists(
   }
 
   try {
-    // Convert contractIdString to LedgerKey for an account
-    const accountId = StellarSdk.xdr.AccountId.fromString(contractIdString);
-    const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
+    // Build a LedgerKey for the account using the contract's public key
+    const keypair = StellarSdk.Keypair.fromPublicKey(contractIdString);
+    const accountId = StellarSdk.xdr.PublicKey.publicKeyTypeEd25519(
+      keypair.rawPublicKey(),
+    );
+    const ledgerKey = StellarSdk.xdr.LedgerKey.account(
+      new StellarSdk.xdr.LedgerKeyAccount({ accountId }),
+    );
     const response = await server.getLedgerEntries(ledgerKey);
     const exists = response.entries && response.entries.length > 0;
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });

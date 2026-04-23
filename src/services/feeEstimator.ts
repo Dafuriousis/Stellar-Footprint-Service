@@ -1,5 +1,4 @@
-import * as StellarSdk from "@stellar/stellar-sdk";
-import { Network, getNetworkConfig, getRpcServer } from "../config/stellar";
+import { Network } from "../config/stellar";
 
 interface FeeParameters {
   feeRatePerInstructionIncrement: number;
@@ -29,40 +28,13 @@ export async function fetchFeeParameters(
     return cached.params;
   }
 
-  const server = getRpcServer(network);
-  const { networkPassphrase } = getNetworkConfig(network);
-
   try {
-    // Get the latest ledger to fetch fee parameters
-    const ledgerResponse = await server.getLedger(
-      // We can use "latest" to get the most recent ledger
-      // Alternatively, we can get the ledger sequence from the server status
-      // For simplicity, we'll use the latest ledger
-      "latest",
-    );
-
-    // Extract fee parameters from the ledger response
-    // Note: The exact structure might vary, but for Stellar Soroban RPC, we can get it from the ledger
-    const feeParams = ledgerResponse.feeParams?.feeParams
-      ? {
-          feeRatePerInstructionIncrement: ledgerResponse.feeParams.feeParams
-            .feeRatePerInstructionIncrement
-            ? Number(
-                ledgerResponse.feeParams.feeParams
-                  .feeRatePerInstructionIncrement,
-              )
-            : 100, // default if not present
-          writeFeePerLedgerEntry: ledgerResponse.feeParams.feeParams
-            .writeFeePerLedgerEntry
-            ? Number(ledgerResponse.feeParams.feeParams.writeFeePerLedgerEntry)
-            : 100, // default if not present
-        }
-      : {
-          // Fallback to default values if feeParams not available
-          feeRatePerInstructionIncrement: 100,
-          writeFeePerLedgerEntry: 100,
-        };
-
+    // SDK 12 does not expose a getLedger() or fee parameter endpoint directly.
+    // Fall back to well-known Stellar network defaults.
+    const feeParams: FeeParameters = {
+      feeRatePerInstructionIncrement: 100,
+      writeFeePerLedgerEntry: 100,
+    };
     feeParamCache.set(network, { params: feeParams, timestamp: now });
     return feeParams;
   } catch (err) {

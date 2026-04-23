@@ -41,7 +41,7 @@ export async function getNetworkStatus(
 
   const result: NetworkStatusResult = {
     ledger: latestLedger.sequence,
-    baseFee: latestLedger.baseFee.toString(),
+    baseFee: "100", // base fee in stroops; not exposed by getLatestLedger in SDK 12
     networkPassphrase,
     rpcLatencyMs,
   };

@@ -42,8 +42,8 @@ app.get("/metrics", async (req, res) => {
   try {
     res.set("Content-Type", "text/plain");
     res.end(await metrics.getMetrics());
-  } catch (error) {
-    res.status(500).end(error);
+  } catch (error: unknown) {
+    res.status(500).end(error instanceof Error ? error.message : String(error));
   }
 });
 

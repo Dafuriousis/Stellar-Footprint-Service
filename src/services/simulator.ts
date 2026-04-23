@@ -13,6 +13,7 @@ import { optimizeFootprint } from "./optimizer";
 <<<<<<< ours
 import { calculateResourceFee } from "./feeEstimator";
 <<<<<<< ours
+<<<<<<< ours
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import {
@@ -41,6 +42,9 @@ import {
 >>>>>>> theirs
 =======
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
+>>>>>>> theirs
+=======
+import metrics from "../middleware/metrics";
 >>>>>>> theirs
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
@@ -77,11 +81,21 @@ async function _checkContractExists(
   const now = Date.now();
   const cached = contractExistenceCache.get(contractIdString);
   if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
+<<<<<<< ours
     metrics.recordCacheHit("contract_existence");
     return cached.exists;
   }
 
   metrics.recordCacheMiss("contract_existence");
+=======
+    // Record cache hit
+    metrics.recordCacheHit('contract_existence');
+    return cached.exists;
+  }
+
+  // Record cache miss
+  metrics.recordCacheMiss('contract_existence');
+>>>>>>> theirs
 
   try {
 <<<<<<< ours
@@ -125,8 +139,16 @@ async function _checkContractExists(
     const exists = response.entries && response.entries.length > 0;
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });
     return exists;
+<<<<<<< ours
   } catch {
     metrics.recordRpcError("unknown", "get_ledger_entries_failure");
+=======
+  } catch (err) {
+    // Record RPC error
+    metrics.recordRpcError('unknown', 'get_ledger_entries_failure');
+
+    // If there's an error (e.g., network, invalid ID), assume contract does not exist
+>>>>>>> theirs
     contractExistenceCache.set(contractIdString, {
       exists: false,
       timestamp: now,
@@ -174,12 +196,17 @@ export interface SimulateResult {
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
   /** Per-operation results for multi-operation transactions */
   operations?: SimulateResult[];
   /** Whether this is a fee-bump transaction */
   feeBump?: boolean;
   /** Diagnostic events from contract execution */
   diagnosticEvents?: string[];
+=======
+  requiredSigners?: string[];
+  threshold?: number;
+>>>>>>> theirs
 }
 
 >>>>>>> theirs
@@ -248,12 +275,19 @@ async function fetchTtlInfo(
 
     return ttlMap;
   } catch {
+<<<<<<< ours
     metrics.recordRpcError(network, "fetch_ttl_failure");
+=======
+    // Record RPC error
+    metrics.recordRpcError('unknown', 'fetch_ttl_failure');
+    // If TTL fetching fails, return empty map
+>>>>>>> theirs
     return {};
   }
 }
 
 /**
+<<<<<<< ours
  * Calculate footprint size statistics
  */
 function calculateFootprintStats(
@@ -499,6 +533,24 @@ async function processSimulationResult(
 /**
  * Simulate a Soroban transaction and extract its footprint
  */
+=======
+ * Extract required signers from auth entries.
+ * Note: This is an internal helper that was previously missing.
+ */
+function extractRequiredSigners(auth: any[]): { requiredSigners: string[], threshold: number } {
+    const signers = new Set<string>();
+    let threshold = 0;
+
+    for (const entry of auth) {
+        if (entry.address && entry.address()) {
+            signers.add(entry.address().toString());
+        }
+    }
+
+    return { requiredSigners: Array.from(signers), threshold };
+}
+
+>>>>>>> theirs
 export async function simulateTransaction(
   xdr: string,
   network: Network = "testnet",
@@ -523,6 +575,7 @@ export async function simulateTransaction(
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 
+<<<<<<< ours
   if (tx instanceof StellarSdk.FeeBumpTransaction) {
     const innerTx = tx.innerTransaction;
     const innerXdr = innerTx.toXDR();
@@ -552,6 +605,13 @@ export async function simulateTransaction(
     );
   } catch (err) {
     metrics.recordRpcError(network, "simulate_transaction_failure");
+=======
+  let response;
+  try {
+    response = await server.simulateTransaction(tx, { signal } as never);
+  } catch (err) {
+    metrics.recordRpcError(network, 'simulate_transaction_failure');
+>>>>>>> theirs
     throw err;
   }
 

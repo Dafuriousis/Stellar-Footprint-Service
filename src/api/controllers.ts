@@ -50,6 +50,7 @@ import { version } from "../../package.json";
 import { ResponseEnvelope } from "../types";
 >>>>>>> theirs
 
+<<<<<<< ours
 /**
  * Handle GET /api/health requests
  * Returns service liveness status for load balancers and uptime monitors
@@ -161,16 +162,27 @@ export async function simulate(
     const response: ResponseEnvelope = { success: false, error: "Missing required field: xdr" };
     res.status(400).json(response);
 >>>>>>> theirs
+=======
+export async function simulate(req: Request, res: Response): Promise<void> {
+  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+
+  if (!xdr) {
+    res.status(400).json({ error: "Missing required field: xdr" });
+>>>>>>> theirs
     return;
   }
 
   // Validate network parameter
   if (network && network !== "mainnet" && network !== "testnet") {
+<<<<<<< ours
     const response: ResponseEnvelope = {
       success: false,
       error: "Invalid network. Use 'testnet' or 'mainnet'",
     };
     res.status(400).json(response);
+=======
+    res.status(400).json({ error: "Invalid network. Use 'testnet' or 'mainnet'" });
+>>>>>>> theirs
     return;
 >>>>>>> theirs
   }
@@ -202,6 +214,7 @@ export async function simulate(
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
 
     const duration = (Date.now() - start) / 1000;
+<<<<<<< ours
     metrics.recordSimulation(net, result.success);
 <<<<<<< ours
 <<<<<<< ours
@@ -310,6 +323,12 @@ export async function simulateBatch(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
   }
+=======
+
+    // Record simulation metrics
+    metrics.recordSimulation(net, result.success);
+    metrics.recordSimulationDuration(net, duration);
+>>>>>>> theirs
 
   const net: Network =
     network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
@@ -472,6 +491,7 @@ export async function simulateBatch(
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
     metrics.recordSimulation(net, false);
 
+<<<<<<< ours
     if (
       message.toLowerCase().includes("rpc") ||
       message.toLowerCase().includes("connection")
@@ -480,11 +500,20 @@ export async function simulateBatch(
     }
 
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+=======
+    // Record RPC error if applicable
+    if (message.toLowerCase().includes('rpc') || message.toLowerCase().includes('connection')) {
+        metrics.recordRpcError(net, 'connection_failure');
+    }
+
+    res.status(500).json({ error: message });
+>>>>>>> theirs
   } finally {
     metrics.decrementActiveSimulations();
   }
 }
 
+<<<<<<< ours
 <<<<<<< ours
 /**
 <<<<<<< ours
@@ -818,4 +847,53 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
   }
 
   res.status(HTTP_STATUS.OK).json(result);
+=======
+export async function footprintDiffController(req: Request, res: Response): Promise<void> {
+  const { before, after } = req.body as {
+    before?: {
+      footprint?: {
+        readOnly: any[];
+        readWrite: any[];
+      } | null
+    };
+    after?: {
+      footprint?: {
+        readOnly: any[];
+        readWrite: any[];
+      } | null
+    };
+  };
+
+  if (!before || !after) {
+    res.status(400).json({ error: "Missing required fields: before and after" });
+    return;
+  }
+
+  try {
+    // Convert the plain objects to the expected types
+    const beforeFootprint = before.footprint ?? { readOnly: [], readWrite: [] };
+    const afterFootprint = after.footprint ?? { readOnly: [], readWrite: [] };
+
+    // Ensure the footprint entries are properly typed
+    const typedBefore = {
+      footprint: {
+        readOnly: beforeFootprint.readOnly as any[],
+        readWrite: beforeFootprint.readWrite as any[]
+      }
+    };
+
+    const typedAfter = {
+      footprint: {
+        readOnly: afterFootprint.readOnly as any[],
+        readWrite: afterFootprint.readWrite as any[]
+      }
+    };
+
+    const result = footprintDiff(typedBefore, typedAfter);
+    res.status(200).json(result);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unexpected error";
+    res.status(500).json({ error: message });
+  }
+>>>>>>> theirs
 }

@@ -1,5 +1,9 @@
 # Stage 1: Build
+<<<<<<< ours
 FROM node:22-alpine AS builder
+=======
+FROM node:18-alpine AS builder
+>>>>>>> theirs
 
 WORKDIR /app
 
@@ -19,7 +23,11 @@ COPY . .
 RUN pnpm run build
 
 # Stage 2: Production Dependencies
+<<<<<<< ours
 FROM node:22-alpine AS prod-deps
+=======
+FROM node:18-alpine AS prod-deps
+>>>>>>> theirs
 
 WORKDIR /app
 
@@ -33,7 +41,11 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 
 # Stage 3: Runtime
+<<<<<<< ours
 FROM node:22-alpine AS runtime
+=======
+FROM node:18-alpine AS runtime
+>>>>>>> theirs
 
 WORKDIR /app
 

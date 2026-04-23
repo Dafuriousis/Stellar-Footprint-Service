@@ -188,6 +188,7 @@ app.use("/api/v1", routes);
 =======
 >>>>>>> theirs
 
+<<<<<<< ours
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
   res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
@@ -231,12 +232,15 @@ app.use("/api/:path(*)", (req, res) => {
   );
 });
 =======
+=======
+>>>>>>> theirs
 // Only start the server when this file is run directly (not imported in tests)
 if (require.main === module) {
   app.listen(PORT, () => {
     console.warn(`stellar-footprint-service running on port ${PORT}`);
   });
 }
+<<<<<<< ours
 >>>>>>> theirs
 
 // Error handling middleware (must be last)
@@ -272,6 +276,8 @@ app.listen(PORT, () => {
   console.warn(`stellar-footprint-service running on port ${PORT}`);
 >>>>>>> theirs
 });
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 export default app;

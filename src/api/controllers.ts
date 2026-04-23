@@ -43,3 +43,14 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     metrics.decrementActiveSimulations();
   }
 }
+
+export async function footprintDiffController(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  res.status(501).json({ error: "Not implemented" });
+}
+
+export async function validate(req: Request, res: Response): Promise<void> {
+  res.status(501).json({ error: "Not implemented" });
+}

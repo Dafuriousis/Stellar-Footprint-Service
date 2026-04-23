@@ -12,7 +12,10 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const COMPRESSION_THRESHOLD = parseInt(process.env.COMPRESSION_THRESHOLD || "1024", 10);
+const COMPRESSION_THRESHOLD = parseInt(
+  process.env.COMPRESSION_THRESHOLD || "1024",
+  10,
+);
 
 // Middleware
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
@@ -45,8 +48,11 @@ app.get("/metrics", async (req, res) => {
 // API routes
 app.use("/api", routes);
 
-app.listen(PORT, () => {
-  console.warn(`stellar-footprint-service running on port ${PORT}`);
-});
+// Only start the server when this file is run directly (not imported in tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.warn(`stellar-footprint-service running on port ${PORT}`);
+  });
+}
 
 export default app;

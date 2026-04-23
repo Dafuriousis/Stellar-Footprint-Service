@@ -28,7 +28,8 @@ export async function simulate(req: Request, res: Response): Promise<void> {
     // Record simulation metrics
     metrics.recordSimulation(net, result.success);
     
-    res.status(result.success ? 200 : 422).json(result);
+    const { raw, ...clientResult } = result;
+    res.status(result.success ? 200 : 422).json(clientResult);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unexpected error";
     

@@ -80,10 +80,19 @@ const mockBuild = jest
     resources: mockResources,
     auth: jest.fn().mockReturnValue([]),
   });
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 const mockBuild = jest.fn().mockReturnValue({
   resources: mockResources,
   auth: jest.fn().mockReturnValue([]),
 });
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 const mockTransactionData = { build: mockBuild };
 
 const mockTx = {};

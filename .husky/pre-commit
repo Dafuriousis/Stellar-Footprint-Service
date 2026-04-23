@@ -4,4 +4,7 @@
 pnpm format
 pnpm lint
 pnpm tsc --noEmit
+<<<<<<< ours
 
+=======
+>>>>>>> theirs

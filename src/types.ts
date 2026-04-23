@@ -3,6 +3,7 @@ export interface ResponseEnvelope<T = unknown> {
   data?: T;
   error?: string;
 }
+<<<<<<< ours
 
 export interface FootprintStats {
   readOnlyCount: number;
@@ -34,3 +35,5 @@ export interface TtlInfo {
   liveUntilLedger: number;
   expiresInLedgers: number;
 }
+=======
+>>>>>>> theirs

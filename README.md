@@ -868,6 +868,21 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 
 ---
 
+## 🚢 Deployment
+
+Step-by-step guides for deploying to common platforms:
+
+| Platform | Guide |
+|---|---|
+| Railway | [docs/deployment.md#1-railway](./docs/deployment.md#1-railway) |
+| Render | [docs/deployment.md#2-render](./docs/deployment.md#2-render) |
+| Fly.io | [docs/deployment.md#3-flyio](./docs/deployment.md#3-flyio) |
+| Bare VPS + PM2 | [docs/deployment.md#4-bare-vps-with-pm2](./docs/deployment.md#4-bare-vps-with-pm2) |
+
+See the full [Deployment Guide](./docs/deployment.md) for environment variable reference and health check configuration.
+
+---
+
 ## 📝 Roadmap
 
 - [ ] Add batch simulation endpoint
@@ -875,7 +890,7 @@ This project uses exact versions for all dependencies to ensure reproducible bui
 - [ ] Add Prometheus metrics
 - [ ] Support Futurenet
 - [ ] Build OpenAPI/Swagger docs
-- [ ] Add Docker deployment guide
+- [x] Add deployment guide
 
 See [ISSUES.md](ISSUES.md) for the full list.
 

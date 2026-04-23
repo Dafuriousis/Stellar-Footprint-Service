@@ -8,7 +8,12 @@ import {
   type ContractType,
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 import { calculateResourceFee } from "./feeEstimator";
+<<<<<<< ours
+<<<<<<< ours
 import metrics from "../middleware/metrics";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import {
@@ -18,6 +23,29 @@ import {
   ContractInvocation,
   TtlInfo,
 } from "../types";
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+import { LRUCache, buildCacheKey } from "./cache";
+import {
+  SIMULATION_CACHE_TTL_MS,
+  SIMULATION_CACHE_MAX_SIZE,
+} from "../constants";
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+import { rpcCircuitBreaker } from "../utils/circuitBreaker";
+>>>>>>> theirs
+=======
+import metrics from "../middleware/metrics";
+>>>>>>> theirs
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -53,17 +81,50 @@ async function _checkContractExists(
   const now = Date.now();
   const cached = contractExistenceCache.get(contractIdString);
   if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
+<<<<<<< ours
     metrics.recordCacheHit("contract_existence");
     return cached.exists;
   }
 
   metrics.recordCacheMiss("contract_existence");
+=======
+    // Record cache hit
+    metrics.recordCacheHit('contract_existence');
+    return cached.exists;
+  }
+
+  // Record cache miss
+  metrics.recordCacheMiss('contract_existence');
+>>>>>>> theirs
 
   try {
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
     // Convert contractIdString to LedgerKey for an account
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const accountId = (StellarSdk.xdr as any).AccountId.fromString(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+    // Build a LedgerKey for the account using the contract's public key
+    const keypair = StellarSdk.Keypair.fromPublicKey(contractIdString);
+    const accountId = StellarSdk.xdr.PublicKey.publicKeyTypeEd25519(
+      keypair.rawPublicKey(),
+    );
+    const ledgerKey = StellarSdk.xdr.LedgerKey.account(
+      new StellarSdk.xdr.LedgerKeyAccount({ accountId }),
+    );
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
     const response = await server.getLedgerEntries(ledgerKey);
     const accountId =
       StellarSdk.StrKey.decodeEd25519PublicKey(contractIdString);
@@ -78,8 +139,16 @@ async function _checkContractExists(
     const exists = response.entries && response.entries.length > 0;
     contractExistenceCache.set(contractIdString, { exists, timestamp: now });
     return exists;
+<<<<<<< ours
   } catch {
     metrics.recordRpcError("unknown", "get_ledger_entries_failure");
+=======
+  } catch (err) {
+    // Record RPC error
+    metrics.recordRpcError('unknown', 'get_ledger_entries_failure');
+
+    // If there's an error (e.g., network, invalid ID), assume contract does not exist
+>>>>>>> theirs
     contractExistenceCache.set(contractIdString, {
       exists: false,
       timestamp: now,
@@ -124,14 +193,44 @@ export interface SimulateResult {
   /** Contract ID that was not found (if error is "Contract not found") */
   contractId?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
   /** Per-operation results for multi-operation transactions */
   operations?: SimulateResult[];
   /** Whether this is a fee-bump transaction */
   feeBump?: boolean;
   /** Diagnostic events from contract execution */
   diagnosticEvents?: string[];
+=======
+  requiredSigners?: string[];
+  threshold?: number;
+>>>>>>> theirs
 }
 
+>>>>>>> theirs
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+  /** Whether this result was served from cache */
+  cacheHit?: boolean;
+}
+
+/** Shared simulation result LRU cache (singleton) */
+export const simulationCache = new LRUCache<SimulateResult>(
+  SIMULATION_CACHE_MAX_SIZE,
+  SIMULATION_CACHE_TTL_MS,
+);
+
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 /**
  * Fetch TTL information for footprint entries via RPC
@@ -176,12 +275,19 @@ async function fetchTtlInfo(
 
     return ttlMap;
   } catch {
+<<<<<<< ours
     metrics.recordRpcError(network, "fetch_ttl_failure");
+=======
+    // Record RPC error
+    metrics.recordRpcError('unknown', 'fetch_ttl_failure');
+    // If TTL fetching fails, return empty map
+>>>>>>> theirs
     return {};
   }
 }
 
 /**
+<<<<<<< ours
  * Calculate footprint size statistics
  */
 function calculateFootprintStats(
@@ -427,17 +533,49 @@ async function processSimulationResult(
 /**
  * Simulate a Soroban transaction and extract its footprint
  */
+=======
+ * Extract required signers from auth entries.
+ * Note: This is an internal helper that was previously missing.
+ */
+function extractRequiredSigners(auth: any[]): { requiredSigners: string[], threshold: number } {
+    const signers = new Set<string>();
+    let threshold = 0;
+
+    for (const entry of auth) {
+        if (entry.address && entry.address()) {
+            signers.add(entry.address().toString());
+        }
+    }
+
+    return { requiredSigners: Array.from(signers), threshold };
+}
+
+>>>>>>> theirs
 export async function simulateTransaction(
   xdr: string,
   network: Network = "testnet",
   signal?: AbortSignal,
   ledgerSequence?: number,
 ): Promise<SimulateResult> {
+<<<<<<< ours
+<<<<<<< ours
+=======
+=======
+>>>>>>> theirs
+  const cacheKey = buildCacheKey(xdr, network);
+  const cached = simulationCache.get(cacheKey);
+  if (cached) {
+    return { ...cached, cacheHit: true };
+  }
+
+  const server = getRpcServer(network);
+>>>>>>> theirs
   const { networkPassphrase } = getNetworkConfig(network);
   const server = getRpcServer(network);
 
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
 
+<<<<<<< ours
   if (tx instanceof StellarSdk.FeeBumpTransaction) {
     const innerTx = tx.innerTransaction;
     const innerXdr = innerTx.toXDR();
@@ -467,6 +605,13 @@ export async function simulateTransaction(
     );
   } catch (err) {
     metrics.recordRpcError(network, "simulate_transaction_failure");
+=======
+  let response;
+  try {
+    response = await server.simulateTransaction(tx, { signal } as never);
+  } catch (err) {
+    metrics.recordRpcError(network, 'simulate_transaction_failure');
+>>>>>>> theirs
     throw err;
   }
 
@@ -505,6 +650,8 @@ export async function simulateTransaction(
 
   const events = extractEvents(response);
 
+<<<<<<< ours
+<<<<<<< ours
   if (results.length === 1) {
     const result = results[0];
     const processed = await processSimulationResult(
@@ -555,6 +702,8 @@ export async function simulateTransaction(
       readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
     };
 
+<<<<<<< ours
+<<<<<<< ours
     // Parse footprint entries to extract contract IDs and classify types
     const parsedFootprint = parseFootprint(rawFootprint);
 
@@ -796,6 +945,38 @@ export async function simulateTransaction(
       raw: response,
     };
   }
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+  const result: SimulateResult = {
+    success: true,
+    footprint: {
+      readOnly: extracted.optimizationResult.readOnly,
+      readWrite: extracted.optimizationResult.readWrite,
+    },
+    contracts: extracted.contracts,
+    contractType: extracted.contractType,
+    ttl,
+    optimized: extracted.optimizationResult.optimized,
+    rawFootprint: extracted.rawFootprint,
+    cost: {
+      cpuInsns: response.cost?.cpuInsns ?? "0",
+      memBytes: response.cost?.memBytes ?? "0",
+    },
+    raw: response,
+  };
+
+  simulationCache.set(cacheKey, result);
+  return { ...result, cacheHit: false };
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 }
 =======
       operations,

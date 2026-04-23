@@ -14,11 +14,38 @@ export const CACHE_TTL = {
   CONTRACT_EXISTENCE_MS: 30000, // 30 seconds
   RPC_POOL_MS: 300000, // 5 minutes
   SIMULATION_MS: 60000, // 1 minute (for simulation result caching)
+<<<<<<< ours
+=======
 } as const;
 
 export const CACHE_CONFIG = {
   MAX_SIZE: 500, // Max entries in LRU in-memory cache
+>>>>>>> theirs
 } as const;
+
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
+export const CACHE_CONFIG = {
+  MAX_SIZE: 500, // Max entries in LRU in-memory cache
+} as const;
+=======
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+/** Simulation result LRU cache — configurable via env vars */
+export const SIMULATION_CACHE_TTL_MS =
+  (parseInt(process.env.CACHE_TTL_SECONDS ?? "60", 10) || 60) * 1000;
+export const SIMULATION_CACHE_MAX_SIZE =
+  parseInt(process.env.CACHE_MAX_SIZE ?? "500", 10) || 500;
+<<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 
 export const BATCH_MAX_SIZE = 10;
 

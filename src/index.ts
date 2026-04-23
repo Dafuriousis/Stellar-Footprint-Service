@@ -15,10 +15,23 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
+<<<<<<< ours
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< ours
 import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 import { logger } from "./utils/logger";
+=======
+import { responseTimeMiddleware } from "./middleware/responseTime";
+>>>>>>> theirs
 
 dotenv.config();
 
@@ -42,6 +55,7 @@ app.use(
 );
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
+app.use(responseTimeMiddleware);
 app.use(ipFilterMiddleware);
 app.use(requestLogger);
 app.use(metricsMiddleware);
@@ -50,10 +64,16 @@ app.use(bruteForceMiddleware);
 app.use(contentTypeMiddleware);
 
 // Health check endpoint
+<<<<<<< ours
 app.get("/health", (req, res) => {
   const circuit = rpcCircuitBreaker.getState();
   res.status(200).json({
     status: "healthy",
+=======
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy", 
+>>>>>>> theirs
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     circuitBreaker: circuit,
@@ -72,6 +92,14 @@ app.get("/metrics", async (req, res) => {
 
 // API v1 routes
 app.use("/api/v1", routes);
+<<<<<<< ours
+=======
+
+// Backward-compat: redirect /api/* → /api/v1/*
+app.use("/api/:path(*)", (req, res) => {
+  res.redirect(308, `/api/v1/${req.params.path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`);
+});
+>>>>>>> theirs
 
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
@@ -86,6 +114,7 @@ app.use("/api/:path(*)", (req, res) => {
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
+<<<<<<< ours
 // Only start the server when this file is run directly (not imported in tests)
 if (require.main === module) {
   app.listen(PORT, () => {
@@ -96,5 +125,13 @@ if (require.main === module) {
     });
   });
 }
+=======
+app.listen(PORT, () => {
+  logger.info("stellar-footprint-service started", {
+    port: PORT,
+    environment: process.env.NODE_ENV || "development",
+  });
+});
+>>>>>>> theirs
 
 export default app;

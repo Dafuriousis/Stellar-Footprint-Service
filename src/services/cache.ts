@@ -2,6 +2,9 @@ import { createHash } from "crypto";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
+=======
+>>>>>>> theirs
 import Redis from "ioredis";
 import { logger } from "../utils/logger";
 
@@ -177,6 +180,7 @@ export function buildCacheKey(data: Record<string, unknown>): string {
       }, {}),
   );
   return createHash("sha256").update(canonical).digest("hex");
+<<<<<<< ours
 =======
 =======
 >>>>>>> theirs
@@ -306,6 +310,8 @@ export function buildCacheKey(xdr: string, network: string): string {
   return createHash("sha256").update(`${xdr}:${network}`).digest("hex");
 <<<<<<< ours
 <<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs

@@ -4,15 +4,20 @@ import { Router } from "express";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import {
 <<<<<<< ours
   health,
 =======
 >>>>>>> theirs
+=======
+import {
+>>>>>>> theirs
   simulate,
   footprintDiffController,
   validate,
   networkStatus,
+<<<<<<< ours
 <<<<<<< ours
   restore,
 =======
@@ -111,6 +116,13 @@ import { simulate, simulateAsync, footprintDiffController, validate, networkStat
 
 const router = Router();
 
+=======
+  invalidateCache,
+} from "./controllers";
+
+const router = Router();
+
+>>>>>>> theirs
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulate);
 
@@ -144,6 +156,7 @@ router.post("/validate", validate);
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 /**
  * @route POST /api/v1/restore
  * @desc Returns a restoration transaction if the transaction requires it
@@ -169,6 +182,11 @@ router.get("/decode", decode);
 =======
 // POST /restore — accepts { xdr, network } and returns restoreXdr when restoration is needed
 router.post("/restore", restore);
+
+>>>>>>> theirs
+=======
+// DELETE /cache — flush all cache entries (Redis or in-memory)
+router.delete("/cache", invalidateCache);
 
 >>>>>>> theirs
 export default router;

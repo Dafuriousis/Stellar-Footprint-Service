@@ -14,6 +14,13 @@ export const CACHE_TTL = {
   CONTRACT_EXISTENCE_MS: 30000, // 30 seconds
   RPC_POOL_MS: 300000, // 5 minutes
   SIMULATION_MS: 60000, // 1 minute (for simulation result caching)
+<<<<<<< ours
+=======
+} as const;
+
+export const CACHE_CONFIG = {
+  MAX_SIZE: 500, // Max entries in LRU in-memory cache
+>>>>>>> theirs
 } as const;
 
 <<<<<<< ours

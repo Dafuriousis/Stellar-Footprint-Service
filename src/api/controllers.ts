@@ -15,6 +15,7 @@ import { AppError } from "../utils/AppError";
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
 import { ResponseEnvelope } from "../types";
 =======
 import { getCache } from "../services/cache";
@@ -24,6 +25,9 @@ import { decodeXdr, type XdrType } from "../services/decoder";
 >>>>>>> theirs
 =======
 import { decodeXdr, type XdrType } from "../services/decoder";
+>>>>>>> theirs
+=======
+import { getCache } from "../services/cache";
 >>>>>>> theirs
 import {
   NETWORKS,
@@ -802,6 +806,7 @@ export async function estimateFeeController(
 }
 
 /**
+<<<<<<< ours
  * Handle GET /api/decode requests
  * Decodes a base64 XDR string into a human-readable JSON representation
  * without simulating the transaction. Useful for debugging.
@@ -894,6 +899,27 @@ export async function footprintDiffController(req: Request, res: Response): Prom
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unexpected error";
     res.status(500).json({ error: message });
+  }
+>>>>>>> theirs
+=======
+ * Handle DELETE /api/cache requests
+ * Flushes all entries from the active cache backend (Redis or in-memory)
+ */
+export async function invalidateCache(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const cache = getCache();
+    await cache.flush();
+    res.status(HTTP_STATUS.OK).json({
+      message: "Cache invalidated",
+      backend: cache.backend,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 >>>>>>> theirs
 }

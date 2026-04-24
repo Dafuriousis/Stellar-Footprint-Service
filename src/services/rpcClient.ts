@@ -12,7 +12,7 @@ export async function simulateViaRpc(
   network: Network,
   signal?: AbortSignal,
   ledgerSequence?: number,
-): Promise<StellarSdk.SorobanRpc.Api.SimulateTransactionResponse> {
+): Promise<StellarSdk.rpc.Api.SimulateTransactionResponse> {
   const server = getRpcServer(network);
   const simOptions: Record<string, unknown> = { signal };
   if (ledgerSequence !== undefined) {

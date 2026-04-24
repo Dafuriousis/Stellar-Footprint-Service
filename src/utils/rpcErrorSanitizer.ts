@@ -5,7 +5,7 @@ import { logger } from "./logger";
  * Logs the raw error internally for debugging.
  */
 export function sanitizeRpcError(raw: string): string {
-  logger.debug("RPC simulation error (raw)", { rawError: raw });
+  logger.debug({ rawError: raw }, "RPC simulation error (raw)");
 
   if (/contract.*not.*found|no such contract/i.test(raw)) {
     return "Contract not found on the specified network.";

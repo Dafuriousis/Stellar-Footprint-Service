@@ -13,8 +13,10 @@ export interface DecodeResult {
  * Serialize an XDR LedgerKey to a plain object by inspecting its arm/value.
  */
 function ledgerKeyToJson(key: StellarSdk.xdr.LedgerKey): unknown {
-  const arm = key.arm();
-  const value = key.value() as Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arm = (key as any).arm();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const value = (key as any).value() as Record<string, unknown>;
   const result: Record<string, unknown> = { type: arm };
 
   for (const [k, v] of Object.entries(value)) {

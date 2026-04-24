@@ -1,13 +1,8 @@
-import { AppError } from "@utils/AppError";
 import { Request, Response, NextFunction } from "express";
 
 import { ResponseEnvelope } from "../types";
 import { AppError } from "../utils/AppError";
 
-/**
- * Express error handling middleware
- * Catches all errors and returns consistent error response format
- */
 export function errorHandler(
   err: Error | AppError,
   _req: Request,

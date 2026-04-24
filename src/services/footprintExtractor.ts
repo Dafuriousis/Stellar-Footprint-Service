@@ -32,7 +32,7 @@ export interface ExtractedFootprint {
  * Extract footprint from simulation response
  */
 export async function extractFootprint(
-  response: StellarSdk.SorobanRpc.Api.SimulateTransactionSuccessResponse,
+  response: StellarSdk.rpc.Api.SimulateTransactionSuccessResponse,
   network: Network,
 ): Promise<ExtractedFootprint> {
   if (!response.transactionData) {

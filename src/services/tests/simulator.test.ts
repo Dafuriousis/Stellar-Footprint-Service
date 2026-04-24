@@ -65,9 +65,9 @@ jest.mock("@stellar/stellar-sdk", () => {
   };
 });
 
-const isSimulationError = StellarSdk.SorobanRpc.Api
+const isSimulationError = StellarSdk.rpc.Api
   .isSimulationError as unknown as jest.Mock;
-const isSimulationRestore = StellarSdk.SorobanRpc.Api
+const isSimulationRestore = StellarSdk.rpc.Api
   .isSimulationRestore as unknown as jest.Mock;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,9 +89,9 @@ function makeSuccessResponse() {
   };
 }
 
-const isSimulationError = StellarSdk.SorobanRpc.Api
+const isSimulationError = StellarSdk.rpc.Api
   .isSimulationError as unknown as jest.Mock;
-const isSimulationRestore = StellarSdk.SorobanRpc.Api
+const isSimulationRestore = StellarSdk.rpc.Api
   .isSimulationRestore as unknown as jest.Mock;
 
 // ── Tests ────────────────────────────────────────────────────────────────────

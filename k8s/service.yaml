@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: stellar-footprint-service
+  labels:
+    app: stellar-footprint-service
+spec:
+  selector:
+    app: stellar-footprint-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: ClusterIP

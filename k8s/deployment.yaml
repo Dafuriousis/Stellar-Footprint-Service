@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stellar-footprint-service
+  labels:
+    app: stellar-footprint-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stellar-footprint-service
+  template:
+    metadata:
+      labels:
+        app: stellar-footprint-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+      containers:
+        - name: stellar-footprint-service
+          image: stellar-footprint-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: NODE_ENV
+              value: "production"
+            - name: TESTNET_RPC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: stellar-footprint-secrets
+                  key: TESTNET_RPC_URL
+            - name: MAINNET_RPC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: stellar-footprint-secrets
+                  key: MAINNET_RPC_URL
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3

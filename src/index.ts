@@ -20,11 +20,8 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { logger } from "./utils/logger";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const COMPRESSION_THRESHOLD = parseInt(
-  process.env.COMPRESSION_THRESHOLD || "1024",
-  10,
-);
+const PORT = env.PORT;
+const COMPRESSION_THRESHOLD = env.COMPRESSION_THRESHOLD;
 
 // CORS — read allowed origins from CORS_ORIGIN env var (comma-separated list)
 // Defaults to * in development, strict in production

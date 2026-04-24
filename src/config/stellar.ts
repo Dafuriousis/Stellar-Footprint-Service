@@ -7,12 +7,11 @@ export type Network = "mainnet" | "testnet";
  * Configuration for a Stellar network
  * @property rpcUrl - The RPC endpoint URL for the network
  * @property networkPassphrase - The network passphrase for transaction signing
- * @property secretKey - The secret key for signing transactions (if needed)
+ * Note: Secret keys are intentionally excluded — signing is the caller's responsibility.
  */
 interface NetworkConfig {
   rpcUrl: string;
   networkPassphrase: string;
-  secretKey: string;
 }
 
 function createNetworkConfig(): Record<Network, NetworkConfig> {
@@ -20,13 +19,11 @@ function createNetworkConfig(): Record<Network, NetworkConfig> {
     mainnet: {
       rpcUrl: process.env.MAINNET_RPC_URL || "",
       networkPassphrase: StellarSdk.Networks.PUBLIC,
-      secretKey: process.env.MAINNET_SECRET_KEY || "",
     },
     testnet: {
       rpcUrl:
         process.env.TESTNET_RPC_URL || "https://soroban-testnet.stellar.org",
       networkPassphrase: StellarSdk.Networks.TESTNET,
-      secretKey: process.env.TESTNET_SECRET_KEY || "",
     },
   };
 }

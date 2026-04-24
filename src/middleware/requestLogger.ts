@@ -1,31 +1,32 @@
-import { Request, Response, NextFunction } from "express";
+import pinoHttp from "pino-http";
 import { logger } from "../utils/logger";
 
-const isDebug = process.env.LOG_LEVEL === "debug";
-
-export function requestLogger(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void {
-  const requestId = res.locals.requestId as string | undefined;
-  const reqLogger = requestId ? logger.child({ requestId }) : logger;
-
-  if (isDebug && req.body && Object.keys(req.body).length > 0) {
-    const logged: Record<string, unknown> = { ...req.body };
-    if (typeof logged.xdr === "string" && logged.xdr.length > 50) {
-      logged.xdr = `${logged.xdr.slice(0, 50)}...`;
-    }
-    reqLogger.debug(`${req.method} ${req.path}`, logged);
-  }
-
-  res.on("finish", () => {
-    reqLogger.info(`${req.method} ${req.path}`, {
-      status: res.statusCode,
-      method: req.method,
-      path: req.path,
-    });
-  });
-
-  next();
-}
+export const requestLogger = pinoHttp({
+  logger,
+  // Attach requestId from res.locals if set by requestIdMiddleware
+  genReqId(req, res) {
+    return (res.locals as Record<string, unknown>).requestId as string;
+  },
+  customLogLevel(_req, res) {
+    if (res.statusCode >= 500) return "error";
+    if (res.statusCode >= 400) return "warn";
+    return "info";
+  },
+  serializers: {
+    req(req) {
+      const body = req.raw?.body as Record<string, unknown> | undefined;
+      const sanitized = body ? { ...body } : undefined;
+      if (sanitized && typeof sanitized.xdr === "string" && sanitized.xdr.length > 50) {
+        sanitized.xdr = `${sanitized.xdr.slice(0, 50)}...`;
+      }
+      return {
+        method: req.method,
+        url: req.url,
+        ...(sanitized && logger.level === "debug" ? { body: sanitized } : {}),
+      };
+    },
+    res(res) {
+      return { statusCode: res.statusCode };
+    },
+  },
+});

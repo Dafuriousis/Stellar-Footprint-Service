@@ -362,6 +362,9 @@ async function _processSimulationResult(
     requiredSigners,
     threshold,
   };
+
+  simulationCache.set(cacheKey, result);
+  return { ...result, cacheHit: false };
 }
 
 /**

@@ -62,8 +62,7 @@ export async function simulate(
     );
   }
 
-  const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const net: Network = (network as Network) || DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
   const start = Date.now();
@@ -118,14 +117,18 @@ export async function simulateBatch(
     );
   }
 
-  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+  if (
+    network &&
+    network !== NETWORKS.MAINNET &&
+    network !== NETWORKS.TESTNET &&
+    network !== NETWORKS.FUTURENET
+  ) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
   }
 
-  const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const net: Network = (network as Network) || DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
 
@@ -174,7 +177,7 @@ export async function networkStatus(
 ): Promise<void> {
   const network = (req.query.network as Network) || DEFAULT_NETWORK;
 
-  if (network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+  if (network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET && network !== NETWORKS.FUTURENET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
@@ -312,14 +315,18 @@ export async function estimateFeeController(
     );
   }
 
-  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+  if (
+    network &&
+    network !== NETWORKS.MAINNET &&
+    network !== NETWORKS.TESTNET &&
+    network !== NETWORKS.FUTURENET
+  ) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
   }
 
-  const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const net: Network = (network as Network) || DEFAULT_NETWORK;
 
   try {
     const result = await estimateFee(cpuInsns, memBytes, net);

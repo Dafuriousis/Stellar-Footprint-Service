@@ -46,6 +46,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
 ### Steps
 
 1. **Install dependencies:**
+
    ```bash
    pnpm install
    ```
@@ -57,6 +58,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
    ```
 
 3. **Build the project:**
+
    ```bash
    pnpm run build
    ```

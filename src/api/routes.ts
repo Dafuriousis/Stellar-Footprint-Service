@@ -25,6 +25,9 @@ router.post("/simulate", simulateRateLimiter, simulate);
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);
 
+// POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
+router.post("/simulate/batch", simulateBatch);
+
 // GET /network/status — returns current network information
 router.get("/network/status", networkStatus);
 

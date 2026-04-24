@@ -878,6 +878,8 @@ await server.sendTransaction(finalTx);
 - **Rate limit** the `/api/simulate` endpoint
 - **Sanitize errors** to avoid leaking internal details
 
+To report a security vulnerability, please follow our [Security Policy](./SECURITY.md). Do not open a public issue.
+
 ---
 
 ## 🐛 Troubleshooting

@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { simulateTransaction } from "@services/simulator";
 import { Network } from "@config/stellar";
+import { isValidNetwork } from "@config/stellar";
 import { getNetworkStatus } from "@services/networkStatus";
 import metrics from "@middleware/metrics";
 import { AppError } from "@utils/AppError";
 import { simulateTransaction } from "../services/simulator";
 import { buildRestoreTransaction } from "../services/restorer";
-import { Network } from "../config/stellar";
+import { Network, isValidNetwork } from "../config/stellar";
 import { getNetworkStatus } from "../services/networkStatus";
 import { estimateFee } from "../services/feeEstimator";
 import metrics from "../middleware/metrics";
@@ -398,7 +399,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
   }
 
   const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+    isValidNetwork(network) ? network : DEFAULT_NETWORK;
 <<<<<<< ours
 <<<<<<< ours
 <<<<<<< ours
@@ -436,7 +437,7 @@ export async function simulate(req: Request, res: Response): Promise<void> {
 =======
 >>>>>>> theirs
 
-  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+  const net: Network = isValidNetwork(network) ? network : "testnet";
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -625,7 +626,7 @@ export async function simulateBatch(
 >>>>>>> theirs
 
   const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+    isValidNetwork(network) ? network : DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
 
@@ -769,7 +770,7 @@ export async function simulateBatch(
   }
 
   const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+    isValidNetwork(network) ? network : DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
 
@@ -901,7 +902,7 @@ export async function simulateBatch(
   }
 
   const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+    isValidNetwork(network) ? network : DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
 
@@ -1005,7 +1006,7 @@ export async function simulateBatch(
   }
 
   const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+    isValidNetwork(network) ? network : DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
 
@@ -1145,7 +1146,7 @@ export async function simulateAsync(
     );
   }
 
-  const net: Network = network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const net: Network = isValidNetwork(network) ? network : DEFAULT_NETWORK;
   const jobId = createJob(webhookUrl);
 
   res.status(HTTP_STATUS.ACCEPTED).json({ jobId });
@@ -1192,7 +1193,7 @@ export async function simulateAsync(
     );
   }
 
-  const net: Network = network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+  const net: Network = isValidNetwork(network) ? network : DEFAULT_NETWORK;
   const jobId = createJob(webhookUrl);
 
   res.status(HTTP_STATUS.ACCEPTED).json({ jobId });
@@ -1323,7 +1324,7 @@ export async function restore(
   }
 
   const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+    isValidNetwork(network) ? network : DEFAULT_NETWORK;
 
   try {
     const result = await buildRestoreTransaction(xdr, net);
@@ -1448,7 +1449,7 @@ export async function estimateFeeController(
   }
 
   const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+    isValidNetwork(network) ? network : DEFAULT_NETWORK;
 
   try {
     const result = await estimateFee(cpuInsns, memBytes, net);
@@ -1641,7 +1642,7 @@ export async function estimateFeeController(
   }
 
   const net: Network =
-    network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
+    isValidNetwork(network) ? network : DEFAULT_NETWORK;
 
   try {
     const result = await estimateFee(cpuInsns, memBytes, net);
@@ -1694,7 +1695,7 @@ export async function restore(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+  const net: Network = isValidNetwork(network) ? network : "testnet";
 
   try {
     const result = await buildRestoreTransaction(xdr, net);
@@ -1721,7 +1722,7 @@ export async function restore(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const net: Network = network === "mainnet" ? "mainnet" : "testnet";
+  const net: Network = isValidNetwork(network) ? network : "testnet";
 
   try {
     const result = await buildRestoreTransaction(xdr, net);

@@ -4,6 +4,15 @@ import * as StellarSdk from "@stellar/stellar-sdk";
 export type Network = "mainnet" | "testnet";
 
 /**
+ * Type guard that checks whether a value is a valid Network.
+ * Returns true only for "testnet" and "mainnet".
+ * @param value - The value to check
+ */
+export function isValidNetwork(value: unknown): value is Network {
+  return value === "testnet" || value === "mainnet";
+}
+
+/**
  * Configuration for a Stellar network
  * @property rpcUrl - The RPC endpoint URL for the network
  * @property networkPassphrase - The network passphrase for transaction signing

@@ -1,3 +1,5 @@
+import { isValidNetwork } from "../stellar";
+
 jest.mock("@stellar/stellar-sdk", () => ({
   Networks: {
     TESTNET: "Test SDF Network ; September 2015",
@@ -103,5 +105,35 @@ describe("getRpcServer", () => {
   });
   it("defaults to testnet", () => {
     expect(getRpcServer()).toBe(getRpcServer("testnet"));
+  });
+});
+
+describe("isValidNetwork", () => {
+  it("returns true for 'testnet'", () => {
+    expect(isValidNetwork("testnet")).toBe(true);
+  });
+
+  it("returns true for 'mainnet'", () => {
+    expect(isValidNetwork("mainnet")).toBe(true);
+  });
+
+  it("returns false for an unknown string", () => {
+    expect(isValidNetwork("devnet")).toBe(false);
+  });
+
+  it("returns false for empty string", () => {
+    expect(isValidNetwork("")).toBe(false);
+  });
+
+  it("returns false for null", () => {
+    expect(isValidNetwork(null)).toBe(false);
+  });
+
+  it("returns false for undefined", () => {
+    expect(isValidNetwork(undefined)).toBe(false);
+  });
+
+  it("returns false for a number", () => {
+    expect(isValidNetwork(42)).toBe(false);
   });
 });

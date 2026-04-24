@@ -909,22 +909,9 @@ await server.sendTransaction(finalTx);
 
 ## 🤝 Contributing
 
-Contributions are welcome! Check out [ISSUES.md](ISSUES.md) for 150+ ideas.
+Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide covering fork/clone setup, local development, code style, commit format, PR process, and issue labels.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Dependency Management
-
-This project uses exact versions for all dependencies to ensure reproducible builds. When updating dependencies:
-
-1. Update the exact version in `package.json`
-2. Run `npm install` to update `package-lock.json`
-3. Commit both files together
-4. Test that the service builds and runs correctly
+Check out [ISSUES.md](ISSUES.md) for 150+ ideas on where to start.
 
 <<<<<<< ours
 <<<<<<< ours

@@ -907,6 +907,12 @@ await server.sendTransaction(finalTx);
 
 ---
 
+## 📋 Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a full history of changes.
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide covering fork/clone setup, local development, code style, commit format, PR process, and issue labels.

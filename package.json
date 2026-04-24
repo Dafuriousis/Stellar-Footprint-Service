@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Stellar transaction footprint simulation service",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node -r tsconfig-paths/register dist/index.js",

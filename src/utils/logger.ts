@@ -1,47 +1,17 @@
 type LogLevel = "info" | "warn" | "error" | "debug";
 
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-/**
- * Structured logger utility using JSON output for production-readiness.
- * Outputs to stdout/stderr using process streams to bypass console buffer.
- */
-function log(level: LogLevel, message: string, data?: unknown) {
-=======
-function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
->>>>>>> theirs
-=======
-function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
->>>>>>> theirs
-=======
-function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
->>>>>>> theirs
-=======
-function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
->>>>>>> theirs
+function log(
+  level: LogLevel,
+  message: string,
+  meta?: Record<string, unknown>,
+  base?: Record<string, unknown>,
+) {
   const entry = {
     timestamp: new Date().toISOString(),
     level,
     message,
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-    ...(data && typeof data === "object" ? data : { data }),
-=======
+    ...base,
     ...meta,
->>>>>>> theirs
-=======
-    ...meta,
->>>>>>> theirs
-=======
-    ...meta,
->>>>>>> theirs
-=======
-    ...meta,
->>>>>>> theirs
   };
   const output = JSON.stringify(entry);
   if (level === "error") {
@@ -51,38 +21,22 @@ function log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
   }
 }
 
-export const logger = {
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
-  info: (message: string, data?: unknown) => log("info", message, data),
-  warn: (message: string, data?: unknown) => log("warn", message, data),
-  error: (message: string, data?: unknown) => log("error", message, data),
-  debug: (message: string, data?: unknown) => log("debug", message, data),
-=======
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-  info: (message: string, meta?: Record<string, unknown>) =>
-    log("info", message, meta),
-  warn: (message: string, meta?: Record<string, unknown>) =>
-    log("warn", message, meta),
-  error: (message: string, meta?: Record<string, unknown>) =>
-    log("error", message, meta),
-  debug: (message: string, meta?: Record<string, unknown>) =>
-    log("debug", message, meta),
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< ours
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
-=======
->>>>>>> theirs
+type Logger = {
+  info: (message: string, meta?: Record<string, unknown>) => void;
+  warn: (message: string, meta?: Record<string, unknown>) => void;
+  error: (message: string, meta?: Record<string, unknown>) => void;
+  debug: (message: string, meta?: Record<string, unknown>) => void;
+  child: (base: Record<string, unknown>) => Logger;
 };
+
+function createLogger(base?: Record<string, unknown>): Logger {
+  return {
+    info: (message, meta) => log("info", message, meta, base),
+    warn: (message, meta) => log("warn", message, meta, base),
+    error: (message, meta) => log("error", message, meta, base),
+    debug: (message, meta) => log("debug", message, meta, base),
+    child: (extra) => createLogger({ ...base, ...extra }),
+  };
+}
+
+export const logger = createLogger();

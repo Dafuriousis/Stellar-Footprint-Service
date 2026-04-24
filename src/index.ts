@@ -13,12 +13,11 @@ import { logger } from "./utils/logger";
 
 dotenv.config();
 
+import { env } from "./config/env";
+
 const app = express();
-const PORT = process.env.PORT || 3000;
-const COMPRESSION_THRESHOLD = parseInt(
-  process.env.COMPRESSION_THRESHOLD || "1024",
-  10,
-);
+const PORT = env.PORT;
+const COMPRESSION_THRESHOLD = env.COMPRESSION_THRESHOLD;
 
 // Middleware
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
@@ -55,9 +54,9 @@ app.use("/api", routes);
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(env.PORT, () => {
   logger.info(
-    { port: PORT, environment: process.env.NODE_ENV || "development" },
+    { port: PORT, environment: env.NODE_ENV },
     "stellar-footprint-service started",
   );
 });

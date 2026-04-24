@@ -1,4 +1,5 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
+import { env } from "./env";
 
 /** Supported Stellar networks */
 export type Network = "mainnet" | "testnet" | "futurenet";
@@ -18,21 +19,19 @@ interface NetworkConfig {
 function createNetworkConfig(): Record<Network, NetworkConfig> {
   return {
     mainnet: {
-      rpcUrl: process.env.MAINNET_RPC_URL || "",
+      rpcUrl: env.MAINNET_RPC_URL,
       networkPassphrase: StellarSdk.Networks.PUBLIC,
-      secretKey: process.env.MAINNET_SECRET_KEY || "",
+      secretKey: env.MAINNET_SECRET_KEY,
     },
     testnet: {
-      rpcUrl:
-        process.env.TESTNET_RPC_URL || "https://soroban-testnet.stellar.org",
+      rpcUrl: env.TESTNET_RPC_URL,
       networkPassphrase: StellarSdk.Networks.TESTNET,
-      secretKey: process.env.TESTNET_SECRET_KEY || "",
+      secretKey: env.TESTNET_SECRET_KEY,
     },
     futurenet: {
-      rpcUrl:
-        process.env.FUTURENET_RPC_URL || "https://rpc-futurenet.stellar.org:443",
+      rpcUrl: env.FUTURENET_RPC_URL,
       networkPassphrase: StellarSdk.Networks.FUTURENET,
-      secretKey: process.env.FUTURENET_SECRET_KEY || "",
+      secretKey: env.FUTURENET_SECRET_KEY,
     },
   };
 }
@@ -44,14 +43,10 @@ function createNetworkConfig(): Record<Network, NetworkConfig> {
  * @throws Error if RPC URL is not configured for the network
  */
 export function getNetworkConfig(network: Network = "testnet"): NetworkConfig {
-  const config = createNetworkConfig()[network];
-  if (!config.rpcUrl) {
-    throw new Error(`RPC URL not configured for network: ${network}`);
-  }
-  return config;
+  return createNetworkConfig()[network];
 }
 
-const RPC_POOL_TTL_MS = parseInt(process.env.RPC_POOL_TTL_MS || "300000", 10);
+const RPC_POOL_TTL_MS = env.RPC_POOL_TTL_MS;
 
 interface PoolEntry {
   server: StellarSdk.SorobanRpc.Server;

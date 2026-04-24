@@ -1,7 +1,7 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
 
 /** Supported Stellar networks */
-export type Network = "mainnet" | "testnet";
+export type Network = "mainnet" | "testnet" | "futurenet";
 
 /**
  * Type guard that checks whether a value is a valid Network.
@@ -34,12 +34,18 @@ function createNetworkConfig(): Record<Network, NetworkConfig> {
         process.env.TESTNET_RPC_URL || "https://soroban-testnet.stellar.org",
       networkPassphrase: StellarSdk.Networks.TESTNET,
     },
+    futurenet: {
+      rpcUrl:
+        process.env.FUTURENET_RPC_URL || "https://rpc-futurenet.stellar.org:443",
+      networkPassphrase: StellarSdk.Networks.FUTURENET,
+      secretKey: process.env.FUTURENET_SECRET_KEY || "",
+    },
   };
 }
 
 /**
  * Get network configuration for the specified network
- * @param network - The network to configure ("testnet" or "mainnet")
+ * @param network - The network to configure ("testnet", "mainnet", or "futurenet")
  * @returns Network configuration object
  * @throws Error if RPC URL is not configured for the network
  */
@@ -61,7 +67,7 @@ const pool = new Map<Network, PoolEntry>();
 /**
  * Get or create an RPC server instance for the specified network
  * Uses connection pooling with TTL to reuse server instances
- * @param network - The network to connect to ("testnet" or "mainnet")
+ * @param network - The network to connect to ("testnet", "mainnet", or "futurenet")
  * @returns Soroban RPC server instance
  */
 export function getRpcServer(

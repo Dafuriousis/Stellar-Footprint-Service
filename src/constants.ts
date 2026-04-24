@@ -1,6 +1,7 @@
 export const NETWORKS = {
   MAINNET: "mainnet",
   TESTNET: "testnet",
+  FUTURENET: "futurenet",
 } as const;
 
 export const DEFAULT_NETWORK = NETWORKS.TESTNET;
@@ -75,7 +76,7 @@ export const BATCH_MAX_SIZE = 10;
 
 export const ERROR_MESSAGES = {
   MISSING_XDR: "Missing required field: xdr",
-  INVALID_NETWORK: "Invalid network. Use 'testnet' or 'mainnet'",
+  INVALID_NETWORK: "Invalid network. Use 'testnet', 'mainnet', or 'futurenet'",
   RPC_URL_NOT_CONFIGURED: "RPC URL not configured for network",
   LEDGER_ENTRY_RESTORATION_REQUIRED:
     "Transaction requires ledger entry restoration before simulation.",

@@ -1,6 +1,3 @@
-import { Network, getRpcServer, getNetworkConfig } from "@config/stellar";
-import * as StellarSdk from "@stellar/stellar-sdk";
-
 import { Network, getRpcServer, getNetworkConfig } from "../config/stellar";
 
 export interface NetworkStatusResult {
@@ -16,14 +13,8 @@ interface CachedStatus {
 }
 
 const cache = new Map<Network, CachedStatus>();
-const CACHE_TTL_MS = 10000; // 10 seconds
+const CACHE_TTL_MS = 10000;
 
-/**
- * Get current network status including latest ledger, base fee, and RPC latency.
- * Results are cached for 10 seconds.
- * @param network - The network to query ("testnet" or "mainnet")
- * @returns Network status with ledger, base fee, network passphrase, and RPC latency
- */
 export async function getNetworkStatus(
   network: Network = "testnet",
 ): Promise<NetworkStatusResult> {
@@ -43,7 +34,7 @@ export async function getNetworkStatus(
 
   const result: NetworkStatusResult = {
     ledger: latestLedger.sequence,
-    baseFee: "100", // base fee in stroops; not exposed by getLatestLedger in SDK 12
+    baseFee: "100",
     networkPassphrase,
     rpcLatencyMs,
   };

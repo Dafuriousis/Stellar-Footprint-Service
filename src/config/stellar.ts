@@ -1,24 +1,13 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
+
 import { env } from "./env";
 
-/** Supported Stellar networks */
 export type Network = "mainnet" | "testnet" | "futurenet";
 
-/**
- * Type guard that checks whether a value is a valid Network.
- * Returns true only for "testnet" and "mainnet".
- * @param value - The value to check
- */
 export function isValidNetwork(value: unknown): value is Network {
-  return value === "testnet" || value === "mainnet";
+  return value === "testnet" || value === "mainnet" || value === "futurenet";
 }
 
-/**
- * Configuration for a Stellar network
- * @property rpcUrl - The RPC endpoint URL for the network
- * @property networkPassphrase - The network passphrase for transaction signing
- * Note: Secret keys are intentionally excluded — signing is the caller's responsibility.
- */
 interface NetworkConfig {
   rpcUrl: string;
   networkPassphrase: string;
@@ -35,46 +24,26 @@ function createNetworkConfig(): Record<Network, NetworkConfig> {
       networkPassphrase: StellarSdk.Networks.TESTNET,
     },
     futurenet: {
-      rpcUrl:
-        process.env.FUTURENET_RPC_URL || "https://rpc-futurenet.stellar.org:443",
-      networkPassphrase: StellarSdk.Networks.FUTURENET,
-      secretKey: process.env.FUTURENET_SECRET_KEY || "",
-    },
-    futurenet: {
       rpcUrl: env.FUTURENET_RPC_URL,
       networkPassphrase: StellarSdk.Networks.FUTURENET,
-      secretKey: env.FUTURENET_SECRET_KEY,
     },
   };
 }
 
-/**
- * Get network configuration for the specified network
- * @param network - The network to configure ("testnet", "mainnet", or "futurenet")
- * @returns Network configuration object
- * @throws Error if RPC URL is not configured for the network
- */
 export function getNetworkConfig(network: Network = "testnet"): NetworkConfig {
   return createNetworkConfig()[network];
 }
 
 interface PoolEntry {
-  server: StellarSdk.SorobanRpc.Server;
+  server: StellarSdk.rpc.Server;
   createdAt: number;
 }
 
 const pool = new Map<Network, PoolEntry>();
 
-/**
- * Get or create an RPC server instance for the specified network
- * Uses connection pooling with TTL to reuse server instances
- * @param network - The network to connect to ("testnet", "mainnet", or "futurenet")
- * @returns Soroban RPC server instance
- */
 export function getRpcServer(
   network: Network = "testnet",
-): StellarSdk.SorobanRpc.Server {
-  // Read at call time so dotenv.config() in index.ts runs first
+): StellarSdk.rpc.Server {
   const rpcPoolTtlMs = parseInt(process.env.RPC_POOL_TTL_MS || "300000", 10);
   const now = Date.now();
   const entry = pool.get(network);
@@ -85,7 +54,7 @@ export function getRpcServer(
 
   const { rpcUrl } = getNetworkConfig(network);
   const allowHttp = process.env.ALLOW_HTTP === "true";
-  const server = new StellarSdk.SorobanRpc.Server(rpcUrl, { allowHttp });
+  const server = new StellarSdk.rpc.Server(rpcUrl, { allowHttp });
   pool.set(network, { server, createdAt: now });
   return server;
 }

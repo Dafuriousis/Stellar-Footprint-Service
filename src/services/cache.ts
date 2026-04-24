@@ -124,8 +124,8 @@ export function getCache(): CacheService {
 
       client.on("error", (err: Error) => {
         logger.warn(
+          { err: err.message },
           "Redis error — falling back to in-memory cache",
-          err.message,
         );
         _cache = new LruMemoryCache();
       });
@@ -139,11 +139,11 @@ export function getCache(): CacheService {
       });
 
       _cache = new RedisCache(client);
-      logger.info("Cache backend: Redis", { url: redisUrl });
+      logger.info({ url: redisUrl }, "Cache backend: Redis");
     } catch (err) {
       logger.warn(
+        { err },
         "Failed to initialise Redis — falling back to in-memory cache",
-        err,
       );
       _cache = new LruMemoryCache();
     }

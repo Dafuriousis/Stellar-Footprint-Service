@@ -177,7 +177,11 @@ export async function networkStatus(
 ): Promise<void> {
   const network = (req.query.network as Network) || DEFAULT_NETWORK;
 
-  if (network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET && network !== NETWORKS.FUTURENET) {
+  if (
+    network !== NETWORKS.MAINNET &&
+    network !== NETWORKS.TESTNET &&
+    network !== NETWORKS.FUTURENET
+  ) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );

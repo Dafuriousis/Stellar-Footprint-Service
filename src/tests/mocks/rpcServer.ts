@@ -33,7 +33,7 @@ export interface MockRpcServerInstance {
  */
 const DEFAULT_RESPONSES = {
   success: {
-    transactionData: StellarSdk.xdr.TransactionData.fromXDR(
+    transactionData: StellarSdk.xdr.SorobanTransactionData.fromXDR(
       Buffer.from("AAAAAgAAAABmzb2MAAAAAAAAAAEAAAABAAAAAwAAAAA=", "base64"),
     ).toXDR("base64"),
     minResourceFee: "100000",

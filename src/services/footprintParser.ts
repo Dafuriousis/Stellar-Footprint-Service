@@ -42,7 +42,9 @@ function extractContractId(xdrBase64: string): string | undefined {
     // Check if this is a ContractData or ContractCode entry
     if (switchName === "ledgerKeyContractData") {
       const contractData = ledgerKey.contractData();
-      return contractData.contract().value().toString("hex");
+      return (contractData.contract().value() as unknown as Buffer).toString(
+        "hex",
+      );
     }
 
     if (switchName === "ledgerKeyContractCode") {
@@ -173,7 +175,7 @@ const contractTypeCache = new Map<string, ContractType>();
  */
 export async function detectTokenContract(
   contractId: string,
-  server: StellarSdk.SorobanRpc.Server,
+  server: StellarSdk.rpc.Server,
 ): Promise<ContractType> {
   if (contractTypeCache.has(contractId)) {
     return contractTypeCache.get(contractId)!;

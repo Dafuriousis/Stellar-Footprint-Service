@@ -37,8 +37,9 @@ function extractRequiredSigners(
       const credentials = entry.credentials();
       if (credentials.switch().name === "sorobanCredentialsAddress") {
         const address = credentials.address();
+
         const accountId = StellarSdk.StrKey.encodeEd25519PublicKey(
-          address.accountId().value(),
+          (address as any).accountId().value(), // eslint-disable-line @typescript-eslint/no-explicit-any
         );
         signers.add(accountId);
       }
@@ -53,7 +54,7 @@ function extractRequiredSigners(
  * Check if a contract exists on the network by looking up its account ledger entry.
  */
 async function _checkContractExists(
-  server: StellarSdk.SorobanRpc.Server,
+  server: StellarSdk.rpc.Server,
   contractIdString: string,
 ): Promise<boolean> {
   const now = Date.now();
@@ -68,13 +69,6 @@ async function _checkContractExists(
   metrics.recordCacheMiss("contract_existence");
 
   try {
-    // Convert contractIdString to LedgerKey for an account
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const accountId = (StellarSdk.xdr as any).AccountId.fromString(
-      contractIdString,
-    );
-    const ledgerKey = StellarSdk.xdr.LedgerKey.account(accountId);
-    const response = await server.getLedgerEntries(ledgerKey);
     const accountId =
       StellarSdk.StrKey.decodeEd25519PublicKey(contractIdString);
     const ledgerKey = StellarSdk.xdr.LedgerKey.account(
@@ -105,7 +99,7 @@ async function _checkContractExists(
  * Fetch TTL information for footprint entries via RPC
  */
 async function fetchTtlInfo(
-  server: StellarSdk.SorobanRpc.Server,
+  server: StellarSdk.rpc.Server,
   footprintEntries: string[],
   _network: Network,
 ): Promise<Record<string, TtlInfo>> {
@@ -220,7 +214,7 @@ function _extractAuthEntries(
  * Extract contract events from simulation response
  */
 function _extractEvents(
-  response: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse,
+  response: StellarSdk.rpc.Api.SimulateTransactionResponse,
 ): ContractEvent[] {
   const events =
     (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
@@ -240,33 +234,6 @@ function _extractEvents(
 /**
  * Extract required signers from auth entries.
  */
-function extractRequiredSigners(auth: unknown[]): {
-  requiredSigners: string[];
-  threshold: number;
-} {
-  const signers = new Set<string>();
-  for (const entry of auth) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = entry as any;
-    try {
-      if (e.address && typeof e.address === "function") {
-        signers.add(e.address().toString());
-      } else if (e.credentials && typeof e.credentials === "function") {
-        const credentials = e.credentials();
-        if (credentials.switch().name === "sorobanCredentialsAddress") {
-          const address = credentials.address();
-          const accountId = StellarSdk.StrKey.encodeEd25519PublicKey(
-            address.accountId().value(),
-          );
-          signers.add(accountId);
-        }
-      }
-    } catch {
-      // ignore invalid entries
-    }
-  }
-  return { requiredSigners: Array.from(signers), threshold: signers.size };
-}
 
 /**
  * Result of a transaction simulation
@@ -296,19 +263,21 @@ export interface SimulateResult {
   resourceFee?: string;
   error?: string;
   contractId?: string;
-  raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
+  raw?: StellarSdk.rpc.Api.SimulateTransactionResponse;
   requiredSigners?: string[];
   threshold?: number;
   operations?: SimulateResult[];
   feeBump?: boolean;
   diagnosticEvents?: string[];
+  cacheHit?: boolean;
+  type?: string;
 }
 
 /**
  * Common processing for a single simulation result
  */
 async function _processSimulationResult(
-  server: StellarSdk.SorobanRpc.Server,
+  server: StellarSdk.rpc.Server,
   network: Network,
   transactionData: StellarSdk.xdr.SorobanTransactionData,
   cost?: { cpuInsns: string; memBytes: string },
@@ -362,9 +331,6 @@ async function _processSimulationResult(
     requiredSigners,
     threshold,
   };
-
-  simulationCache.set(cacheKey, result);
-  return { ...result, cacheHit: false };
 }
 
 /**
@@ -379,7 +345,7 @@ export async function simulateTransaction(
   // getNetworkConfig and getRpcServer are called inside the try block so that
   // synchronous throws (e.g. missing RPC URL) are caught by the caller's
   // error handler rather than propagating as unhandled rejections.
-  let server: StellarSdk.SorobanRpc.Server;
+  let server: StellarSdk.rpc.Server;
   let networkPassphrase: string;
   let tx: StellarSdk.Transaction | StellarSdk.FeeBumpTransaction;
 
@@ -387,7 +353,7 @@ export async function simulateTransaction(
     ({ networkPassphrase } = getNetworkConfig(network));
     server = getRpcServer(network);
     tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
-  } catch {
+  } catch (err) {
     throw err;
   }
 
@@ -430,12 +396,12 @@ export async function simulateTransaction(
         simOptions as any,
       ),
     );
-  } catch {
+  } catch (err) {
     metrics.recordRpcError(network, "simulate_transaction_failure");
     throw err;
   }
 
-  if (StellarSdk.SorobanRpc.Api.isSimulationError(response)) {
+  if (StellarSdk.rpc.Api.isSimulationError(response)) {
     return {
       success: false,
       type: "simulation_error" as const,
@@ -444,7 +410,7 @@ export async function simulateTransaction(
     };
   }
 
-  if (StellarSdk.SorobanRpc.Api.isSimulationRestore(response)) {
+  if (StellarSdk.rpc.Api.isSimulationRestore(response)) {
     return {
       success: false,
       type: "restoration_required" as const,
@@ -453,17 +419,15 @@ export async function simulateTransaction(
     };
   }
 
-  const results =
-    response.results ||
-    (response.transactionData
-      ? [{ transactionData: response.transactionData, cost: response.cost }]
-      : []);
+  const results = response.transactionData
+    ? [{ transactionData: response.transactionData }]
+    : [];
 
   if (results.length === 0) {
     return {
       success: false,
       error:
-        "Simulation succeeded but no transactionData or results; cannot extract footprint.",
+        "Simulation succeeded but no transactionData; cannot extract footprint.",
       raw: response,
     };
   }
@@ -480,14 +444,84 @@ export async function simulateTransaction(
       };
     }
 
-    if (results.length === 1) {
-      // Single operation
-      const result = results[0];
+    const footprint = result.transactionData.build().resources().footprint();
+    const rawFootprint = {
+      readOnly: footprint.readOnly().map((e) => e.toXDR("base64")),
+      readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
+    };
+
+    // Parse footprint entries to extract contract IDs and classify types
+    const parsedFootprint = parseFootprint(rawFootprint);
+
+    // Extract all contracts touched by the transaction
+    const allEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
+    const contracts = extractContracts(allEntries);
+
+    // Optimize footprint by removing redundant read-only entries
+    const optimizationResult = optimizeFootprint(
+      parsedFootprint.readOnly,
+      parsedFootprint.readWrite,
+    );
+
+    // Get all XDR strings for TTL lookup (use original footprint)
+    const allXdrEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
+
+    // Fetch TTL information
+    const ttl = await fetchTtlInfo(server, allXdrEntries, network);
+
+    // Extract required signers from auth entries
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const auth = (result.transactionData?.build() as any)?.auth?.() ?? [];
+    const { requiredSigners, threshold } = extractRequiredSigners(auth);
+
+    // Detect SEP-41 token contract type for the first invoked contract
+    const contractType =
+      contracts.length > 0
+        ? await detectTokenContract(contracts[0], server)
+        : "unknown";
+
+    return {
+      success: true,
+      footprint: {
+        readOnly: optimizationResult.readOnly,
+        readWrite: optimizationResult.readWrite,
+      },
+      contracts,
+      contractType,
+      ttl,
+      optimized: optimizationResult.optimized,
+      rawFootprint,
+      cost: {
+        cpuInsns: "0",
+        memBytes: "0",
+      },
+      requiredSigners,
+      threshold,
+      raw: response,
+      diagnosticEvents:
+        response.events
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?.filter((e) => (e as any).type?.()?.name === "diagnostic")
+          .map((e) => e.toXDR("base64")) || [],
+    };
+  } else {
+    // Multi operation
+    const operations: SimulateResult[] = [];
+    let allReadOnly: FootprintEntry[] = [];
+    let allReadWrite: FootprintEntry[] = [];
+    let allContracts: string[] = [];
+    const allTtl: Record<string, TtlInfo> = {};
+    let contractType: ContractType = "unknown";
+    let optimized = false;
+    let allRawReadOnly: string[] = [];
+    let allRawReadWrite: string[] = [];
+
+    for (const result of results) {
       if (!result.transactionData) {
         return {
           success: false,
           error:
-            "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+            "Simulation succeeded but transactionData is missing for one operation; cannot extract footprint.",
           raw: response,
         };
       }
@@ -498,194 +532,110 @@ export async function simulateTransaction(
         readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
       };
 
-      // Parse footprint entries to extract contract IDs and classify types
       const parsedFootprint = parseFootprint(rawFootprint);
 
-      // Extract all contracts touched by the transaction
       const allEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
       const contracts = extractContracts(allEntries);
 
-      // Optimize footprint by removing redundant read-only entries
       const optimizationResult = optimizeFootprint(
         parsedFootprint.readOnly,
         parsedFootprint.readWrite,
       );
 
-      // Get all XDR strings for TTL lookup (use original footprint)
       const allXdrEntries = [
         ...rawFootprint.readOnly,
         ...rawFootprint.readWrite,
       ];
 
-      // Fetch TTL information
-      const ttl = await fetchTtlInfo(server, allXdrEntries);
+      const ttl = await fetchTtlInfo(server, allXdrEntries, network);
 
-      // Extract required signers from auth entries
-      const auth = result.transactionData?.build().auth() ?? [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const auth = (result.transactionData?.build() as any)?.auth?.() ?? [];
       const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
-      // Detect SEP-41 token contract type for the first invoked contract
-      const contractType =
+      const opContractType =
         contracts.length > 0
           ? await detectTokenContract(contracts[0], server)
           : "unknown";
 
-      return {
+      if (contractType === "unknown") contractType = opContractType;
+
+      const opResult: SimulateResult = {
         success: true,
         footprint: {
           readOnly: optimizationResult.readOnly,
           readWrite: optimizationResult.readWrite,
         },
         contracts,
-        contractType,
+        contractType: opContractType,
         ttl,
         optimized: optimizationResult.optimized,
         rawFootprint,
         cost: {
-          cpuInsns: result.cost?.cpuInsns ?? "0",
-          memBytes: result.cost?.memBytes ?? "0",
+          cpuInsns: "0",
+          memBytes: "0",
         },
         requiredSigners,
         threshold,
-        raw: response,
-        diagnosticEvents:
-          response.events
-            ?.filter((e) => e.type().name === "diagnostic")
-            .map((e) => e.toXDR("base64")) || [],
       };
-    } else {
-      // Multi operation
-      const operations: SimulateResult[] = [];
-      let allReadOnly: FootprintEntry[] = [];
-      let allReadWrite: FootprintEntry[] = [];
-      let allContracts: string[] = [];
-      const allTtl: Record<string, TtlInfo> = {};
-      let contractType: ContractType = "unknown";
-      let optimized = false;
-      let allRawReadOnly: string[] = [];
-      let allRawReadWrite: string[] = [];
 
-      for (const result of results) {
-        if (!result.transactionData) {
-          return {
-            success: false,
-            error:
-              "Simulation succeeded but transactionData is missing for one operation; cannot extract footprint.",
-            raw: response,
-          };
-        }
+      operations.push(opResult);
 
-        const footprint = result.transactionData
-          .build()
-          .resources()
-          .footprint();
-        const rawFootprint = {
-          readOnly: footprint.readOnly().map((e) => e.toXDR("base64")),
-          readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
-        };
-
-        const parsedFootprint = parseFootprint(rawFootprint);
-
-        const allEntries = [
-          ...rawFootprint.readOnly,
-          ...rawFootprint.readWrite,
-        ];
-        const contracts = extractContracts(allEntries);
-
-        const optimizationResult = optimizeFootprint(
-          parsedFootprint.readOnly,
-          parsedFootprint.readWrite,
-        );
-
-        const allXdrEntries = [
-          ...rawFootprint.readOnly,
-          ...rawFootprint.readWrite,
-        ];
-
-        const ttl = await fetchTtlInfo(server, allXdrEntries);
-
-        const auth = result.transactionData?.build().auth() ?? [];
-        const { requiredSigners, threshold } = extractRequiredSigners(auth);
-
-        const opContractType =
-          contracts.length > 0
-            ? await detectTokenContract(contracts[0], server)
-            : "unknown";
-
-        if (contractType === "unknown") contractType = opContractType;
-
-        const opResult: SimulateResult = {
-          success: true,
-          footprint: {
-            readOnly: optimizationResult.readOnly,
-            readWrite: optimizationResult.readWrite,
-          },
-          contracts,
-          contractType: opContractType,
-          ttl,
-          optimized: optimizationResult.optimized,
-          rawFootprint,
-          cost: {
-            cpuInsns: result.cost?.cpuInsns ?? "0",
-            memBytes: result.cost?.memBytes ?? "0",
-          },
-          requiredSigners,
-          threshold,
-        };
-
-        operations.push(opResult);
-
-        allReadOnly = [...allReadOnly, ...optimizationResult.readOnly];
-        allReadWrite = [...allReadWrite, ...optimizationResult.readWrite];
-        allContracts = [...allContracts, ...contracts];
-        Object.assign(allTtl, ttl);
-        if (optimizationResult.optimized) optimized = true;
-        allRawReadOnly = [...allRawReadOnly, ...rawFootprint.readOnly];
-        allRawReadWrite = [...allRawReadWrite, ...rawFootprint.readWrite];
-      }
-
-      // Dedup
-      const dedupReadOnly = allReadOnly.filter(
-        (item, index, arr) =>
-          arr.findIndex(
-            (i) => i.contractId === item.contractId && i.key === item.key,
-          ) === index,
-      );
-      const dedupReadWrite = allReadWrite.filter(
-        (item, index, arr) =>
-          arr.findIndex(
-            (i) => i.contractId === item.contractId && i.key === item.key,
-          ) === index,
-      );
-      const dedupContracts = [...new Set(allContracts)];
-      const dedupRawReadOnly = [...new Set(allRawReadOnly)];
-      const dedupRawReadWrite = [...new Set(allRawReadWrite)];
-
-      return {
-        success: true,
-        footprint: {
-          readOnly: dedupReadOnly,
-          readWrite: dedupReadWrite,
-        },
-        contracts: dedupContracts,
-        contractType,
-        ttl: allTtl,
-        optimized,
-        rawFootprint: {
-          readOnly: dedupRawReadOnly,
-          readWrite: dedupRawReadWrite,
-        },
-        cost: {
-          cpuInsns: response.cost?.cpuInsns ?? "0",
-          memBytes: response.cost?.memBytes ?? "0",
-        },
-        operations,
-        raw: response,
-        diagnosticEvents:
-          response.events
-            ?.filter((e) => e.type().name === "diagnostic")
-            .map((e) => e.toXDR("base64")) || [],
-      };
+      allReadOnly = [...allReadOnly, ...optimizationResult.readOnly];
+      allReadWrite = [...allReadWrite, ...optimizationResult.readWrite];
+      allContracts = [...allContracts, ...contracts];
+      Object.assign(allTtl, ttl);
+      if (optimizationResult.optimized) optimized = true;
+      allRawReadOnly = [...allRawReadOnly, ...rawFootprint.readOnly];
+      allRawReadWrite = [...allRawReadWrite, ...rawFootprint.readWrite];
     }
+
+    // Dedup
+    const dedupReadOnly = allReadOnly.filter(
+      (item, index, arr) =>
+        arr.findIndex(
+          (i) =>
+            i.contractId === item.contractId &&
+            (i as any).key === (item as any).key, // eslint-disable-line @typescript-eslint/no-explicit-any
+        ) === index,
+    );
+    const dedupReadWrite = allReadWrite.filter(
+      (item, index, arr) =>
+        arr.findIndex(
+          (i) =>
+            i.contractId === item.contractId &&
+            (i as any).key === (item as any).key, // eslint-disable-line @typescript-eslint/no-explicit-any
+        ) === index,
+    );
+    const dedupContracts = [...new Set(allContracts)];
+    const dedupRawReadOnly = [...new Set(allRawReadOnly)];
+    const dedupRawReadWrite = [...new Set(allRawReadWrite)];
+
+    return {
+      success: true,
+      footprint: {
+        readOnly: dedupReadOnly,
+        readWrite: dedupReadWrite,
+      },
+      contracts: dedupContracts,
+      contractType,
+      ttl: allTtl,
+      optimized,
+      rawFootprint: {
+        readOnly: dedupRawReadOnly,
+        readWrite: dedupRawReadWrite,
+      },
+      cost: {
+        cpuInsns: "0",
+        memBytes: "0",
+      },
+      operations,
+      raw: response,
+      diagnosticEvents:
+        response.events
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ?.filter((e) => (e as any).type?.()?.name === "diagnostic")
+          .map((e) => e.toXDR("base64")) || [],
+    };
   }
 }

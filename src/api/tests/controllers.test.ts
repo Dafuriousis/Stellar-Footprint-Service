@@ -1,4 +1,6 @@
+/* eslint-disable import-x/order */
 import request from "supertest";
+
 import app from "../../index";
 
 // Mock the simulator service before any imports resolve it

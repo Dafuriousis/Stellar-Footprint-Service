@@ -30,10 +30,17 @@
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.4.0",
     "helmet": "^8.0.0",
+    "ioredis": "^5.10.1",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
     "prom-client": "^15.1.0",
+    "swagger-ui-express": "^5.0.1",
     "tsconfig-paths": "^4.2.0",
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.0",
+    "yaml": "^2.8.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",
@@ -44,6 +51,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
     "@types/supertest": "^6.0.0",
+    "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.59.0",

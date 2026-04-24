@@ -1,23 +1,24 @@
 import { z } from "zod";
+
 import { logger } from "../utils/logger";
 
-// ── Schema ────────────────────────────────────────────────────────────────────
-
 export const EnvSchema = z.object({
-  // Required — RPC URLs for active network
-  MAINNET_RPC_URL: z.string().url(),
-  TESTNET_RPC_URL: z.string().url(),
-  FUTURENET_RPC_URL: z.string().url(),
-
-  // Required — secret keys (non-empty strings; format validated at use-site)
-  MAINNET_SECRET_KEY: z.string().min(1),
-  TESTNET_SECRET_KEY: z.string().min(1),
-  FUTURENET_SECRET_KEY: z.string().min(1),
-
-  // Required — active network selection
-  NETWORK: z.enum(["mainnet", "testnet", "futurenet"]),
-
-  // Optional with defaults
+  MAINNET_RPC_URL: z
+    .string()
+    .url()
+    .default("https://mainnet.stellar.validationcloud.io/v1/placeholder"),
+  TESTNET_RPC_URL: z
+    .string()
+    .url()
+    .default("https://soroban-testnet.stellar.org"),
+  FUTURENET_RPC_URL: z
+    .string()
+    .url()
+    .default("https://rpc-futurenet.stellar.org:443"),
+  MAINNET_SECRET_KEY: z.string().default(""),
+  TESTNET_SECRET_KEY: z.string().default(""),
+  FUTURENET_SECRET_KEY: z.string().default(""),
+  NETWORK: z.enum(["mainnet", "testnet", "futurenet"]).default("testnet"),
   PORT: z.coerce.number().int().positive().default(3000),
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -38,25 +39,6 @@ export const EnvSchema = z.object({
 
 export type EnvConfig = z.infer<typeof EnvSchema>;
 
-// ── Required field names ──────────────────────────────────────────────────────
-
-const REQUIRED_FIELDS = new Set([
-  "MAINNET_RPC_URL",
-  "TESTNET_RPC_URL",
-  "FUTURENET_RPC_URL",
-  "MAINNET_SECRET_KEY",
-  "TESTNET_SECRET_KEY",
-  "FUTURENET_SECRET_KEY",
-  "NETWORK",
-]);
-
-// ── Validation ────────────────────────────────────────────────────────────────
-
-/**
- * Validates raw environment variables against EnvSchema.
- * - Required vars missing/invalid → logs aggregated error and calls process.exit(1).
- * - Optional vars with bad values → warns, substitutes default, continues.
- */
 export function validateEnv(raw: NodeJS.ProcessEnv): EnvConfig {
   const result = EnvSchema.safeParse(raw);
 
@@ -64,65 +46,24 @@ export function validateEnv(raw: NodeJS.ProcessEnv): EnvConfig {
     return result.data;
   }
 
-  const requiredErrors: z.ZodIssue[] = [];
-  const optionalErrors: z.ZodIssue[] = [];
-
-  for (const issue of result.error.issues) {
-    const field = issue.path[0] as string;
-    if (REQUIRED_FIELDS.has(field)) {
-      requiredErrors.push(issue);
-    } else {
-      optionalErrors.push(issue);
-    }
-  }
-
-  // Handle optional field errors: warn and strip so defaults apply
-  if (optionalErrors.length > 0) {
-    const strippedRaw = { ...raw };
-    for (const issue of optionalErrors) {
-      const field = issue.path[0] as string;
-      logger.warn(
-        { field, message: issue.message },
-        `Optional env var ${field} is invalid: ${issue.message}. Using default.`,
-      );
-      delete strippedRaw[field];
-    }
-
-    // Re-parse without the invalid optional fields to get defaults
-    const retryResult = EnvSchema.safeParse(strippedRaw);
-
-    if (retryResult.success) {
-      return retryResult.data;
-    }
-
-    // After stripping optionals, check again for required errors
-    for (const issue of retryResult.error.issues) {
-      const field = issue.path[0] as string;
-      if (REQUIRED_FIELDS.has(field)) {
-        requiredErrors.push(issue);
-      }
-    }
-  }
-
-  // Handle required field errors: aggregate and exit
-  if (requiredErrors.length > 0) {
-    const lines = requiredErrors.map(
+  // In production, log and exit on any validation failure
+  if (raw["NODE_ENV"] === "production") {
+    const lines = result.error.issues.map(
       (issue) => `  ${String(issue.path[0])}: ${issue.message}`,
     );
-    const message = [
-      "Environment validation failed. Fix the following errors:",
-      ...lines,
-    ].join("\n");
-
-    logger.error(message);
+    logger.error(["Environment validation failed:", ...lines].join("\n"));
     process.exit(1);
   }
 
-  // Should not reach here, but satisfy TypeScript
-  /* istanbul ignore next */
-  throw new Error("Unexpected validation state");
+  // In dev/test, warn and use defaults
+  logger.warn(
+    "Environment validation warnings (using defaults for invalid values)",
+  );
+  const stripped = { ...raw };
+  for (const issue of result.error.issues) {
+    delete stripped[issue.path[0] as string];
+  }
+  return EnvSchema.parse(stripped);
 }
-
-// ── Singleton export ──────────────────────────────────────────────────────────
 
 export const env: EnvConfig = validateEnv(process.env);

@@ -18,7 +18,7 @@ export async function buildRestoreTransaction(
   const tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
   const response = await server.simulateTransaction(tx);
 
-  if (!StellarSdk.SorobanRpc.Api.isSimulationRestore(response)) {
+  if (!StellarSdk.rpc.Api.isSimulationRestore(response)) {
     return { needsRestore: false };
   }
 

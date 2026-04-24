@@ -3,12 +3,15 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import path from "path";
+
 import compression from "compression";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 
 import routes from "./api/routes";
+import { env } from "./config/env";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
@@ -16,6 +19,7 @@ import { ipFilterMiddleware } from "./middleware/ipFilter";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { requestLogger } from "./middleware/requestLogger";
+import { responseTimeMiddleware } from "./middleware/responseTime";
 import { timeoutMiddleware } from "./middleware/timeout";
 import { logger } from "./utils/logger";
 
@@ -23,8 +27,6 @@ const app = express();
 const PORT = env.PORT;
 const COMPRESSION_THRESHOLD = env.COMPRESSION_THRESHOLD;
 
-// CORS — read allowed origins from CORS_ORIGIN env var (comma-separated list)
-// Defaults to * in development, strict in production
 function buildCorsOptions(): cors.CorsOptions {
   const origin = process.env.CORS_ORIGIN;
   if (!origin) {
@@ -37,8 +39,6 @@ function buildCorsOptions(): cors.CorsOptions {
 }
 
 app.use(cors(buildCorsOptions()));
-
-// Middleware
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -66,20 +66,23 @@ if (process.env.NODE_ENV !== "production") {
     require("swagger-ui-express") as typeof import("swagger-ui-express");
 
   const YAML = require("yaml") as { parse: (s: string) => unknown };
+
   const fs = require("fs") as typeof import("fs");
   const specPath = path.join(__dirname, "..", "openapi.yaml");
-  const spec = YAML.parse(fs.readFileSync(specPath, "utf8"));
-  app.use(
-    "/api/docs",
-    swaggerUi.serve,
-    swaggerUi.setup(spec, {
+  if (fs.existsSync(specPath)) {
+    const spec = YAML.parse(fs.readFileSync(specPath, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    const swaggerSetup = swaggerUi.setup(spec, {
       customSiteTitle: "Stellar Footprint Service API",
-    }),
-  );
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (app as any).use("/api/docs", swaggerUi.serve, swaggerSetup);
+  }
 }
 
-// Metrics endpoint
-app.get("/metrics", async (req, res) => {
+app.get("/metrics", async (_req, res) => {
   try {
     res.set("Content-Type", "text/plain");
     res.end(await metrics.getMetrics());
@@ -88,10 +91,8 @@ app.get("/metrics", async (req, res) => {
   }
 });
 
-// API v1 routes
 app.use("/api/v1", routes);
 
-// Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const _p = ((req.params as any)["0"] ?? (req.params as any)["path"]) || "";
@@ -101,21 +102,20 @@ app.use("/api/:path(*)", (req, res) => {
   );
 });
 
-// Error handling middleware (must be last)
 app.use(errorHandler);
 
-// Only start the server when this file is run directly (not imported in tests)
 if (require.main === module) {
   const server = app.listen(PORT, () => {
-    logger.info("stellar-footprint-service started", {
-      port: PORT,
-      nodeVersion: process.version,
-      environment: process.env.NODE_ENV || "development",
-    });
+    logger.info(
+      {
+        port: PORT,
+        nodeVersion: process.version,
+        environment: process.env.NODE_ENV || "development",
+      },
+      "stellar-footprint-service started",
+    );
   });
 
-  // Graceful shutdown: stop accepting new connections and wait for in-flight
-  // requests to finish before exiting. A forced exit fires after 10 seconds.
   const shutdown = (signal: string) => {
     logger.info(`${signal} received, shutting down gracefully`);
     server.close(() => {
@@ -130,10 +130,8 @@ if (require.main === module) {
 
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
-
-  // Safety net for any unhandled promise rejections
   process.on("unhandledRejection", (reason) => {
-    logger.error("Unhandled rejection", { reason });
+    logger.error({ reason }, "Unhandled rejection");
   });
 }
 

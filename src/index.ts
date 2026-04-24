@@ -5,6 +5,7 @@ import routes from "./api/routes";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { timeoutMiddleware } from "./middleware/timeout";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
+import { requestIdMiddleware } from "./middleware/requestId";
 import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { errorHandler } from "./middleware/errorHandler";
@@ -23,6 +24,7 @@ const COMPRESSION_THRESHOLD = parseInt(
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json());
 app.use(ipFilterMiddleware);
+app.use(requestIdMiddleware);
 app.use(requestLogger);
 app.use(metricsMiddleware);
 app.use(timeoutMiddleware);

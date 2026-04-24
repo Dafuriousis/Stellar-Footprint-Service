@@ -1,4 +1,5 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
+import { Network, getRpcServer, getNetworkConfig } from "@config/stellar";
 import { Network, getRpcServer, getNetworkConfig } from "../config/stellar";
 
 export interface NetworkStatusResult {

@@ -12,12 +12,15 @@ function formatNumber(value) {
 
 function calculateErrorRate(result) {
   const totalRequests = result.requests?.total ?? 0;
-  const totalErrors = (result.errors ?? 0) + (result.timeouts ?? 0) + (result.non2xx ?? 0);
+  const totalErrors =
+    (result.errors ?? 0) + (result.timeouts ?? 0) + (result.non2xx ?? 0);
   return totalRequests > 0 ? (totalErrors / totalRequests) * 100 : 0;
 }
 
 async function runScenario(connections) {
-  console.log(`\nRunning load test: ${connections} connections for ${duration}s against ${target}`);
+  console.log(
+    `\nRunning load test: ${connections} connections for ${duration}s against ${target}`,
+  );
 
   const result = await autocannon({
     url: target,
@@ -37,8 +40,10 @@ async function runScenario(connections) {
 }
 
 function printSummary(results) {
-  const header = "Connections | p50(ms) | p95(ms) | p99(ms) | Req/sec | Errors(%)";
-  const divider = "---------------------------------------------------------------";
+  const header =
+    "Connections | p50(ms) | p95(ms) | p99(ms) | Req/sec | Errors(%)";
+  const divider =
+    "---------------------------------------------------------------";
 
   console.log("\nLoad Test Summary");
   console.log(header);
@@ -46,7 +51,7 @@ function printSummary(results) {
 
   results.forEach((row) => {
     console.log(
-      `${String(row.connections).padEnd(11)} | ${formatNumber(row.p50).padEnd(7)} | ${formatNumber(row.p95).padEnd(7)} | ${formatNumber(row.p99).padEnd(7)} | ${formatNumber(row.reqPerSec).padEnd(7)} | ${String(row.errors).padStart(8)}`
+      `${String(row.connections).padEnd(11)} | ${formatNumber(row.p50).padEnd(7)} | ${formatNumber(row.p95).padEnd(7)} | ${formatNumber(row.p99).padEnd(7)} | ${formatNumber(row.reqPerSec).padEnd(7)} | ${String(row.errors).padStart(8)}`,
     );
   });
 }

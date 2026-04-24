@@ -18,18 +18,18 @@ Step-by-step deployment instructions for **Stellar Footprint Service** across co
 
 All platforms require these variables. Copy `.env.example` as a starting point.
 
-| Variable | Required | Description |
-|---|---|---|
-| `NODE_ENV` | ✅ | Set to `production` |
-| `PORT` | ✅ | Port the service listens on (default: `3000`) |
-| `TESTNET_RPC_URL` | ✅ | Stellar testnet RPC endpoint |
-| `MAINNET_RPC_URL` | ⚠️ | Required for mainnet usage |
-| `TESTNET_SECRET_KEY` | ⚠️ | Stellar testnet signing key |
-| `MAINNET_SECRET_KEY` | ⚠️ | Stellar mainnet signing key |
-| `SIMULATE_TIMEOUT_MS` | ❌ | Simulation timeout in ms (default: `30000`) |
-| `LOG_LEVEL` | ❌ | `debug` \| `info` \| `warn` \| `error` (default: `info`) |
-| `COMPRESSION_THRESHOLD` | ❌ | Response compression threshold in bytes (default: `1024`) |
-| `RPC_POOL_TTL_MS` | ❌ | RPC connection pool TTL in ms (default: `300000`) |
+| Variable                | Required | Description                                               |
+| ----------------------- | -------- | --------------------------------------------------------- |
+| `NODE_ENV`              | ✅       | Set to `production`                                       |
+| `PORT`                  | ✅       | Port the service listens on (default: `3000`)             |
+| `TESTNET_RPC_URL`       | ✅       | Stellar testnet RPC endpoint                              |
+| `MAINNET_RPC_URL`       | ⚠️       | Required for mainnet usage                                |
+| `TESTNET_SECRET_KEY`    | ⚠️       | Stellar testnet signing key                               |
+| `MAINNET_SECRET_KEY`    | ⚠️       | Stellar mainnet signing key                               |
+| `SIMULATE_TIMEOUT_MS`   | ❌       | Simulation timeout in ms (default: `30000`)               |
+| `LOG_LEVEL`             | ❌       | `debug` \| `info` \| `warn` \| `error` (default: `info`)  |
+| `COMPRESSION_THRESHOLD` | ❌       | Response compression threshold in bytes (default: `1024`) |
+| `RPC_POOL_TTL_MS`       | ❌       | RPC connection pool TTL in ms (default: `300000`)         |
 
 > **Never commit real secret keys.** Use each platform's secret/environment variable manager.
 
@@ -78,6 +78,7 @@ Railway auto-detects Node.js projects and builds from your `Dockerfile`.
    ```
 
    Expected response:
+
    ```json
    { "status": "healthy", "uptime": 12.3, ... }
    ```
@@ -323,6 +324,7 @@ curl http://localhost:3000/health
 ```
 
 Expected output:
+
 ```json
 { "status": "healthy", "uptime": 5.2, ... }
 ```

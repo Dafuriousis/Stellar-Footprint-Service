@@ -28,9 +28,7 @@ export interface FeeEstimate {
  * Fetch the recommended inclusion fee (p50 of recent Soroban transactions)
  * from the RPC getFeeStats endpoint.
  */
-async function fetchRecommendedInclusionFee(
-  network: Network,
-): Promise<bigint> {
+async function fetchRecommendedInclusionFee(network: Network): Promise<bigint> {
   try {
     const server = getRpcServer(network);
     const stats = await server.getFeeStats();

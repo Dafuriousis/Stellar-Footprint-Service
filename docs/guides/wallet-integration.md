@@ -23,12 +23,18 @@ npm install @stellar/freighter-api @stellar/stellar-sdk
 Before doing anything, confirm the extension is installed and the user is connected.
 
 ```javascript
-import { isConnected, getPublicKey, requestAccess } from "@stellar/freighter-api";
+import {
+  isConnected,
+  getPublicKey,
+  requestAccess,
+} from "@stellar/freighter-api";
 
 async function connectWallet() {
   const connected = await isConnected();
   if (!connected) {
-    throw new Error("Freighter extension not found. Install it at freighter.app");
+    throw new Error(
+      "Freighter extension not found. Install it at freighter.app",
+    );
   }
 
   // Request permission to access the user's public key
@@ -122,8 +128,12 @@ function assembleTransaction(xdr, simulationResult, network = "testnet") {
   const { readOnly, readWrite } = simulationResult.footprint;
 
   const sorobanData = new StellarSdk.SorobanDataBuilder()
-    .setReadOnly(readOnly.map((e) => StellarSdk.xdr.LedgerKey.fromXDR(e, "base64")))
-    .setReadWrite(readWrite.map((e) => StellarSdk.xdr.LedgerKey.fromXDR(e, "base64")))
+    .setReadOnly(
+      readOnly.map((e) => StellarSdk.xdr.LedgerKey.fromXDR(e, "base64")),
+    )
+    .setReadWrite(
+      readWrite.map((e) => StellarSdk.xdr.LedgerKey.fromXDR(e, "base64")),
+    )
     .build();
 
   const assembledTx = StellarSdk.TransactionBuilder.cloneFrom(tx)
@@ -183,11 +193,16 @@ async function submitTransaction(signedXdr, network = "testnet") {
       ? StellarSdk.Networks.PUBLIC
       : StellarSdk.Networks.TESTNET;
 
-  const tx = StellarSdk.TransactionBuilder.fromXDR(signedXdr, networkPassphrase);
+  const tx = StellarSdk.TransactionBuilder.fromXDR(
+    signedXdr,
+    networkPassphrase,
+  );
   const result = await server.sendTransaction(tx);
 
   if (result.status === "ERROR") {
-    throw new Error(`Submission failed: ${result.errorResult?.toXDR("base64")}`);
+    throw new Error(
+      `Submission failed: ${result.errorResult?.toXDR("base64")}`,
+    );
   }
 
   return result; // { id, status } — poll result.id for final status
@@ -201,11 +216,17 @@ async function submitTransaction(signedXdr, network = "testnet") {
 Here is the complete flow as a single function with error handling for each stage.
 
 ```javascript
-import { isConnected, getPublicKey, requestAccess, signTransaction } from "@stellar/freighter-api";
+import {
+  isConnected,
+  getPublicKey,
+  requestAccess,
+  signTransaction,
+} from "@stellar/freighter-api";
 import * as StellarSdk from "@stellar/stellar-sdk";
 
 const SERVICE_URL = "http://localhost:3000";
-const CONTRACT_ID = "CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+const CONTRACT_ID =
+  "CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 const NETWORK = "testnet";
 
 async function runTransaction() {
@@ -249,8 +270,16 @@ async function runTransaction() {
 
   // 4. Assemble transaction with footprint
   const sorobanData = new StellarSdk.SorobanDataBuilder()
-    .setReadOnly(footprint.readOnly.map((e) => StellarSdk.xdr.LedgerKey.fromXDR(e, "base64")))
-    .setReadWrite(footprint.readWrite.map((e) => StellarSdk.xdr.LedgerKey.fromXDR(e, "base64")))
+    .setReadOnly(
+      footprint.readOnly.map((e) =>
+        StellarSdk.xdr.LedgerKey.fromXDR(e, "base64"),
+      ),
+    )
+    .setReadWrite(
+      footprint.readWrite.map((e) =>
+        StellarSdk.xdr.LedgerKey.fromXDR(e, "base64"),
+      ),
+    )
     .build();
 
   const assembledXdr = StellarSdk.TransactionBuilder.cloneFrom(unsignedTx)
@@ -274,14 +303,24 @@ async function runTransaction() {
 
   // 6. Submit
   const submitResult = await server.sendTransaction(
-    StellarSdk.TransactionBuilder.fromXDR(signedXdr, StellarSdk.Networks.TESTNET)
+    StellarSdk.TransactionBuilder.fromXDR(
+      signedXdr,
+      StellarSdk.Networks.TESTNET,
+    ),
   );
 
   if (submitResult.status === "ERROR") {
-    throw new Error(`Submission failed: ${submitResult.errorResult?.toXDR("base64")}`);
+    throw new Error(
+      `Submission failed: ${submitResult.errorResult?.toXDR("base64")}`,
+    );
   }
 
-  console.log("Transaction submitted:", submitResult.id, "Status:", submitResult.status);
+  console.log(
+    "Transaction submitted:",
+    submitResult.id,
+    "Status:",
+    submitResult.status,
+  );
   return submitResult;
 }
 ```
@@ -290,13 +329,13 @@ async function runTransaction() {
 
 ## Error Handling Reference
 
-| Error | Cause | Fix |
-|---|---|---|
-| `Freighter extension not found` | Extension not installed | Direct user to [freighter.app](https://www.freighter.app/) |
-| `User declined` | User rejected in Freighter popup | Show a dismissible UI message, do not retry automatically |
-| `Simulation failed: ...` | Invalid XDR or RPC issue | Log `envelope.error` and surface it to the user |
-| `Submission failed: ...` | On-chain rejection | Decode the error XDR for details |
-| `Transaction requires ledger entry restoration` | Expired ledger entries | Call `POST /api/v1/restore` first, submit the restore tx, then retry |
+| Error                                           | Cause                            | Fix                                                                  |
+| ----------------------------------------------- | -------------------------------- | -------------------------------------------------------------------- |
+| `Freighter extension not found`                 | Extension not installed          | Direct user to [freighter.app](https://www.freighter.app/)           |
+| `User declined`                                 | User rejected in Freighter popup | Show a dismissible UI message, do not retry automatically            |
+| `Simulation failed: ...`                        | Invalid XDR or RPC issue         | Log `envelope.error` and surface it to the user                      |
+| `Submission failed: ...`                        | On-chain rejection               | Decode the error XDR for details                                     |
+| `Transaction requires ledger entry restoration` | Expired ledger entries           | Call `POST /api/v1/restore` first, submit the restore tx, then retry |
 
 ### Handling the Restore Case
 
@@ -316,7 +355,10 @@ if (simEnvelope.error?.includes("restoration")) {
     networkPassphrase: "Test SDF Network ; September 2015",
   });
   await server.sendTransaction(
-    StellarSdk.TransactionBuilder.fromXDR(signedRestoreXdr, StellarSdk.Networks.TESTNET)
+    StellarSdk.TransactionBuilder.fromXDR(
+      signedRestoreXdr,
+      StellarSdk.Networks.TESTNET,
+    ),
   );
 
   // Then retry the original flow

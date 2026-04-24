@@ -36,7 +36,8 @@ describe("simulateTransaction Integration Tests", () => {
     const operation = StellarSdk.Operation.invokeHostFunction({
       func: StellarSdk.xdr.HostFunction.hostFunctionTypeInvokeContract(
         new StellarSdk.xdr.InvokeContractArgs({
-          contractAddress: StellarSdk.Address.fromString(contract).toXDRObject(),
+          contractAddress:
+            StellarSdk.Address.fromString(contract).toXDRObject(),
           functionName: Buffer.from("test"),
           args: [],
         }),

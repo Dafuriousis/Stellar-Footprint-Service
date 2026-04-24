@@ -30,7 +30,8 @@ function createNetworkConfig(): Record<Network, NetworkConfig> {
     },
     futurenet: {
       rpcUrl:
-        process.env.FUTURENET_RPC_URL || "https://rpc-futurenet.stellar.org:443",
+        process.env.FUTURENET_RPC_URL ||
+        "https://rpc-futurenet.stellar.org:443",
       networkPassphrase: StellarSdk.Networks.FUTURENET,
       secretKey: process.env.FUTURENET_SECRET_KEY || "",
     },

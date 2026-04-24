@@ -1,21 +1,22 @@
 // dotenv must be configured before any other imports that read process.env
+// eslint-disable-next-line import-x/order
 import dotenv from "dotenv";
 dotenv.config();
 
-import express from "express";
 import compression from "compression";
-import helmet from "helmet";
 import cors from "cors";
+import express from "express";
+import helmet from "helmet";
+
 import routes from "./api/routes";
-import { metricsMiddleware, metrics } from "./middleware/metrics";
-import { timeoutMiddleware } from "./middleware/timeout";
-import { ipFilterMiddleware } from "./middleware/ipFilter";
-import { requestIdMiddleware } from "./middleware/requestId";
-import { requestLogger } from "./middleware/requestLogger";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
-import { rpcCircuitBreaker } from "./utils/circuitBreaker";
+import { ipFilterMiddleware } from "./middleware/ipFilter";
+import { metricsMiddleware, metrics } from "./middleware/metrics";
+import { requestIdMiddleware } from "./middleware/requestId";
+import { requestLogger } from "./middleware/requestLogger";
+import { timeoutMiddleware } from "./middleware/timeout";
 import { logger } from "./utils/logger";
 
 const app = express();
@@ -62,16 +63,23 @@ app.use(timeoutMiddleware);
 app.use(bruteForceMiddleware);
 app.use(contentTypeMiddleware);
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-  const circuit = rpcCircuitBreaker.getState();
-  res.status(200).json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    circuitBreaker: circuit,
-  });
-});
+// Swagger UI — development only
+if (process.env.NODE_ENV !== "production") {
+  const swaggerUi =
+    require("swagger-ui-express") as typeof import("swagger-ui-express");
+
+  const YAML = require("yaml") as { parse: (s: string) => unknown };
+  const fs = require("fs") as typeof import("fs");
+  const specPath = path.join(__dirname, "..", "openapi.yaml");
+  const spec = YAML.parse(fs.readFileSync(specPath, "utf8"));
+  app.use(
+    "/api/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(spec, {
+      customSiteTitle: "Stellar Footprint Service API",
+    }),
+  );
+}
 
 // Metrics endpoint
 app.get("/metrics", async (req, res) => {
@@ -89,10 +97,10 @@ app.use("/api/v1", routes);
 // Backward-compat: redirect /api/* → /api/v1/*
 app.use("/api/:path(*)", (req, res) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const path = (req.params as any)["path"] || "";
+  const _p = ((req.params as any)["0"] ?? (req.params as any)["path"]) || "";
   res.redirect(
     308,
-    `/api/v1/${path}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
+    `/api/v1/${_p}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`,
   );
 });
 

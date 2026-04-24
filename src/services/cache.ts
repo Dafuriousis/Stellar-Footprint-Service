@@ -123,9 +123,10 @@ export function getCache(): CacheService {
       });
 
       client.on("error", (err: Error) => {
-        logger.warn("Redis error — falling back to in-memory cache", {
-          message: err.message,
-        });
+        logger.warn(
+          "Redis error — falling back to in-memory cache",
+          err.message,
+        );
         _cache = new LruMemoryCache();
       });
 
@@ -142,7 +143,7 @@ export function getCache(): CacheService {
     } catch (err) {
       logger.warn(
         "Failed to initialise Redis — falling back to in-memory cache",
-        { err },
+        err,
       );
       _cache = new LruMemoryCache();
     }

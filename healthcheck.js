@@ -4,12 +4,6 @@ const options = {
   host: "localhost",
   port: process.env.PORT || 3000,
   path: "/api/health",
-  path: "/api/health",
-  path: "/health",
-  path: "/health",
-  path: "/health",
-  path: "/health",
-  path: "/api/health",
   timeout: 2000,
 };
 

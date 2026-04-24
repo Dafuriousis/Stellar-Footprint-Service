@@ -32,6 +32,10 @@ const mockBuild = jest.fn().mockReturnValue({
   resources: mockResources,
   auth: jest.fn().mockReturnValue([]),
 });
+const mockBuild = jest.fn().mockReturnValue({
+  resources: mockResources,
+  auth: jest.fn().mockReturnValue([]),
+});
 const mockTransactionData = { build: mockBuild };
 
 jest.mock("@stellar/stellar-sdk", () => {
@@ -84,6 +88,11 @@ function makeSuccessResponse() {
     error: undefined,
   };
 }
+
+const isSimulationError = StellarSdk.SorobanRpc.Api
+  .isSimulationError as unknown as jest.Mock;
+const isSimulationRestore = StellarSdk.SorobanRpc.Api
+  .isSimulationRestore as unknown as jest.Mock;
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,5 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
 
-import { env } from "./env";
-
 export type Network = "mainnet" | "testnet" | "futurenet";
 
 export function isValidNetwork(value: unknown): value is Network {
@@ -11,27 +9,33 @@ export function isValidNetwork(value: unknown): value is Network {
 interface NetworkConfig {
   rpcUrl: string;
   networkPassphrase: string;
-}
-
-function createNetworkConfig(): Record<Network, NetworkConfig> {
-  return {
-    mainnet: {
-      rpcUrl: env.MAINNET_RPC_URL,
-      networkPassphrase: StellarSdk.Networks.PUBLIC,
-    },
-    testnet: {
-      rpcUrl: env.TESTNET_RPC_URL,
-      networkPassphrase: StellarSdk.Networks.TESTNET,
-    },
-    futurenet: {
-      rpcUrl: env.FUTURENET_RPC_URL,
-      networkPassphrase: StellarSdk.Networks.FUTURENET,
-    },
-  };
+  secretKey: string;
 }
 
 export function getNetworkConfig(network: Network = "testnet"): NetworkConfig {
-  return createNetworkConfig()[network];
+  const configs: Record<Network, NetworkConfig> = {
+    mainnet: {
+      rpcUrl: process.env.MAINNET_RPC_URL || "",
+      networkPassphrase: StellarSdk.Networks.PUBLIC,
+      secretKey: process.env.MAINNET_SECRET_KEY || "",
+    },
+    testnet: {
+      rpcUrl: process.env.TESTNET_RPC_URL || "",
+      networkPassphrase: StellarSdk.Networks.TESTNET,
+      secretKey: process.env.TESTNET_SECRET_KEY || "",
+    },
+    futurenet: {
+      rpcUrl: process.env.FUTURENET_RPC_URL || "",
+      networkPassphrase: StellarSdk.Networks.FUTURENET,
+      secretKey: process.env.FUTURENET_SECRET_KEY || "",
+    },
+  };
+
+  const config = configs[network];
+  if (!config.rpcUrl) {
+    throw new Error(`RPC URL not configured for network: ${network}`);
+  }
+  return config;
 }
 
 interface PoolEntry {
@@ -40,6 +44,10 @@ interface PoolEntry {
 }
 
 const pool = new Map<Network, PoolEntry>();
+
+export function clearRpcPool(): void {
+  pool.clear();
+}
 
 export function getRpcServer(
   network: Network = "testnet",

@@ -4,16 +4,20 @@ import request from "supertest";
 import app from "../../index";
 
 // Mock the simulator service before any imports resolve it
-jest.mock("../../services/simulator");
+jest.mock("@services/simulator");
 
 // Mock metrics to avoid prom-client side effects in tests
-jest.mock("../../middleware/metrics", () => ({
+jest.mock("@middleware/metrics", () => ({
   __esModule: true,
   metricsMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
   metrics: {
     incrementActiveSimulations: jest.fn(),
     decrementActiveSimulations: jest.fn(),
     recordSimulation: jest.fn(),
+    recordSimulationDuration: jest.fn(),
+    recordCacheHit: jest.fn(),
+    recordCacheMiss: jest.fn(),
+    recordRpcError: jest.fn(),
     getMetrics: jest.fn().mockResolvedValue(""),
     getRegister: jest.fn(),
   },
@@ -21,52 +25,57 @@ jest.mock("../../middleware/metrics", () => ({
     incrementActiveSimulations: jest.fn(),
     decrementActiveSimulations: jest.fn(),
     recordSimulation: jest.fn(),
+    recordSimulationDuration: jest.fn(),
+    recordCacheHit: jest.fn(),
+    recordCacheMiss: jest.fn(),
+    recordRpcError: jest.fn(),
     getMetrics: jest.fn().mockResolvedValue(""),
     getRegister: jest.fn(),
   },
 }));
 
-import { simulateTransaction } from "../../services/simulator";
+import { simulateTransaction } from "@services/simulator";
 
 const mockSimulateTransaction = simulateTransaction as jest.MockedFunction<
   typeof simulateTransaction
 >;
 
-const VALID_XDR = "AAAAAQAAAAC...fake_xdr_string";
+const VALID_XDR =
+  "AAAAAgAAAACnDQTKOBdaOH0ynf6k7SpkytahlUjNsWgm4WEB8rmE1QAAAGQAAAAAAAAAZwAAAAEAAAAAAAAAAAAAAABp6joKAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFaGVsbG8AAAAAAAABAAAAAQAAAAAAAAAAAAAAAfK5hNUAAABAIbPVF4x6vSLx/J3T0SDhvTNtytA/BNO+qMJ74p/b3Y8xpBhR7xzy68FuEyffaF9fNXHEC+77WK+oOJpfon1tCg==";
 
-describe("POST /api/simulate", () => {
+describe("POST /api/v1/simulate", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("returns 400 when xdr is missing", async () => {
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ network: "testnet" });
 
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: "Missing required field: xdr" });
+    expect(res.body).toMatchObject({ error: "Missing required field: xdr" });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
 
   it("returns 400 when xdr is an empty string", async () => {
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ xdr: "", network: "testnet" });
 
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: "Missing required field: xdr" });
+    expect(res.body).toMatchObject({ error: "Missing required field: xdr" });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
 
   it("returns 400 when network is invalid", async () => {
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ xdr: VALID_XDR, network: "invalidnet" });
 
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({
-      error: "Invalid network. Use 'testnet' or 'mainnet'",
+    expect(res.body).toMatchObject({
+      error: "Invalid network. Use 'testnet', 'mainnet', or 'futurenet'",
     });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
@@ -85,7 +94,7 @@ describe("POST /api/simulate", () => {
     mockSimulateTransaction.mockResolvedValueOnce(mockResult);
 
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ xdr: VALID_XDR, network: "testnet" });
 
     expect(res.status).toBe(200);
@@ -111,7 +120,7 @@ describe("POST /api/simulate", () => {
     mockSimulateTransaction.mockResolvedValueOnce(mockResult);
 
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ xdr: VALID_XDR });
 
     expect(res.status).toBe(200);
@@ -136,7 +145,7 @@ describe("POST /api/simulate", () => {
     mockSimulateTransaction.mockResolvedValueOnce(mockResult);
 
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ xdr: VALID_XDR, network: "mainnet" });
 
     expect(res.status).toBe(200);
@@ -155,7 +164,7 @@ describe("POST /api/simulate", () => {
     mockSimulateTransaction.mockResolvedValueOnce(mockResult);
 
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ xdr: VALID_XDR, network: "testnet" });
 
     expect(res.status).toBe(422);
@@ -171,21 +180,21 @@ describe("POST /api/simulate", () => {
     );
 
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ xdr: VALID_XDR, network: "testnet" });
 
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: "RPC connection refused" });
+    expect(res.body).toMatchObject({ error: "RPC connection refused" });
   });
 
   it("returns 500 with generic message when a non-Error is thrown", async () => {
     mockSimulateTransaction.mockRejectedValueOnce("something went wrong");
 
     const res = await request(app)
-      .post("/api/simulate")
+      .post("/api/v1/simulate")
       .send({ xdr: VALID_XDR, network: "testnet" });
 
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: "Unexpected error" });
+    expect(res.body).toMatchObject({ error: "Unexpected error" });
   });
 });

@@ -29,5 +29,5 @@ export function sanitizeRpcError(raw: string): string {
     return "RPC network error. Please try again.";
   }
 
-  return "Simulation failed. Please check your transaction and try again.";
+  return raw;
 }

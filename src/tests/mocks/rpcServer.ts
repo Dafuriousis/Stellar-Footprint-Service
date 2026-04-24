@@ -1,7 +1,5 @@
 import * as http from "http";
 
-import * as StellarSdk from "@stellar/stellar-sdk";
-
 /**
  * Response type for mock RPC server
  */
@@ -33,10 +31,9 @@ export interface MockRpcServerInstance {
  */
 const DEFAULT_RESPONSES = {
   success: {
-    transactionData: StellarSdk.xdr.SorobanTransactionData.fromXDR(
-      Buffer.from("AAAAAgAAAABmzb2MAAAAAAAAAAEAAAABAAAAAwAAAAA=", "base64"),
-    ).toXDR("base64"),
+    transactionData: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
     minResourceFee: "100000",
+    cost: { cpuInsns: "100000", memBytes: "100000" },
     events: [],
     latestLedger: 1000,
   },
@@ -182,6 +179,7 @@ function handleSimulateTransaction(
           transactionData:
             config.transactionData || DEFAULT_RESPONSES.success.transactionData,
           minResourceFee: DEFAULT_RESPONSES.success.minResourceFee,
+          cost: DEFAULT_RESPONSES.success.cost,
           events: DEFAULT_RESPONSES.success.events,
           latestLedger:
             config.ledgerSequence || DEFAULT_RESPONSES.success.latestLedger,

@@ -427,7 +427,7 @@ export async function simulateTransaction(
     return {
       success: false,
       error:
-        "Simulation succeeded but no transactionData; cannot extract footprint.",
+        "Simulation succeeded but transactionData is missing; cannot extract footprint.",
       raw: response,
     };
   }
@@ -492,8 +492,10 @@ export async function simulateTransaction(
       optimized: optimizationResult.optimized,
       rawFootprint,
       cost: {
-        cpuInsns: "0",
-        memBytes: "0",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        cpuInsns: (response as any).cost?.cpuInsns ?? "0",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        memBytes: (response as any).cost?.memBytes ?? "0",
       },
       requiredSigners,
       threshold,

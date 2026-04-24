@@ -11,7 +11,6 @@ import express from "express";
 import helmet from "helmet";
 
 import routes from "./api/routes";
-import { env } from "./config/env";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
@@ -24,8 +23,11 @@ import { timeoutMiddleware } from "./middleware/timeout";
 import { logger } from "./utils/logger";
 
 const app = express();
-const PORT = env.PORT;
-const COMPRESSION_THRESHOLD = env.COMPRESSION_THRESHOLD;
+const PORT = parseInt(process.env.PORT || "3000", 10);
+const COMPRESSION_THRESHOLD = parseInt(
+  process.env.COMPRESSION_THRESHOLD || "1024",
+  10,
+);
 
 function buildCorsOptions(): cors.CorsOptions {
   const origin = process.env.CORS_ORIGIN;
@@ -93,7 +95,7 @@ app.get("/metrics", async (_req, res) => {
 
 app.use("/api/v1", routes);
 
-app.use("/api/:path(*)", (req, res) => {
+app.use("/api/*path", (req, res) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const _p = ((req.params as any)["0"] ?? (req.params as any)["path"]) || "";
   res.redirect(

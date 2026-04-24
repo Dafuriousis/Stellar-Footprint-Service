@@ -1,30 +1,31 @@
 import { isValidNetwork } from "../stellar";
 
-jest.mock("@stellar/stellar-sdk", () => ({
-  Networks: {
-    TESTNET: "Test SDF Network ; September 2015",
-    PUBLIC: "Public Global Stellar Network ; September 2015",
-  },
-  SorobanRpc: {
-    Server: jest.fn().mockImplementation(() => ({ _mock: true })),
-  },
-}));
-
-let getNetworkConfig: typeof import("../stellar").getNetworkConfig;
-let getRpcServer: typeof import("../stellar").getRpcServer;
+const mockServer = { _mock: true };
 
 async function reimport() {
   jest.resetModules();
+  jest.doMock("@stellar/stellar-sdk", () => ({
+    Networks: {
+      TESTNET: "Test SDF Network ; September 2015",
+      PUBLIC: "Public Global Stellar Network ; September 2015",
+      FUTURENET: "Test SDF Future Network ; October 2022",
+    },
+    rpc: {
+      Server: jest.fn().mockImplementation(() => mockServer),
+    },
+  }));
   const mod = await import("../stellar");
-  getNetworkConfig = mod.getNetworkConfig;
-  getRpcServer = mod.getRpcServer;
+  return mod;
 }
 
 describe("getNetworkConfig", () => {
   const orig = process.env;
+  let getNetworkConfig: typeof import("../stellar").getNetworkConfig;
+
   beforeEach(async () => {
     process.env = { ...orig };
-    await reimport();
+    const mod = await reimport();
+    getNetworkConfig = mod.getNetworkConfig;
   });
   afterEach(() => {
     process.env = orig;
@@ -82,13 +83,16 @@ describe("getNetworkConfig", () => {
 
 describe("getRpcServer", () => {
   const orig = process.env;
+  let getRpcServer: typeof import("../stellar").getRpcServer;
+
   beforeEach(async () => {
     process.env = {
       ...orig,
       TESTNET_RPC_URL: "https://soroban-testnet.stellar.org",
       MAINNET_RPC_URL: "https://mainnet-rpc.stellar.org",
     };
-    await reimport();
+    const mod = await reimport();
+    getRpcServer = mod.getRpcServer;
   });
   afterEach(() => {
     process.env = orig;

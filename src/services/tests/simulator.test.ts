@@ -32,27 +32,32 @@ const mockBuild = jest.fn().mockReturnValue({
   resources: mockResources,
   auth: jest.fn().mockReturnValue([]),
 });
-const mockBuild = jest.fn().mockReturnValue({
-  resources: mockResources,
-  auth: jest.fn().mockReturnValue([]),
-});
 const mockTransactionData = { build: mockBuild };
 
 jest.mock("@stellar/stellar-sdk", () => {
   const isSimulationError = jest.fn();
   const isSimulationRestore = jest.fn();
 
+  class FeeBumpTransaction {}
+
   return {
     TransactionBuilder: {
-      fromXDR: jest.fn().mockReturnValue({}),
+      fromXDR: jest.fn().mockReturnValue({
+        operations: [{ type: "invokeHostFunction" }],
+      }),
     },
-    SorobanRpc: {
+    FeeBumpTransaction,
+    StrKey: {
+      encodeEd25519PublicKey: jest.fn().mockReturnValue("GABC"),
+    },
+    rpc: {
       Server: jest.fn(),
       Api: { isSimulationError, isSimulationRestore },
     },
     Networks: {
       TESTNET: "Test SDF Network ; September 2015",
       PUBLIC: "Public Global Stellar Network ; September 2015",
+      FUTURENET: "Test SDF Future Network ; October 2022",
     },
     xdr: {
       LedgerKey: {
@@ -88,11 +93,6 @@ function makeSuccessResponse() {
     error: undefined,
   };
 }
-
-const isSimulationError = StellarSdk.rpc.Api
-  .isSimulationError as unknown as jest.Mock;
-const isSimulationRestore = StellarSdk.rpc.Api
-  .isSimulationRestore as unknown as jest.Mock;
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 

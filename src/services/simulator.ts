@@ -19,6 +19,7 @@ import {
   TtlInfo,
 } from "../types";
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
+import { withRetry } from "../utils/retry";
 import { sanitizeRpcError } from "../utils/rpcErrorSanitizer";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
@@ -389,12 +390,16 @@ export async function simulateTransaction(
 
   let response;
   try {
-    response = await rpcCircuitBreaker.call(() =>
-      server.simulateTransaction(
-        tx as StellarSdk.Transaction,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        simOptions as any,
-      ),
+    response = await withRetry(
+      () =>
+        rpcCircuitBreaker.call(() =>
+          server.simulateTransaction(
+            tx as StellarSdk.Transaction,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            simOptions as any,
+          ),
+        ),
+      `simulateTransaction:${network}`,
     );
   } catch (err) {
     metrics.recordRpcError(network, "simulate_transaction_failure");

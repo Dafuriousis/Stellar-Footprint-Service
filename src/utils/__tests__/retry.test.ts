@@ -84,10 +84,13 @@ describe("withRetry", () => {
     });
     const fn = jest.fn().mockRejectedValue(transientErr);
 
-    // Run promise and advance timers concurrently
-    const promise = withRetry(fn, "test", 3);
-    await jest.runAllTimersAsync();
-    await expect(promise).rejects.toThrow("connect ETIMEDOUT");
+    // Attach rejection handler immediately to avoid PromiseRejectionHandledWarning,
+    // then advance fake timers concurrently so the retry loop can complete.
+    const [result] = await Promise.all([
+      expect(withRetry(fn, "test", 3)).rejects.toThrow("connect ETIMEDOUT"),
+      jest.runAllTimersAsync(),
+    ]);
+    void result;
     expect(fn).toHaveBeenCalledTimes(4); // initial + 3 retries
   });
 });

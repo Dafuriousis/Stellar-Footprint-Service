@@ -40,7 +40,7 @@
     "tsconfig-paths": "^4.2.0",
     "uuid": "^9.0.1",
     "yaml": "^2.8.3",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",

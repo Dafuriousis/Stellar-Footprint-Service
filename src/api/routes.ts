@@ -11,6 +11,7 @@ import {
   restore,
   invalidateCache,
   estimateFeeController,
+  supportedNetworks,
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
 
@@ -18,6 +19,9 @@ const router = Router();
 
 // GET /health — liveness check for load balancers and uptime monitors
 router.get("/health", health);
+
+// GET /simulate/supported-networks — returns list of configured networks
+router.get("/simulate/supported-networks", supportedNetworks);
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulateRateLimiter, simulate);

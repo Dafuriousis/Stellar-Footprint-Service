@@ -14,14 +14,14 @@ client.collectDefaultMetrics({
 const httpRequestsTotal = new client.Counter({
   name: "http_requests_total",
   help: "Total number of HTTP requests",
-  labelNames: ["method", "route", "status_code"],
+  labelNames: ["method", "route", "status_code", "network"],
   registers: [register],
 });
 
 const httpRequestDuration = new client.Histogram({
   name: "http_request_duration_seconds",
   help: "Duration of HTTP requests in seconds",
-  labelNames: ["method", "route"],
+  labelNames: ["method", "route", "network"],
   buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
   registers: [register],
 });
@@ -81,17 +81,22 @@ export function metricsMiddleware(
   res.on("finish", () => {
     const duration = (Date.now() - start) / 1000;
     const route = req.route?.path || req.path;
+    const isSimulateRoute = route.includes("/simulate");
+    const network =
+      isSimulateRoute && req.body?.network ? (req.body.network as string) : "";
 
     httpRequestsTotal.inc({
       method: req.method,
       route,
       status_code: res.statusCode.toString(),
+      network,
     });
 
     httpRequestDuration.observe(
       {
         method: req.method,
         route,
+        network,
       },
       duration,
     );

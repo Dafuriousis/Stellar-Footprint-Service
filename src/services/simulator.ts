@@ -59,6 +59,8 @@ export interface TtlInfo {
 
 export interface SimulateResult {
   success: boolean;
+  /** ISO 8601 timestamp of when the simulation was performed */
+  simulatedAt?: string;
   footprint?: {
     readOnly: FootprintEntry[];
     readWrite: FootprintEntry[];
@@ -211,6 +213,7 @@ export async function simulateTransaction(
 
   return {
     success: true,
+    simulatedAt: new Date().toISOString(),
     footprint: {
       readOnly: optimizationResult.readOnly,
       readWrite: optimizationResult.readWrite,

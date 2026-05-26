@@ -1,9 +1,10 @@
 # Stage 1: Build
+# Builds the TypeScript source code and prepares the application
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm
+# Install pnpm package manager
 RUN npm install -g pnpm
 
 # Copy package files

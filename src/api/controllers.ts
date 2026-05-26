@@ -7,6 +7,7 @@ import { getNetworkStatus } from "@services/networkStatus";
 import { buildRestoreTransaction } from "@services/restorer";
 import { simulateTransaction } from "@services/simulator";
 import { AppError } from "@utils/AppError";
+import { rpcCircuitBreaker } from "@utils/circuitBreaker";
 import { Request, Response, NextFunction } from "express";
 
 import { version } from "../../package.json";
@@ -26,6 +27,73 @@ export function health(_req: Request, res: Response): void {
     version,
     timestamp: new Date().toISOString(),
   });
+}
+
+export function liveness(_req: Request, res: Response): void {
+  res.status(HTTP_STATUS.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    version,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function readiness(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const checks: Record<string, { status: string; details?: unknown }> = {};
+
+    // Check Redis/Cache
+    try {
+      const cache = getCache();
+      const testKey = "__health_check__";
+      const testValue = Date.now().toString();
+      await cache.set(testKey, testValue, 5000);
+      const retrieved = await cache.get<string>(testKey);
+      await cache.delete(testKey);
+
+      checks.cache = {
+        status: retrieved === testValue ? "healthy" : "unhealthy",
+        details: { backend: cache.backend },
+      };
+    } catch (err) {
+      checks.cache = {
+        status: "unhealthy",
+        details: { error: (err as Error).message },
+      };
+    }
+
+    // Check RPC Circuit Breaker
+    const cbState = rpcCircuitBreaker.getState();
+    checks.rpcCircuitBreaker = {
+      status: cbState.state === "open" ? "unhealthy" : "healthy",
+      details: cbState,
+    };
+
+    // Determine overall health
+    const allHealthy = Object.values(checks).every(
+      (check) => check.status === "healthy",
+    );
+
+    if (allHealthy) {
+      res.status(HTTP_STATUS.OK).json({
+        status: "ready",
+        checks,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({
+        status: "not ready",
+        checks,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (err) {
+    next(err);
+  }
 }
 
 export async function simulate(

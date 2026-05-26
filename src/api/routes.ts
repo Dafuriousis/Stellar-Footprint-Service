@@ -2,6 +2,8 @@ import { Router } from "express";
 
 import {
   health,
+  liveness,
+  readiness,
   simulate,
   simulateBatch,
   footprintDiffController,
@@ -16,8 +18,14 @@ import { simulateRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
-// GET /health — liveness check for load balancers and uptime monitors
+// GET /health — liveness check for load balancers and uptime monitors (deprecated, use /health/live)
 router.get("/health", health);
+
+// GET /health/live — liveness check (process is running)
+router.get("/health/live", liveness);
+
+// GET /health/ready — readiness check (Redis and RPC circuit breaker are healthy)
+router.get("/health/ready", readiness);
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulateRateLimiter, simulate);

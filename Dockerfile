@@ -20,11 +20,12 @@ COPY . .
 RUN pnpm run build
 
 # Stage 2: Production Dependencies
+# Installs only production dependencies for runtime efficiency
 FROM node:22-alpine AS prod-deps
 
 WORKDIR /app
 
-# Install pnpm
+# Install pnpm package manager
 RUN npm install -g pnpm
 
 # Copy package files

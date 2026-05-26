@@ -57,8 +57,10 @@ USER stellar
 # Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+# HEALTHCHECK instruction enables Docker and container orchestrators to detect unhealthy containers
+# Interval: 30 seconds, Timeout: 5 seconds, Retries: 3
+# Exit code 0 on success, 1 on failure
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD node healthcheck.js
 
 # Start the application

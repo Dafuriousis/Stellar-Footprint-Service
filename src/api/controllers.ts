@@ -115,25 +115,9 @@ export async function simulate(
 ): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
-  if (!xdr) {
-    return next(
-      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
-    );
-  }
-
-  if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
-    return next(
-      new AppError(
-        "Invalid XDR: must be valid base64",
-        HTTP_STATUS.BAD_REQUEST,
-      ),
-    );
-  }
-
-  if (xdr.length > 100 * 1024) {
-    return next(
-      new AppError("XDR too large: maximum 100kb", HTTP_STATUS.BAD_REQUEST),
-    );
+  const xdrCheck = validateXdrInput(xdr);
+  if (!xdrCheck.valid) {
+    return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
   if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
@@ -344,10 +328,9 @@ export async function restore(
 ): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
-  if (!xdr) {
-    return next(
-      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
-    );
+  const xdrCheck = validateXdrInput(xdr);
+  if (!xdrCheck.valid) {
+    return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
   const net: Network =
@@ -440,10 +423,9 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
     type?: string;
   };
 
-  if (!xdr) {
-    return next(
-      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
-    );
+  const xdrCheck = validateXdrInput(xdr);
+  if (!xdrCheck.valid) {
+    return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
   const validTypes: XdrType[] = ["transaction", "operation", "ledger_key"];

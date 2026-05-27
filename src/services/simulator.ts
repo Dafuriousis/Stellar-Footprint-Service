@@ -21,13 +21,13 @@ import {
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import { withRetry } from "../utils/retry";
 import { sanitizeRpcError } from "../utils/rpcErrorSanitizer";
+import { CACHE_TTL } from "../constants";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
   string,
   { exists: boolean; timestamp: number }
 >();
-const CONTRACT_EXISTENCE_CACHE_TTL = 30 * 1000; // 30 seconds
 
 function extractRequiredSigners(
   auth: StellarSdk.xdr.SorobanAuthorizationEntry[],
@@ -62,7 +62,7 @@ async function _checkContractExists(
 ): Promise<boolean> {
   const now = Date.now();
   const cached = contractExistenceCache.get(contractIdString);
-  if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
+  if (cached && now - cached.timestamp < CACHE_TTL.CONTRACT_EXISTENCE_MS) {
     // Record cache hit
     metrics.recordCacheHit("contract_existence");
     return cached.exists;

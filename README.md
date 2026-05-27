@@ -112,6 +112,19 @@ To benchmark the service under concurrent load:
    npm run load-test
    ```
 
+### Available scenarios
+
+The load test supports two scenarios controlled by the `LOAD_TEST_SCENARIO` environment variable:
+
+- **`health`** (default): Tests the `/health` endpoint
+- **`batch`**: Tests the `/api/simulate/batch` endpoint with 5 transactions per request
+
+To run the batch simulation scenario:
+
+```bash
+LOAD_TEST_SCENARIO=batch npm run load-test
+```
+
 ### What is tested
 
 This load test runs three concurrency levels against the service:
@@ -119,6 +132,8 @@ This load test runs three concurrency levels against the service:
 - `10` connections
 - `50` connections
 - `100` connections
+
+**Batch simulation scenario** sends POST requests to `/api/simulate/batch` with 5 Soroban transactions per request, simulating realistic workloads where multiple transactions need footprint extraction.
 
 ### Metrics explained
 
@@ -133,15 +148,22 @@ This load test runs three concurrency levels against the service:
 - Lower `p50`, `p95`, and `p99` values indicate better request latency.
 - A small gap between `p95` and `p99` suggests a stable service under load.
 - A low `Errors(%)` means the service handled the traffic reliably.
+- For batch scenarios, multiply `Req/sec` by 5 to get the effective transaction simulation throughput.
 
 ### Customize the target
 
 By default, the load test targets the health endpoint at `http://localhost:3000/health`.
 
-You can override the base URL using `LOAD_TEST_URL` or change the path via `LOAD_TEST_PATH`:
+You can override the base URL using `LOAD_TEST_URL` or change the path via `LOAD_TEST_PATH` (for health scenario only):
 
 ```bash
 LOAD_TEST_URL=http://localhost:3000 LOAD_TEST_PATH=/metrics npm run load-test
+```
+
+For batch simulation testing:
+
+```bash
+LOAD_TEST_URL=http://localhost:3000 LOAD_TEST_SCENARIO=batch npm run load-test
 ```
 
 ### Scaffold from Scratch

@@ -11,6 +11,7 @@ Step-by-step deployment instructions for **Stellar Footprint Service** across co
 - [Render](#2-render)
 - [Fly.io](#3-flyio)
 - [Bare VPS with PM2](#4-bare-vps-with-pm2)
+- [Kubernetes](#5-kubernetes)
 
 ---
 
@@ -455,3 +456,11 @@ curl -X POST https://<your-host>/api/v1/simulate \
 ```
 
 A `200` from `/health` and a `400` (missing XDR) or `422` from `/api/v1/simulate` both confirm the service is live and routing correctly.
+
+---
+
+## 5. Kubernetes
+
+For deploying to a Kubernetes cluster using the manifests in `k8s/`, see the full [Kubernetes Deployment Guide](./guides/kubernetes.md).
+
+It covers prerequisites, applying manifests, configuring secrets, HPA tuning, and health check configuration.

@@ -4,9 +4,10 @@
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-To report a vulnerability, email us privately at:
+Report vulnerabilities privately using one of these channels:
 
-**jeremiahniffypeter@gmail.com**
+- **Email:** [jeremiahniffypeter@gmail.com](mailto:jeremiahniffypeter@gmail.com)
+- **GitHub Security Advisories:** [Report a vulnerability](https://github.com/Dafuriousis/Stellar-Footprint-Service/security/advisories/new)
 
 Include as much detail as possible:
 
@@ -15,15 +16,13 @@ Include as much detail as possible:
 - Affected versions or components
 - Any suggested mitigations (optional)
 
-We will acknowledge your report within **48 hours** and aim to provide a resolution timeline within **7 days**.
-
 ## Disclosure Timeline
 
 | Stage | Target timeframe |
 |---|---|
-| Acknowledgement | Within 48 hours of report |
-| Initial assessment | Within 7 days |
-| Fix developed & reviewed | Within 30 days (critical issues prioritised) |
+| Acknowledgement | Within **48 hours** of report |
+| Initial assessment | Within **7 days** |
+| Fix developed & reviewed | Within **30 days** (critical issues prioritised) |
 | Public disclosure | After fix is released, coordinated with reporter |
 
 We follow a **coordinated disclosure** model. We ask that you give us a reasonable window to address the issue before any public disclosure.

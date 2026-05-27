@@ -828,6 +828,10 @@ export default router;
 
 For a beginner-friendly guide explaining what Soroban footprints are, why they are required, and how this service simplifies the process, see [Understanding Soroban Footprints](./docs/guides/understanding-footprints.md).
 
+## 🗄️ Caching Guide
+
+For details on the Redis vs in-memory dual-backend strategy, TTL configuration, cache key structure, and when to use `DELETE /cache`, see [docs/guides/caching.md](./docs/guides/caching.md).
+
 ## 🧩 Integration Guide
 
 ### Step 1: Build Transaction
@@ -944,6 +948,7 @@ Step-by-step guides for deploying to common platforms:
 | Render         | [docs/deployment.md#2-render](./docs/deployment.md#2-render)                       |
 | Fly.io         | [docs/deployment.md#3-flyio](./docs/deployment.md#3-flyio)                         |
 | Bare VPS + PM2 | [docs/deployment.md#4-bare-vps-with-pm2](./docs/deployment.md#4-bare-vps-with-pm2) |
+| Kubernetes     | [docs/guides/kubernetes.md](./docs/guides/kubernetes.md)                           |
 
 See the full [Deployment Guide](./docs/deployment.md) for environment variable reference and health check configuration.
 

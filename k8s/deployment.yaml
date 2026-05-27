@@ -23,11 +23,15 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
+          envFrom:
+            # Load all ConfigMap entries as environment variables
+            - configMapRef:
+                name: stellar-footprint-config
+            # Load all Secret entries as environment variables
+            - secretRef:
+                name: stellar-footprint-secrets
           env:
-            - name: PORT
-              value: "3000"
-            - name: NODE_ENV
-              value: "production"
+            # Secret references for RPC URLs (can be overridden if needed)
             - name: TESTNET_RPC_URL
               valueFrom:
                 secretKeyRef:

@@ -11,6 +11,7 @@ import { rpcCircuitBreaker } from "@utils/circuitBreaker";
 import { Request, Response, NextFunction } from "express";
 
 import { version } from "../../package.json";
+import { env } from "../config/env";
 import {
   NETWORKS,
   DEFAULT_NETWORK,
@@ -197,18 +198,23 @@ export async function simulateBatch(
   }
 
   const net: Network = (network as Network) || DEFAULT_NETWORK;
+  const concurrency = env.BATCH_CONCURRENCY;
 
   metrics.incrementActiveSimulations();
 
   try {
-    const settled = await Promise.allSettled(
-      transactions.map(({ xdr }, index) => {
-        if (!xdr) return Promise.reject(new Error(ERROR_MESSAGES.MISSING_XDR));
-        return simulateTransaction(xdr, net, res.locals.abortSignal).then(
-          (result) => ({ index, ...result }),
-        );
-      }),
-    );
+    const tasks = transactions.map(({ xdr }, index) => () => {
+      if (!xdr) return Promise.reject(new Error(ERROR_MESSAGES.MISSING_XDR));
+      return simulateTransaction(xdr, net, res.locals.abortSignal).then(
+        (result) => ({ index, ...result }),
+      );
+    });
+
+    const settled: PromiseSettledResult<{ index: number }>[] = [];
+    for (let i = 0; i < tasks.length; i += concurrency) {
+      const chunk = tasks.slice(i, i + concurrency).map((t) => t());
+      settled.push(...(await Promise.allSettled(chunk)));
+    }
 
     const results = settled.map((outcome, index) => {
       if (outcome.status === "fulfilled") {

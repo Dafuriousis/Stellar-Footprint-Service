@@ -252,6 +252,7 @@ function _extractEvents(
  */
 export interface SimulateResult {
   success: boolean;
+  upgradedFromV0?: boolean;
   footprint?: {
     readOnly: FootprintEntry[];
     readWrite: FootprintEntry[];
@@ -363,12 +364,26 @@ export async function simulateTransaction(
   let networkPassphrase: string;
   let tx: StellarSdk.Transaction | StellarSdk.FeeBumpTransaction;
 
+  let upgradedFromV0 = false;
+
   try {
     ({ networkPassphrase } = getNetworkConfig(network));
     server = getRpcServer(network);
     tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
   } catch (err) {
     throw err;
+  }
+
+  // Upgrade v0 envelopes to v1 before simulation
+  if (
+    !(tx instanceof StellarSdk.FeeBumpTransaction) &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (tx as any).envelopeType?.().name === "envelopeTypeTxV0"
+  ) {
+    tx = StellarSdk.TransactionBuilder.cloneFrom(
+      tx as StellarSdk.Transaction,
+    ).build();
+    upgradedFromV0 = true;
   }
 
   if (tx instanceof StellarSdk.FeeBumpTransaction) {
@@ -519,6 +534,7 @@ export async function simulateTransaction(
       requiredSigners,
       threshold,
       raw: response,
+      upgradedFromV0: upgradedFromV0 || undefined,
       diagnosticEvents:
         response.events
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

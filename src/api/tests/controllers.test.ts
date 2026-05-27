@@ -18,6 +18,7 @@ jest.mock("@middleware/metrics", () => ({
     recordCacheHit: jest.fn(),
     recordCacheMiss: jest.fn(),
     recordRpcError: jest.fn(),
+    recordXdrBytes: jest.fn(),
     getMetrics: jest.fn().mockResolvedValue(""),
     getRegister: jest.fn(),
   },
@@ -29,6 +30,7 @@ jest.mock("@middleware/metrics", () => ({
     recordCacheHit: jest.fn(),
     recordCacheMiss: jest.fn(),
     recordRpcError: jest.fn(),
+    recordXdrBytes: jest.fn(),
     getMetrics: jest.fn().mockResolvedValue(""),
     getRegister: jest.fn(),
   },
@@ -196,6 +198,49 @@ describe("POST /api/v1/simulate", () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toMatchObject({ error: "Unexpected error" });
+  });
+
+  it("records XDR byte length via metrics.recordXdrBytes", async () => {
+    const mockResult = {
+      success: true,
+      footprint: { readOnly: [], readWrite: [] },
+      contracts: [],
+      contractType: "unknown" as const,
+      ttl: {},
+      optimized: false,
+      rawFootprint: { readOnly: [], readWrite: [] },
+      cost: { cpuInsns: "0", memBytes: "0" },
+    };
+    mockSimulateTransaction.mockResolvedValueOnce(mockResult);
+
+    const { default: metrics } = jest.requireMock("@middleware/metrics");
+
+    await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, network: "testnet" });
+
+    expect(metrics.recordXdrBytes).toHaveBeenCalledWith(
+      Buffer.from(VALID_XDR, "base64").length,
+    );
+  });
+});
+
+describe("GET /api/v1/openapi.json", () => {
+  it("returns 200 with Content-Type application/json", async () => {
+    const res = await request(app).get("/api/v1/openapi.json");
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/application\/json/);
+  });
+
+  it("returns a parsed object with openapi or info field", async () => {
+    const res = await request(app).get("/api/v1/openapi.json");
+
+    expect(res.status).toBe(200);
+    // The spec should have at least one of these top-level keys
+    expect(res.body.openapi !== undefined || res.body.info !== undefined).toBe(
+      true,
+    );
   });
 });
 

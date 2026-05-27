@@ -147,6 +147,10 @@ export const metrics = {
     activeSimulations.dec();
   },
 
+  recordXdrBytes: (bytes: number) => {
+    simulateRequestXdrBytes.observe(bytes);
+  },
+
   getMetrics: async (): Promise<string> => {
     return await register.metrics();
   },

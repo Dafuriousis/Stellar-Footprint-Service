@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import { Network } from "@config/stellar";
 import metrics from "@middleware/metrics";
 import { getCache } from "@services/cache";
@@ -143,6 +146,13 @@ export async function simulate(
 
   metrics.incrementActiveSimulations();
   const start = Date.now();
+
+  // Record XDR payload size (decoded byte length)
+  try {
+    metrics.recordXdrBytes(Buffer.from(xdr, "base64").length);
+  } catch {
+    // ignore — never block the request for a metrics failure
+  }
 
   try {
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);

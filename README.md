@@ -915,6 +915,7 @@ To report a security vulnerability, please follow our [Security Policy](./SECURI
 - **Batch requests** if simulating multiple transactions (see [#22](ISSUES.md))
 - **Use connection pooling** for RPC calls
 - **Monitor RPC latency** and switch providers if needed
+- **Gzip compression** is enabled automatically for responses larger than `COMPRESSION_THRESHOLD` bytes (default: `1024`). Clients must send `Accept-Encoding: gzip`. Tune the threshold via the `COMPRESSION_THRESHOLD` environment variable — lower values compress more aggressively, higher values reduce CPU overhead for small payloads.
 
 ---
 

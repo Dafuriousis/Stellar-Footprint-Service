@@ -294,6 +294,9 @@ TESTNET_SECRET_KEY=<your_testnet_secret_key>
 MAINNET_SECRET_KEY=<your_mainnet_secret_key>
 LOG_LEVEL=info
 SIMULATE_TIMEOUT_MS=30000
+# Use TLS for Redis in production when available.
+# For a managed Redis instance, use a rediss:// URL.
+# REDIS_URL=rediss://redis:6379
 ```
 
 #### 6. Create the logs directory
@@ -307,6 +310,8 @@ mkdir -p logs
 ```bash
 pm2 start ecosystem.config.js --env production
 ```
+
+> The `ecosystem.config.js` file is configured with `instances: "max"` and `exec_mode: "cluster"` so PM2 will distribute worker processes across available CPU cores. The application also handles `SIGTERM`/`SIGINT` gracefully, which allows clustered workers to shut down cleanly.
 
 #### 8. Save PM2 process list and enable startup on reboot
 
@@ -377,6 +382,36 @@ If you want to serve on port 80/443 with TLS:
        }
    }
    ```
+
+3. To protect the `/api/v1/simulate` endpoint from abusive request bursts, add a rate limit rule in your Nginx config:
+
+   ```nginx
+   http {
+     limit_req_zone $binary_remote_addr zone=simulate_req:10m rate=10r/s;
+   }
+
+   server {
+     # ...
+     error_page 429 = @too_many_requests;
+
+     location = /api/v1/simulate {
+       limit_req zone=simulate_req burst=10 nodelay;
+       proxy_pass http://localhost:3000;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+     }
+
+     location @too_many_requests {
+       internal;
+       add_header Content-Type application/json;
+       return 429 '{"error":"Too many requests"}';
+     }
+   }
+   ```
+
+   This ensures the service returns `429` with a JSON error body when rate limiting is exceeded.
 
 3. Enable the site and obtain a TLS certificate:
 

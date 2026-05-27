@@ -39,8 +39,10 @@ function extractRequiredSigners(
       if (credentials.switch().name === "sorobanCredentialsAddress") {
         const address = credentials.address();
 
+        const credAddress =
+          address as StellarSdk.xdr.SorobanAddressCredentials;
         const accountId = StellarSdk.StrKey.encodeEd25519PublicKey(
-          (address as any).accountId().value(), // eslint-disable-line @typescript-eslint/no-explicit-any
+          credAddress.address().accountId().ed25519(),
         );
         signers.add(accountId);
       }
@@ -221,8 +223,7 @@ function _extractEvents(
     (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
 
   return events.map((event: unknown) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = event as any;
+    const e = event as { type?: () => { name?: string }; contractId?: () => Buffer };
     return {
       type: e.type?.()?.name || "unknown",
       contractId: e.contractId?.()?.toString("hex") || "",
@@ -304,8 +305,10 @@ async function _processSimulationResult(
       ? await detectTokenContract(contracts[0], server)
       : "unknown";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const auth = (transactionData as any)?.auth?.() ?? [];
+  // SorobanTransactionData.build() returns xdr.SorobanTransactionData which
+  // exposes auth() at the XDR level; use unknown cast to avoid any.
+  const builtData = transactionData as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+  const auth = builtData.auth?.() ?? [];
   const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
   const footprintStats = calculateFootprintStats(
@@ -383,7 +386,12 @@ export async function simulateTransaction(
     };
   }
 
-  const simOptions: Record<string, unknown> = { signal, includeEvents: true };
+  interface SimulateOptions {
+    signal?: AbortSignal;
+    includeEvents?: boolean;
+    ledger?: number;
+  }
+  const simOptions: SimulateOptions = { signal, includeEvents: true };
   if (ledgerSequence !== undefined) {
     simOptions.ledger = ledgerSequence;
   }
@@ -395,8 +403,7 @@ export async function simulateTransaction(
         rpcCircuitBreaker.call(() =>
           server.simulateTransaction(
             tx as StellarSdk.Transaction,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            simOptions as any,
+            simOptions,
           ),
         ),
       `simulateTransaction:${network}`,
@@ -475,8 +482,8 @@ export async function simulateTransaction(
     const ttl = await fetchTtlInfo(server, allXdrEntries, network);
 
     // Extract required signers from auth entries
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const auth = (result.transactionData?.build() as any)?.auth?.() ?? [];
+    const builtTxData = result.transactionData?.build() as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+    const auth = builtTxData?.auth?.() ?? [];
     const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
     // Detect SEP-41 token contract type for the first invoked contract
@@ -497,18 +504,15 @@ export async function simulateTransaction(
       optimized: optimizationResult.optimized,
       rawFootprint,
       cost: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        cpuInsns: (response as any).cost?.cpuInsns ?? "0",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        memBytes: (response as any).cost?.memBytes ?? "0",
+        cpuInsns: response.cost?.cpuInsns ?? "0",
+        memBytes: response.cost?.memBytes ?? "0",
       },
       requiredSigners,
       threshold,
       raw: response,
       diagnosticEvents:
         response.events
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.filter((e) => (e as any).type?.()?.name === "diagnostic")
+          ?.filter((e) => (e as unknown as { type?: () => { name?: string } }).type?.()?.name === "diagnostic")
           .map((e) => e.toXDR("base64")) || [],
     };
   } else {
@@ -556,8 +560,8 @@ export async function simulateTransaction(
 
       const ttl = await fetchTtlInfo(server, allXdrEntries, network);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const auth = (result.transactionData?.build() as any)?.auth?.() ?? [];
+      const builtOpData = result.transactionData?.build() as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+      const auth = builtOpData?.auth?.() ?? [];
       const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
       const opContractType =
@@ -600,19 +604,11 @@ export async function simulateTransaction(
     // Dedup
     const dedupReadOnly = allReadOnly.filter(
       (item, index, arr) =>
-        arr.findIndex(
-          (i) =>
-            i.contractId === item.contractId &&
-            (i as any).key === (item as any).key, // eslint-disable-line @typescript-eslint/no-explicit-any
-        ) === index,
+        arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
     const dedupReadWrite = allReadWrite.filter(
       (item, index, arr) =>
-        arr.findIndex(
-          (i) =>
-            i.contractId === item.contractId &&
-            (i as any).key === (item as any).key, // eslint-disable-line @typescript-eslint/no-explicit-any
-        ) === index,
+        arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
     const dedupContracts = [...new Set(allContracts)];
     const dedupRawReadOnly = [...new Set(allRawReadOnly)];
@@ -640,8 +636,7 @@ export async function simulateTransaction(
       raw: response,
       diagnosticEvents:
         response.events
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.filter((e) => (e as any).type?.()?.name === "diagnostic")
+          ?.filter((e) => (e as unknown as { type?: () => { name?: string } }).type?.()?.name === "diagnostic")
           .map((e) => e.toXDR("base64")) || [],
     };
   }

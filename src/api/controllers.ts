@@ -21,6 +21,14 @@ import {
 } from "../constants";
 import { ResponseEnvelope } from "../types";
 
+export function supportedNetworks(_req: Request, res: Response): void {
+  const networks: string[] = [];
+  if (process.env.TESTNET_RPC_URL) networks.push("testnet");
+  if (process.env.MAINNET_RPC_URL) networks.push("mainnet");
+  if (process.env.FUTURENET_RPC_URL) networks.push("futurenet");
+  res.status(HTTP_STATUS.OK).json({ networks });
+}
+
 export function health(_req: Request, res: Response): void {
   res.status(HTTP_STATUS.OK).json({
     status: "ok",

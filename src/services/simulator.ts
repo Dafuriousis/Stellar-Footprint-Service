@@ -147,7 +147,18 @@ async function fetchTtlInfo(
 }
 
 /**
- * Calculate footprint size statistics
+ * Build warnings for footprint entries expiring within 100 ledgers
+ */
+function buildTtlWarnings(ttl: Record<string, TtlInfo>): string[] {
+  return Object.entries(ttl)
+    .filter(([, info]) => info.expiresInLedgers < 100)
+    .map(
+      ([xdr, info]) =>
+        `Footprint entry ${xdr.slice(0, 16)}… expires in ${info.expiresInLedgers} ledgers; restoration may be required soon.`,
+    );
+}
+
+/**
  */
 function calculateFootprintStats(
   readOnly: string[],
@@ -272,6 +283,7 @@ export interface SimulateResult {
   diagnosticEvents?: string[];
   cacheHit?: boolean;
   type?: string;
+  warnings?: string[];
 }
 
 /**
@@ -502,6 +514,7 @@ export async function simulateTransaction(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         memBytes: (response as any).cost?.memBytes ?? "0",
       },
+      warnings: buildTtlWarnings(ttl),
       requiredSigners,
       threshold,
       raw: response,
@@ -522,6 +535,8 @@ export async function simulateTransaction(
     let optimized = false;
     let allRawReadOnly: string[] = [];
     let allRawReadWrite: string[] = [];
+    let totalCpuInsns = BigInt(0);
+    let totalMemBytes = BigInt(0);
 
     for (const result of results) {
       if (!result.transactionData) {
@@ -567,6 +582,13 @@ export async function simulateTransaction(
 
       if (contractType === "unknown") contractType = opContractType;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opCpuInsns = (result as any).cost?.cpuInsns ?? "0";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opMemBytes = (result as any).cost?.memBytes ?? "0";
+      totalCpuInsns += BigInt(opCpuInsns);
+      totalMemBytes += BigInt(opMemBytes);
+
       const opResult: SimulateResult = {
         success: true,
         footprint: {
@@ -579,9 +601,10 @@ export async function simulateTransaction(
         optimized: optimizationResult.optimized,
         rawFootprint,
         cost: {
-          cpuInsns: "0",
-          memBytes: "0",
+          cpuInsns: opCpuInsns,
+          memBytes: opMemBytes,
         },
+        warnings: buildTtlWarnings(ttl),
         requiredSigners,
         threshold,
       };
@@ -633,9 +656,10 @@ export async function simulateTransaction(
         readWrite: dedupRawReadWrite,
       },
       cost: {
-        cpuInsns: "0",
-        memBytes: "0",
+        cpuInsns: totalCpuInsns.toString(),
+        memBytes: totalMemBytes.toString(),
       },
+      warnings: buildTtlWarnings(allTtl),
       operations,
       raw: response,
       diagnosticEvents:

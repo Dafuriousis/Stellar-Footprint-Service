@@ -23,6 +23,20 @@ export interface FeeEstimate {
   feeInXLM: string;
 }
 
+export interface DetailedFeeBreakdown {
+  baseFee: string;
+  resourceFee: string;
+  inclusionFee: string;
+  totalStroops: string;
+  totalXlm: string;
+  breakdown: {
+    cpuFee: string;
+    memoryFee: string;
+    readFee: string;
+    overheadFee: string;
+  };
+}
+
 /**
  * Fetch the recommended inclusion fee (p50 of recent Soroban transactions)
  * from the RPC getFeeStats endpoint.
@@ -58,6 +72,36 @@ function estimateResourceFee(cpuInsns: bigint, memBytes: bigint): bigint {
 }
 
 /**
+ * Estimate the Soroban resource fee with detailed breakdown.
+ */
+function estimateResourceFeeDetailed(
+  cpuInsns: bigint,
+  memBytes: bigint,
+): {
+  total: bigint;
+  cpuFee: bigint;
+  memoryFee: bigint;
+  readFee: bigint;
+  overheadFee: bigint;
+} {
+  const cpuFee =
+    ((cpuInsns + INSTRUCTION_INCREMENT - 1n) / INSTRUCTION_INCREMENT) *
+    DEFAULT_FEE_RATE_PER_INSTRUCTION_INCREMENT;
+
+  const memoryFee = memBytes * DEFAULT_WRITE_FEE_PER_BYTE;
+
+  const overheadFee =
+    TYPICAL_TX_OVERHEAD_BYTES *
+    (DEFAULT_HISTORICAL_FEE_RATE + DEFAULT_METADATA_FEE_RATE);
+
+  const readFee = memBytes * DEFAULT_READ_FEE_PER_BYTE;
+
+  const total = cpuFee + memoryFee + readFee + overheadFee;
+
+  return { total, cpuFee, memoryFee, readFee, overheadFee };
+}
+
+/**
  * Estimate fees for a Soroban transaction given simulation cost output.
  */
 export async function estimateFee(
@@ -83,5 +127,45 @@ export async function estimateFee(
     resourceFee: resourceFee.toString(),
     totalFee: totalFee.toString(),
     feeInXLM,
+  };
+}
+
+/**
+ * Estimate fees with detailed breakdown for a Soroban transaction.
+ */
+export async function estimateFeeDetailed(
+  cpuInsns: string,
+  memBytes: string,
+  network: Network = "testnet",
+): Promise<DetailedFeeBreakdown> {
+  const cpu = BigInt(cpuInsns);
+  const mem = BigInt(memBytes);
+
+  const [inclusionFee, resourceBreakdown] = await Promise.all([
+    fetchRecommendedInclusionFee(network),
+    Promise.resolve(estimateResourceFeeDetailed(cpu, mem)),
+  ]);
+
+  const baseFee = inclusionFee; // Base fee is the inclusion fee
+  const resourceFee = resourceBreakdown.total;
+  const totalStroops = baseFee + resourceFee;
+
+  // Convert to XLM
+  const xlmWhole = totalStroops / STROOPS_PER_XLM;
+  const xlmFrac = totalStroops % STROOPS_PER_XLM;
+  const totalXlm = `${xlmWhole}.${xlmFrac.toString().padStart(7, "0")}`;
+
+  return {
+    baseFee: baseFee.toString(),
+    resourceFee: resourceFee.toString(),
+    inclusionFee: inclusionFee.toString(),
+    totalStroops: totalStroops.toString(),
+    totalXlm,
+    breakdown: {
+      cpuFee: resourceBreakdown.cpuFee.toString(),
+      memoryFee: resourceBreakdown.memoryFee.toString(),
+      readFee: resourceBreakdown.readFee.toString(),
+      overheadFee: resourceBreakdown.overheadFee.toString(),
+    },
   };
 }

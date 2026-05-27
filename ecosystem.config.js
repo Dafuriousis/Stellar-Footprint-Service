@@ -3,6 +3,7 @@ module.exports = {
     {
       name: "stellar-footprint-service",
       script: "dist/index.js",
+      // Use PM2 cluster mode to utilise all available CPU cores.
       instances: "max",
       exec_mode: "cluster",
       max_restarts: 10,

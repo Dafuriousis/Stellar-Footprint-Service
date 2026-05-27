@@ -18,6 +18,7 @@ export function timeoutMiddleware(
     }
   }, TIMEOUT_MS);
 
+  req.on("close", () => controller.abort());
   res.on("finish", () => clearTimeout(timer));
   next();
 }

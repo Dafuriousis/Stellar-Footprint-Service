@@ -231,4 +231,54 @@ describe("simulateTransaction", () => {
       simulateTransaction(INVALID_BASE64_XDR, "testnet"),
     ).rejects.toThrow("invalid base64");
   });
+
+  // ── #429: TTL expiry warnings ─────────────────────────────────────────────
+
+  it("returns warnings for footprint entries expiring in < 100 ledgers", async () => {
+    // Set up a non-empty footprint so TTL lookup is triggered
+    const mockEntry = { toXDR: jest.fn().mockReturnValue("AAAA") };
+    mockFootprint.readOnly.mockReturnValueOnce([mockEntry]);
+    mockFootprint.readWrite.mockReturnValueOnce([]);
+    mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
+    // Entry expires in 49 ledgers (liveUntil=150, current=101)
+    mockGetLedgerEntries.mockResolvedValueOnce({
+      entries: [{ liveUntilLedgerSeq: 150 }],
+      latestLedger: 101,
+    });
+
+    const result = await simulateTransaction(DUMMY_XDR, "testnet");
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toBeDefined();
+    expect(result.warnings!.length).toBeGreaterThan(0);
+    expect(result.warnings![0]).toMatch(/expires in 49 ledgers/i);
+  });
+
+  it("returns empty warnings when all entries have >= 100 ledgers remaining", async () => {
+    const mockEntry = { toXDR: jest.fn().mockReturnValue("AAAA") };
+    mockFootprint.readOnly.mockReturnValueOnce([mockEntry]);
+    mockFootprint.readWrite.mockReturnValueOnce([]);
+    mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
+    mockGetLedgerEntries.mockResolvedValueOnce({
+      entries: [{ liveUntilLedgerSeq: 300 }],
+      latestLedger: 100,
+    });
+
+    const result = await simulateTransaction(DUMMY_XDR, "testnet");
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it("returns empty warnings when TTL fetch returns no entries", async () => {
+    mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
+    mockGetLedgerEntries.mockResolvedValueOnce({
+      entries: [],
+      latestLedger: 100,
+    });
+
+    const result = await simulateTransaction(DUMMY_XDR, "testnet");
+
+    expect(result.warnings).toEqual([]);
+  });
 });

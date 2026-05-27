@@ -1,15 +1,20 @@
+import fs from "fs";
+import path from "path";
+
 import { Network } from "@config/stellar";
 import metrics from "@middleware/metrics";
 import { getCache } from "@services/cache";
 import { decodeXdr, type XdrType } from "@services/decoder";
-import { estimateFee } from "@services/feeEstimator";
+import { estimateFee, estimateFeeDetailed } from "@services/feeEstimator";
 import { getNetworkStatus } from "@services/networkStatus";
 import { buildRestoreTransaction } from "@services/restorer";
 import { simulateTransaction } from "@services/simulator";
 import { AppError } from "@utils/AppError";
+import { rpcCircuitBreaker } from "@utils/circuitBreaker";
 import { Request, Response, NextFunction } from "express";
 
 import { version } from "../../package.json";
+import { env } from "../config/env";
 import {
   NETWORKS,
   DEFAULT_NETWORK,
@@ -18,6 +23,14 @@ import {
   BATCH_MAX_SIZE,
 } from "../constants";
 import { ResponseEnvelope } from "../types";
+
+export function supportedNetworks(_req: Request, res: Response): void {
+  const networks: string[] = [];
+  if (process.env.TESTNET_RPC_URL) networks.push("testnet");
+  if (process.env.MAINNET_RPC_URL) networks.push("mainnet");
+  if (process.env.FUTURENET_RPC_URL) networks.push("futurenet");
+  res.status(HTTP_STATUS.OK).json({ networks });
+}
 
 export function health(_req: Request, res: Response): void {
   res.status(HTTP_STATUS.OK).json({
@@ -28,6 +41,73 @@ export function health(_req: Request, res: Response): void {
   });
 }
 
+export function liveness(_req: Request, res: Response): void {
+  res.status(HTTP_STATUS.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    version,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function readiness(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const checks: Record<string, { status: string; details?: unknown }> = {};
+
+    // Check Redis/Cache
+    try {
+      const cache = getCache();
+      const testKey = "__health_check__";
+      const testValue = Date.now().toString();
+      await cache.set(testKey, testValue, 5000);
+      const retrieved = await cache.get<string>(testKey);
+      await cache.delete(testKey);
+
+      checks.cache = {
+        status: retrieved === testValue ? "healthy" : "unhealthy",
+        details: { backend: cache.backend },
+      };
+    } catch (err) {
+      checks.cache = {
+        status: "unhealthy",
+        details: { error: (err as Error).message },
+      };
+    }
+
+    // Check RPC Circuit Breaker
+    const cbState = rpcCircuitBreaker.getState();
+    checks.rpcCircuitBreaker = {
+      status: cbState.state === "open" ? "unhealthy" : "healthy",
+      details: cbState,
+    };
+
+    // Determine overall health
+    const allHealthy = Object.values(checks).every(
+      (check) => check.status === "healthy",
+    );
+
+    if (allHealthy) {
+      res.status(HTTP_STATUS.OK).json({
+        status: "ready",
+        checks,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({
+        status: "not ready",
+        checks,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function simulate(
   req: Request,
   res: Response,
@@ -35,25 +115,9 @@ export async function simulate(
 ): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
-  if (!xdr) {
-    return next(
-      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
-    );
-  }
-
-  if (!/^[A-Za-z0-9+/]+=*$/.test(xdr)) {
-    return next(
-      new AppError(
-        "Invalid XDR: must be valid base64",
-        HTTP_STATUS.BAD_REQUEST,
-      ),
-    );
-  }
-
-  if (xdr.length > 100 * 1024) {
-    return next(
-      new AppError("XDR too large: maximum 100kb", HTTP_STATUS.BAD_REQUEST),
-    );
+  const xdrCheck = validateXdrInput(xdr);
+  if (!xdrCheck.valid) {
+    return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
   if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
@@ -66,6 +130,13 @@ export async function simulate(
 
   metrics.incrementActiveSimulations();
   const start = Date.now();
+
+  // Record XDR payload size (decoded byte length)
+  try {
+    metrics.recordXdrBytes(Buffer.from(xdr, "base64").length);
+  } catch {
+    // ignore — never block the request for a metrics failure
+  }
 
   try {
     const result = await simulateTransaction(xdr, net, res.locals.abortSignal);
@@ -129,18 +200,23 @@ export async function simulateBatch(
   }
 
   const net: Network = (network as Network) || DEFAULT_NETWORK;
+  const concurrency = env.BATCH_CONCURRENCY;
 
   metrics.incrementActiveSimulations();
 
   try {
-    const settled = await Promise.allSettled(
-      transactions.map(({ xdr }, index) => {
-        if (!xdr) return Promise.reject(new Error(ERROR_MESSAGES.MISSING_XDR));
-        return simulateTransaction(xdr, net, res.locals.abortSignal).then(
-          (result) => ({ index, ...result }),
-        );
-      }),
-    );
+    const tasks = transactions.map(({ xdr }, index) => () => {
+      if (!xdr) return Promise.reject(new Error(ERROR_MESSAGES.MISSING_XDR));
+      return simulateTransaction(xdr, net, res.locals.abortSignal).then(
+        (result) => ({ index, ...result }),
+      );
+    });
+
+    const settled: PromiseSettledResult<{ index: number }>[] = [];
+    for (let i = 0; i < tasks.length; i += concurrency) {
+      const chunk = tasks.slice(i, i + concurrency).map((t) => t());
+      settled.push(...(await Promise.allSettled(chunk)));
+    }
 
     const results = settled.map((outcome, index) => {
       if (outcome.status === "fulfilled") {
@@ -252,10 +328,9 @@ export async function restore(
 ): Promise<void> {
   const { xdr, network } = req.body as { xdr?: string; network?: Network };
 
-  if (!xdr) {
-    return next(
-      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
-    );
+  const xdrCheck = validateXdrInput(xdr);
+  if (!xdrCheck.valid) {
+    return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
   const net: Network =
@@ -348,10 +423,9 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
     type?: string;
   };
 
-  if (!xdr) {
-    return next(
-      new AppError(ERROR_MESSAGES.MISSING_XDR, HTTP_STATUS.BAD_REQUEST),
-    );
+  const xdrCheck = validateXdrInput(xdr);
+  if (!xdrCheck.valid) {
+    return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
   const validTypes: XdrType[] = ["transaction", "operation", "ledger_key"];
@@ -376,4 +450,56 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
   }
 
   res.status(HTTP_STATUS.OK).json(result);
+}
+
+export async function costBreakdownController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const { cpuInsns, memBytes, network } = req.query as {
+    cpuInsns?: string;
+    memBytes?: string;
+    network?: string;
+  };
+
+  if (!cpuInsns || !memBytes) {
+    return next(
+      new AppError(
+        "Missing required query parameters: cpuInsns and memBytes",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  if (!/^\d+$/.test(cpuInsns) || !/^\d+$/.test(memBytes)) {
+    return next(
+      new AppError(
+        "cpuInsns and memBytes must be non-negative integer strings",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  if (
+    network &&
+    network !== NETWORKS.MAINNET &&
+    network !== NETWORKS.TESTNET &&
+    network !== NETWORKS.FUTURENET
+  ) {
+    return next(
+      new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
+    );
+  }
+
+  const net: Network = (network as Network) || DEFAULT_NETWORK;
+
+  try {
+    const result = await estimateFeeDetailed(cpuInsns, memBytes, net);
+    res.status(HTTP_STATUS.OK).json(result);
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
 }

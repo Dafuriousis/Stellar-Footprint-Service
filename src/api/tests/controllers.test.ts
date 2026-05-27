@@ -18,6 +18,7 @@ jest.mock("@middleware/metrics", () => ({
     recordCacheHit: jest.fn(),
     recordCacheMiss: jest.fn(),
     recordRpcError: jest.fn(),
+    recordXdrBytes: jest.fn(),
     getMetrics: jest.fn().mockResolvedValue(""),
     getRegister: jest.fn(),
   },
@@ -29,6 +30,7 @@ jest.mock("@middleware/metrics", () => ({
     recordCacheHit: jest.fn(),
     recordCacheMiss: jest.fn(),
     recordRpcError: jest.fn(),
+    recordXdrBytes: jest.fn(),
     getMetrics: jest.fn().mockResolvedValue(""),
     getRegister: jest.fn(),
   },
@@ -196,5 +198,120 @@ describe("POST /api/v1/simulate", () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toMatchObject({ error: "Unexpected error" });
+  });
+
+  it("records XDR byte length via metrics.recordXdrBytes", async () => {
+    const mockResult = {
+      success: true,
+      footprint: { readOnly: [], readWrite: [] },
+      contracts: [],
+      contractType: "unknown" as const,
+      ttl: {},
+      optimized: false,
+      rawFootprint: { readOnly: [], readWrite: [] },
+      cost: { cpuInsns: "0", memBytes: "0" },
+    };
+    mockSimulateTransaction.mockResolvedValueOnce(mockResult);
+
+    const { default: metrics } = jest.requireMock("@middleware/metrics");
+
+    await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, network: "testnet" });
+
+    expect(metrics.recordXdrBytes).toHaveBeenCalledWith(
+      Buffer.from(VALID_XDR, "base64").length,
+    );
+  });
+});
+
+describe("GET /api/v1/openapi.json", () => {
+  it("returns 200 with Content-Type application/json", async () => {
+    const res = await request(app).get("/api/v1/openapi.json");
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/application\/json/);
+  });
+
+  it("returns a parsed object with openapi or info field", async () => {
+    const res = await request(app).get("/api/v1/openapi.json");
+
+    expect(res.status).toBe(200);
+    // The spec should have at least one of these top-level keys
+    expect(res.body.openapi !== undefined || res.body.info !== undefined).toBe(
+      true,
+    );
+  });
+});
+
+// ── #427: GET /simulate/supported-networks ────────────────────────────────
+
+describe("GET /api/v1/simulate/supported-networks", () => {
+  const orig = process.env;
+
+  beforeEach(() => {
+    process.env = { ...orig };
+  });
+
+  afterEach(() => {
+    process.env = orig;
+  });
+
+  it("returns only networks with a configured RPC URL", async () => {
+    process.env.TESTNET_RPC_URL = "https://soroban-testnet.stellar.org";
+    delete process.env.MAINNET_RPC_URL;
+    delete process.env.FUTURENET_RPC_URL;
+
+    const res = await request(app).get("/api/v1/simulate/supported-networks");
+
+    expect(res.status).toBe(200);
+    expect(res.body.networks).toEqual(["testnet"]);
+  });
+
+  it("returns all three networks when all RPC URLs are set", async () => {
+    process.env.TESTNET_RPC_URL = "https://testnet.example.com";
+    process.env.MAINNET_RPC_URL = "https://mainnet.example.com";
+    process.env.FUTURENET_RPC_URL = "https://futurenet.example.com";
+
+    const res = await request(app).get("/api/v1/simulate/supported-networks");
+
+    expect(res.status).toBe(200);
+    expect(res.body.networks).toEqual(["testnet", "mainnet", "futurenet"]);
+  });
+
+  it("returns empty array when no RPC URLs are configured", async () => {
+    delete process.env.TESTNET_RPC_URL;
+    delete process.env.MAINNET_RPC_URL;
+    delete process.env.FUTURENET_RPC_URL;
+
+    const res = await request(app).get("/api/v1/simulate/supported-networks");
+
+    expect(res.status).toBe(200);
+    expect(res.body.networks).toEqual([]);
+  });
+});
+
+// ── #424: network label in HTTP metrics ──────────────────────────────────
+
+describe("network label in HTTP metrics", () => {
+  it("records simulation with the correct network label", async () => {
+    const mockMetrics = jest.requireMock("@middleware/metrics").default;
+    const mockResult = {
+      success: true,
+      footprint: { readOnly: [], readWrite: [] },
+      contracts: [],
+      contractType: "unknown" as const,
+      ttl: {},
+      optimized: false,
+      rawFootprint: { readOnly: [], readWrite: [] },
+      cost: { cpuInsns: "0", memBytes: "0" },
+    };
+    mockSimulateTransaction.mockResolvedValueOnce(mockResult);
+
+    await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, network: "mainnet" });
+
+    expect(mockMetrics.recordSimulation).toHaveBeenCalledWith("mainnet", true);
   });
 });

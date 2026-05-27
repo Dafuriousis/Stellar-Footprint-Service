@@ -25,7 +25,7 @@
     "load-test": "node scripts/load-test.js"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "^15.0.1",
+    "@stellar/stellar-sdk": "^15.1.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
@@ -40,10 +40,10 @@
     "tsconfig-paths": "^4.2.0",
     "uuid": "^9.0.1",
     "yaml": "^2.8.3",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.0.0",
+    "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^19.0.0",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
@@ -61,7 +61,7 @@
     "eslint-plugin-import-x": "^4.16.2",
     "eslint-plugin-prettier": "^5.5.5",
     "husky": "^9.1.7",
-    "jest": "^30.3.0",
+    "jest": "^30.4.0",
     "lint-staged": "16.4.0",
     "prettier": "^3.8.3",
     "solhint": "^6.2.1",

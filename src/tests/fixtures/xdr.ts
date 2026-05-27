@@ -38,3 +38,11 @@ export const INVALID_BASE64_XDR = "not-valid-base64!!!@@@";
  * Useful for testing XDR parse failures distinct from base64 decode failures.
  */
 export const INVALID_XDR_BYTES = "AAAAAA==";
+
+/**
+ * A v0 transaction envelope XDR (envelopeTypeTxV0).
+ * Used to test automatic upgrade to v1 before simulation.
+ * Built against the Stellar Testnet passphrase.
+ */
+export const V0_ENVELOPE_XDR =
+  "AAAAAJ0NBMo4F1o4fTKd/qTtKmTK1qGVSM2xaCbhYQHyuYTVAAAAZAAAAAAAAAAoAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAGAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFaGVsbG8AAAAAAAAAAA==";

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stellar-footprint-config
+  labels:
+    app: stellar-footprint-service
+    version: "1.0"
+data:
+  # Application runtime environment
+  NODE_ENV: production
+  
+  # Server port
+  PORT: "3000"
+  
+  # Logging
+  LOG_LEVEL: info
+  
+  # Cache configuration
+  CACHE_TTL_MS: "300000"
+  CACHE_MAX_SIZE: "500"
+  
+  # RPC retry configuration
+  RPC_MAX_RETRIES: "3"
+  RPC_TIMEOUT_MS: "30000"
+  
+  # Rate limiting
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "1000"
+  
+  # Batch processing
+  BATCH_MAX_SIZE: "100"
+  
+  # Circuit breaker
+  CIRCUIT_BREAKER_THRESHOLD: "5"
+  CIRCUIT_BREAKER_TIMEOUT_MS: "60000"

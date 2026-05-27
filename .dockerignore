@@ -12,3 +12,8 @@ README.md
 coverage
 .nyc_output
 *.log
+src/
+*.test.ts
+docs/
+scripts/
+.github/

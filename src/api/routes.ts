@@ -2,6 +2,8 @@ import { Router } from "express";
 
 import {
   health,
+  liveness,
+  readiness,
   simulate,
   simulateBatch,
   footprintDiffController,
@@ -11,19 +13,29 @@ import {
   restore,
   invalidateCache,
   estimateFeeController,
+  costBreakdownController,
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
-// GET /health — liveness check for load balancers and uptime monitors
+// GET /health — liveness check for load balancers and uptime monitors (deprecated, use /health/live)
 router.get("/health", health);
+
+// GET /health/live — liveness check (process is running)
+router.get("/health/live", liveness);
+
+// GET /health/ready — readiness check (Redis and RPC circuit breaker are healthy)
+router.get("/health/ready", readiness);
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulateRateLimiter, simulate);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);
+
+// GET /simulate/cost-breakdown — accepts ?cpuInsns=&memBytes=&network= and returns detailed cost breakdown
+router.get("/simulate/cost-breakdown", costBreakdownController);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);
@@ -48,5 +60,8 @@ router.post("/estimate-fee", estimateFeeController);
 
 // DELETE /cache — flush all cache entries (Redis or in-memory)
 router.delete("/cache", invalidateCache);
+
+// GET /openapi.json — serve raw OpenAPI spec as JSON
+router.get("/openapi.json", openApiSpec);
 
 export default router;

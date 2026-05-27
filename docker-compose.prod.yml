@@ -15,6 +15,7 @@ services:
       - MAINNET_RPC_URL=${MAINNET_RPC_URL}
       - TESTNET_SECRET_KEY=${TESTNET_SECRET_KEY}
       - MAINNET_SECRET_KEY=${MAINNET_SECRET_KEY}
+      - REDIS_URL=${REDIS_URL:-rediss://redis:6379}
     networks:
       - monitoring
     labels:
@@ -68,10 +69,16 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+      - ./docker/redis/certs:/etc/redis/certs:ro
     networks:
       - monitoring
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: >
+      redis-server --appendonly yes
+        --tls-port 6379 --port 0
+        --tls-cert-file /etc/redis/certs/redis.crt
+        --tls-key-file /etc/redis/certs/redis.key
+        --tls-ca-cert-file /etc/redis/certs/ca.crt
 
 volumes:
   prometheus_data:

@@ -1,6 +1,7 @@
 # 🚀 Stellar Footprint Service
 
 [![CI](https://github.com/josunday002/Stellar-Footprint-Service/actions/workflows/ci.yml/badge.svg)](https://github.com/josunday002/Stellar-Footprint-Service/actions/workflows/ci.yml)
+[![Docker Publish](https://github.com/Dafuriousis/Stellar-Footprint-Service/actions/workflows/release.yml/badge.svg)](https://github.com/Dafuriousis/Stellar-Footprint-Service/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/josunday002/Stellar-Footprint-Service/branch/main/graph/badge.svg)](https://codecov.io/gh/josunday002/Stellar-Footprint-Service)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](https://nodejs.org/)
@@ -293,7 +294,13 @@ export interface SimulateResult {
   error?: string;
   raw?: StellarSdk.SorobanRpc.Api.SimulateTransactionResponse;
 }
-
+/**
+ * Simulates a Stellar transaction and returns footprint data.
+ * 
+ * @param xdr - Base64 encoded transaction XDR
+ * @param network - Stellar network type
+ * @returns Simulation result containing footprint and cost
+ */
 export async function simulateTransaction(
   xdr: string,
   network: Network = "testnet",
@@ -909,6 +916,7 @@ To report a security vulnerability, please follow our [Security Policy](./SECURI
 - **Batch requests** if simulating multiple transactions (see [#22](ISSUES.md))
 - **Use connection pooling** for RPC calls
 - **Monitor RPC latency** and switch providers if needed
+- **Gzip compression** is enabled automatically for responses larger than `COMPRESSION_THRESHOLD` bytes (default: `1024`). Clients must send `Accept-Encoding: gzip`. Tune the threshold via the `COMPRESSION_THRESHOLD` environment variable — lower values compress more aggressively, higher values reduce CPU overhead for small payloads.
 
 ---
 

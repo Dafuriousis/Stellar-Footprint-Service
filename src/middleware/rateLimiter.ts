@@ -9,10 +9,12 @@ const RATE_LIMIT_WINDOW_MS = parseInt(
 export const simulateRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_WINDOW_MS,
   max: RATE_LIMIT_MAX,
-  standardHeaders: true, // sets X-RateLimit-Limit and X-RateLimit-Remaining
-  legacyHeaders: false,
+  standardHeaders: true, // sets RateLimit-* headers (draft-7 standard)
+  legacyHeaders: true, // sets X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
   handler: (req, res) => {
     const retryAfter = Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
+    // X-RateLimit-Reset is set by legacyHeaders but express-rate-limit uses epoch seconds;
+    // Retry-After is the number of seconds until the window resets.
     res.setHeader("Retry-After", retryAfter);
     res.status(429).json({
       error: "Too Many Requests",

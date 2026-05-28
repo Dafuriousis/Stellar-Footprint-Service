@@ -503,3 +503,14 @@ export async function costBreakdownController(
     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
   }
 }
+
+export function openApiSpec(req: Request, res: Response): void {
+  const fs = require("fs") as typeof import("fs");
+  const YAML = require("yaml") as { parse: (s: string) => unknown };
+  const specPath = path.join(__dirname, "..", "..", "openapi.yaml");
+  if (!fs.existsSync(specPath)) {
+    res.status(404).json({ error: "OpenAPI spec not found" });
+    return;
+  }
+  res.json(YAML.parse(fs.readFileSync(specPath, "utf8")));
+}

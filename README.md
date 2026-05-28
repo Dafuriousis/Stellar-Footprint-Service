@@ -112,6 +112,19 @@ To benchmark the service under concurrent load:
    npm run load-test
    ```
 
+### Available scenarios
+
+The load test supports two scenarios controlled by the `LOAD_TEST_SCENARIO` environment variable:
+
+- **`health`** (default): Tests the `/health` endpoint
+- **`batch`**: Tests the `/api/simulate/batch` endpoint with 5 transactions per request
+
+To run the batch simulation scenario:
+
+```bash
+LOAD_TEST_SCENARIO=batch npm run load-test
+```
+
 ### What is tested
 
 This load test runs three concurrency levels against the service:
@@ -119,6 +132,8 @@ This load test runs three concurrency levels against the service:
 - `10` connections
 - `50` connections
 - `100` connections
+
+**Batch simulation scenario** sends POST requests to `/api/simulate/batch` with 5 Soroban transactions per request, simulating realistic workloads where multiple transactions need footprint extraction.
 
 ### Metrics explained
 
@@ -133,15 +148,22 @@ This load test runs three concurrency levels against the service:
 - Lower `p50`, `p95`, and `p99` values indicate better request latency.
 - A small gap between `p95` and `p99` suggests a stable service under load.
 - A low `Errors(%)` means the service handled the traffic reliably.
+- For batch scenarios, multiply `Req/sec` by 5 to get the effective transaction simulation throughput.
 
 ### Customize the target
 
 By default, the load test targets the health endpoint at `http://localhost:3000/health`.
 
-You can override the base URL using `LOAD_TEST_URL` or change the path via `LOAD_TEST_PATH`:
+You can override the base URL using `LOAD_TEST_URL` or change the path via `LOAD_TEST_PATH` (for health scenario only):
 
 ```bash
 LOAD_TEST_URL=http://localhost:3000 LOAD_TEST_PATH=/metrics npm run load-test
+```
+
+For batch simulation testing:
+
+```bash
+LOAD_TEST_URL=http://localhost:3000 LOAD_TEST_SCENARIO=batch npm run load-test
 ```
 
 ### Scaffold from Scratch
@@ -489,6 +511,13 @@ npm start
 
 The service will start on `http://localhost:3000` (or your configured `PORT`).
 
+### Clean Build Artifacts
+
+```bash
+npm run clean          # Remove dist/ and coverage/
+npm run build:clean    # Clean then rebuild from source
+```
+
 ---
 
 ## 📡 API Reference
@@ -828,6 +857,10 @@ export default router;
 
 For a beginner-friendly guide explaining what Soroban footprints are, why they are required, and how this service simplifies the process, see [Understanding Soroban Footprints](./docs/guides/understanding-footprints.md).
 
+## 🗄️ Caching Guide
+
+For details on the Redis vs in-memory dual-backend strategy, TTL configuration, cache key structure, and when to use `DELETE /cache`, see [docs/guides/caching.md](./docs/guides/caching.md).
+
 ## 🧩 Integration Guide
 
 ### Step 1: Build Transaction
@@ -944,6 +977,7 @@ Step-by-step guides for deploying to common platforms:
 | Render         | [docs/deployment.md#2-render](./docs/deployment.md#2-render)                       |
 | Fly.io         | [docs/deployment.md#3-flyio](./docs/deployment.md#3-flyio)                         |
 | Bare VPS + PM2 | [docs/deployment.md#4-bare-vps-with-pm2](./docs/deployment.md#4-bare-vps-with-pm2) |
+| Kubernetes     | [docs/guides/kubernetes.md](./docs/guides/kubernetes.md)                           |
 
 See the full [Deployment Guide](./docs/deployment.md) for environment variable reference and health check configuration.
 

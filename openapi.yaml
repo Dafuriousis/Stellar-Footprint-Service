@@ -100,12 +100,35 @@ paths:
                     error: "Transaction requires ledger entry restoration before simulation."
         "429":
           description: Rate limit exceeded
+          headers:
+            X-RateLimit-Limit:
+              description: Maximum number of requests allowed in the current window
+              schema:
+                type: integer
+              example: 60
+            X-RateLimit-Remaining:
+              description: Number of requests remaining in the current window
+              schema:
+                type: integer
+              example: 0
+            X-RateLimit-Reset:
+              description: Unix timestamp (seconds) when the current rate-limit window resets
+              schema:
+                type: integer
+              example: 1700000060
+            Retry-After:
+              description: Number of seconds to wait before retrying
+              schema:
+                type: integer
+              example: 60
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
-                error: "Too many requests, please try again later."
+                error: "Too Many Requests"
+                message: "Rate limit exceeded. Try again in 60 seconds."
+                retryAfter: 60
         "500":
           description: Internal server error
           content:

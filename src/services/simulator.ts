@@ -21,13 +21,13 @@ import {
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import { withRetry } from "../utils/retry";
 import { sanitizeRpcError } from "../utils/rpcErrorSanitizer";
+import { CACHE_TTL } from "../constants";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
   string,
   { exists: boolean; timestamp: number }
 >();
-const CONTRACT_EXISTENCE_CACHE_TTL = 30 * 1000; // 30 seconds
 
 function extractRequiredSigners(
   auth: StellarSdk.xdr.SorobanAuthorizationEntry[],
@@ -39,8 +39,10 @@ function extractRequiredSigners(
       if (credentials.switch().name === "sorobanCredentialsAddress") {
         const address = credentials.address();
 
+        const credAddress =
+          address as StellarSdk.xdr.SorobanAddressCredentials;
         const accountId = StellarSdk.StrKey.encodeEd25519PublicKey(
-          (address as any).accountId().value(), // eslint-disable-line @typescript-eslint/no-explicit-any
+          credAddress.address().accountId().ed25519(),
         );
         signers.add(accountId);
       }
@@ -60,7 +62,7 @@ async function _checkContractExists(
 ): Promise<boolean> {
   const now = Date.now();
   const cached = contractExistenceCache.get(contractIdString);
-  if (cached && now - cached.timestamp < CONTRACT_EXISTENCE_CACHE_TTL) {
+  if (cached && now - cached.timestamp < CACHE_TTL.CONTRACT_EXISTENCE_MS) {
     // Record cache hit
     metrics.recordCacheHit("contract_existence");
     return cached.exists;
@@ -160,16 +162,22 @@ function buildTtlWarnings(ttl: Record<string, TtlInfo>): string[] {
 
 /**
  */
+function base64ByteLength(b64: string): number {
+  const len = b64.length;
+  const padding = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+  return (len * 3) / 4 - padding;
+}
+
 function calculateFootprintStats(
   readOnly: string[],
   readWrite: string[],
 ): FootprintStats {
   const readOnlySize = readOnly.reduce(
-    (sum, xdr) => sum + Buffer.from(xdr, "base64").length,
+    (sum, xdr) => sum + base64ByteLength(xdr),
     0,
   );
   const readWriteSize = readWrite.reduce(
-    (sum, xdr) => sum + Buffer.from(xdr, "base64").length,
+    (sum, xdr) => sum + base64ByteLength(xdr),
     0,
   );
 
@@ -232,8 +240,7 @@ function _extractEvents(
     (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
 
   return events.map((event: unknown) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = event as any;
+    const e = event as { type?: () => { name?: string }; contractId?: () => Buffer };
     return {
       type: e.type?.()?.name || "unknown",
       contractId: e.contractId?.()?.toString("hex") || "",
@@ -317,8 +324,10 @@ async function _processSimulationResult(
       ? await detectTokenContract(contracts[0], server)
       : "unknown";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const auth = (transactionData as any)?.auth?.() ?? [];
+  // SorobanTransactionData.build() returns xdr.SorobanTransactionData which
+  // exposes auth() at the XDR level; use unknown cast to avoid any.
+  const builtData = transactionData as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+  const auth = builtData.auth?.() ?? [];
   const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
   const footprintStats = calculateFootprintStats(
@@ -411,7 +420,12 @@ export async function simulateTransaction(
     };
   }
 
-  const simOptions: Record<string, unknown> = { signal, includeEvents: true };
+  interface SimulateOptions {
+    signal?: AbortSignal;
+    includeEvents?: boolean;
+    ledger?: number;
+  }
+  const simOptions: SimulateOptions = { signal, includeEvents: true };
   if (ledgerSequence !== undefined) {
     simOptions.ledger = ledgerSequence;
   }
@@ -423,8 +437,7 @@ export async function simulateTransaction(
         rpcCircuitBreaker.call(() =>
           server.simulateTransaction(
             tx as StellarSdk.Transaction,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            simOptions as any,
+            simOptions,
           ),
         ),
       `simulateTransaction:${network}`,
@@ -465,8 +478,16 @@ export async function simulateTransaction(
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const responseCost = (response as any).cost;
+  const diagnosticEvents =
+    response.events
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ?.filter((e) => (e as any).type?.()?.name === "diagnostic")
+      .map((e) => e.toXDR("base64")) || [];
+
   if (results.length === 1) {
-    // Single operation
+    // Single operation — delegate to shared helper
     const result = results[0];
     if (!result.transactionData) {
       return {
@@ -477,41 +498,12 @@ export async function simulateTransaction(
       };
     }
 
-    const footprint = result.transactionData.build().resources().footprint();
-    const rawFootprint = {
-      readOnly: footprint.readOnly().map((e) => e.toXDR("base64")),
-      readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
-    };
-
-    // Parse footprint entries to extract contract IDs and classify types
-    const parsedFootprint = parseFootprint(rawFootprint);
-
-    // Extract all contracts touched by the transaction
-    const allEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
-    const contracts = extractContracts(allEntries);
-
-    // Optimize footprint by removing redundant read-only entries
-    const optimizationResult = optimizeFootprint(
-      parsedFootprint.readOnly,
-      parsedFootprint.readWrite,
+    const processed = await _processSimulationResult(
+      server,
+      network,
+      result.transactionData.build(),
+      responseCost,
     );
-
-    // Get all XDR strings for TTL lookup (use original footprint)
-    const allXdrEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
-
-    // Fetch TTL information
-    const ttl = await fetchTtlInfo(server, allXdrEntries, network);
-
-    // Extract required signers from auth entries
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const auth = (result.transactionData?.build() as any)?.auth?.() ?? [];
-    const { requiredSigners, threshold } = extractRequiredSigners(auth);
-
-    // Detect SEP-41 token contract type for the first invoked contract
-    const contractType =
-      contracts.length > 0
-        ? await detectTokenContract(contracts[0], server)
-        : "unknown";
 
     return {
       success: true,
@@ -525,10 +517,8 @@ export async function simulateTransaction(
       optimized: optimizationResult.optimized,
       rawFootprint,
       cost: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        cpuInsns: (response as any).cost?.cpuInsns ?? "0",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        memBytes: (response as any).cost?.memBytes ?? "0",
+        cpuInsns: response.cost?.cpuInsns ?? "0",
+        memBytes: response.cost?.memBytes ?? "0",
       },
       warnings: buildTtlWarnings(ttl),
       requiredSigners,
@@ -537,12 +527,11 @@ export async function simulateTransaction(
       upgradedFromV0: upgradedFromV0 || undefined,
       diagnosticEvents:
         response.events
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.filter((e) => (e as any).type?.()?.name === "diagnostic")
+          ?.filter((e) => (e as unknown as { type?: () => { name?: string } }).type?.()?.name === "diagnostic")
           .map((e) => e.toXDR("base64")) || [],
     };
   } else {
-    // Multi operation
+    // Multi operation — call helper per result and merge
     const operations: SimulateResult[] = [];
     let allReadOnly: FootprintEntry[] = [];
     let allReadWrite: FootprintEntry[] = [];
@@ -565,20 +554,10 @@ export async function simulateTransaction(
         };
       }
 
-      const footprint = result.transactionData.build().resources().footprint();
-      const rawFootprint = {
-        readOnly: footprint.readOnly().map((e) => e.toXDR("base64")),
-        readWrite: footprint.readWrite().map((e) => e.toXDR("base64")),
-      };
-
-      const parsedFootprint = parseFootprint(rawFootprint);
-
-      const allEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
-      const contracts = extractContracts(allEntries);
-
-      const optimizationResult = optimizeFootprint(
-        parsedFootprint.readOnly,
-        parsedFootprint.readWrite,
+      const processed = await _processSimulationResult(
+        server,
+        network,
+        result.transactionData.build(),
       );
 
       const allXdrEntries = [
@@ -588,8 +567,8 @@ export async function simulateTransaction(
 
       const ttl = await fetchTtlInfo(server, allXdrEntries, network);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const auth = (result.transactionData?.build() as any)?.auth?.() ?? [];
+      const builtOpData = result.transactionData?.build() as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+      const auth = builtOpData?.auth?.() ?? [];
       const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
       const opContractType =
@@ -628,43 +607,41 @@ export async function simulateTransaction(
 
       operations.push(opResult);
 
-      allReadOnly = [...allReadOnly, ...optimizationResult.readOnly];
-      allReadWrite = [...allReadWrite, ...optimizationResult.readWrite];
-      allContracts = [...allContracts, ...contracts];
-      Object.assign(allTtl, ttl);
-      if (optimizationResult.optimized) optimized = true;
-      allRawReadOnly = [...allRawReadOnly, ...rawFootprint.readOnly];
-      allRawReadWrite = [...allRawReadWrite, ...rawFootprint.readWrite];
+      allReadOnly = [...allReadOnly, ...(processed.footprint?.readOnly ?? [])];
+      allReadWrite = [
+        ...allReadWrite,
+        ...(processed.footprint?.readWrite ?? []),
+      ];
+      allContracts = [...allContracts, ...(processed.contracts ?? [])];
+      Object.assign(allTtl, processed.ttl ?? {});
+      if (processed.optimized) optimized = true;
+      if (contractType === "unknown" && processed.contractType !== "unknown") {
+        contractType = processed.contractType as ContractType;
+      }
+      allRawReadOnly = [
+        ...allRawReadOnly,
+        ...(processed.rawFootprint?.readOnly ?? []),
+      ];
+      allRawReadWrite = [
+        ...allRawReadWrite,
+        ...(processed.rawFootprint?.readWrite ?? []),
+      ];
     }
 
     // Dedup
     const dedupReadOnly = allReadOnly.filter(
       (item, index, arr) =>
-        arr.findIndex(
-          (i) =>
-            i.contractId === item.contractId &&
-            (i as any).key === (item as any).key, // eslint-disable-line @typescript-eslint/no-explicit-any
-        ) === index,
+        arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
     const dedupReadWrite = allReadWrite.filter(
       (item, index, arr) =>
-        arr.findIndex(
-          (i) =>
-            i.contractId === item.contractId &&
-            (i as any).key === (item as any).key, // eslint-disable-line @typescript-eslint/no-explicit-any
-        ) === index,
+        arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
-    const dedupContracts = [...new Set(allContracts)];
-    const dedupRawReadOnly = [...new Set(allRawReadOnly)];
-    const dedupRawReadWrite = [...new Set(allRawReadWrite)];
 
     return {
       success: true,
-      footprint: {
-        readOnly: dedupReadOnly,
-        readWrite: dedupReadWrite,
-      },
-      contracts: dedupContracts,
+      footprint: { readOnly: dedupReadOnly, readWrite: dedupReadWrite },
+      contracts: [...new Set(allContracts)],
       contractType,
       ttl: allTtl,
       optimized,
@@ -679,11 +656,7 @@ export async function simulateTransaction(
       warnings: buildTtlWarnings(allTtl),
       operations,
       raw: response,
-      diagnosticEvents:
-        response.events
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ?.filter((e) => (e as any).type?.()?.name === "diagnostic")
-          .map((e) => e.toXDR("base64")) || [],
+      diagnosticEvents,
     };
   }
 }

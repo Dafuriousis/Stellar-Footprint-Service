@@ -112,6 +112,11 @@ This project enforces consistent style via ESLint, Prettier, and TypeScript stri
 
 Husky runs lint and branch name validation automatically before each commit. Commits are rejected if checks fail.
 
+**Automated checks:**
+- **TypeScript files** (`.ts`, `.tsx`): ESLint + Prettier
+- **Other files** (`.js`, `.jsx`, `.json`, `.md`): Prettier
+- **package.json**: `npm audit --audit-level=high` to catch high-severity vulnerabilities
+
 Branch names must follow one of these patterns:
 
 - Protected: `main`, `develop`, `live`

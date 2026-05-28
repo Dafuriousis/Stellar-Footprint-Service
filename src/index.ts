@@ -49,6 +49,7 @@ app.use(
         frameAncestors: ["'none'"],
       },
     },
+    referrerPolicy: { policy: "no-referrer" },
   }),
 );
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
@@ -107,6 +108,15 @@ app.use("/api/*path", (req, res) => {
 app.use(errorHandler);
 
 if (require.main === module) {
+  const KEEP_ALIVE_TIMEOUT_MS = parseInt(
+    process.env.KEEP_ALIVE_TIMEOUT_MS || "65000",
+    10,
+  );
+  const HEADERS_TIMEOUT_MS = parseInt(
+    process.env.HEADERS_TIMEOUT_MS || "66000",
+    10,
+  );
+
   const server = app.listen(PORT, () => {
     logger.info(
       {
@@ -117,6 +127,9 @@ if (require.main === module) {
       "stellar-footprint-service started",
     );
   });
+
+  server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT_MS;
+  server.headersTimeout = HEADERS_TIMEOUT_MS;
 
   const shutdown = (signal: string) => {
     logger.info(`${signal} received, shutting down gracefully`);

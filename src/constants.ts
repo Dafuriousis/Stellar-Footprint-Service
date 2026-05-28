@@ -10,11 +10,18 @@ export const RPC_URLS = {
   TESTNET: "https://soroban-testnet.stellar.org",
 } as const;
 
+/**
+ * Cache TTL values in milliseconds for various caching layers.
+ * - NETWORK_STATUS_MS: How long to cache network status responses (10 s)
+ * - CONTRACT_EXISTENCE_MS: How long to cache contract existence lookups (30 s)
+ * - RPC_POOL_MS: How long an RPC server connection is reused before recreation (5 min)
+ * - SIMULATION_MS: How long to cache simulation results (1 min)
+ */
 export const CACHE_TTL = {
-  NETWORK_STATUS_MS: 10000, // 10 seconds
-  CONTRACT_EXISTENCE_MS: 30000, // 30 seconds
-  RPC_POOL_MS: 300000, // 5 minutes
-  SIMULATION_MS: 60000, // 1 minute (for simulation result caching)
+  NETWORK_STATUS_MS: 10000,
+  CONTRACT_EXISTENCE_MS: 30000,
+  RPC_POOL_MS: 300000,
+  SIMULATION_MS: 60000,
 } as const;
 
 /** Simulation result LRU cache — configurable via env vars */

@@ -1,6 +1,8 @@
+import { Request, Response, NextFunction } from "express";
 import fs from "fs";
 import path from "path";
 
+import * as StellarSdk from "@stellar/stellar-sdk";
 import { Network } from "@config/stellar";
 import metrics from "@middleware/metrics";
 import { getCache } from "@services/cache";
@@ -9,10 +11,10 @@ import { estimateFee, estimateFeeDetailed } from "@services/feeEstimator";
 import { getNetworkStatus } from "@services/networkStatus";
 import { buildRestoreTransaction } from "@services/restorer";
 import { simulateTransaction } from "@services/simulator";
+import { createJob, deliverWebhook } from "@services/webhook";
 import { AppError } from "@utils/AppError";
 import { rpcCircuitBreaker } from "@utils/circuitBreaker";
 import { validateXdrInput } from "@utils/validateXdrInput";
-import { Request, Response, NextFunction } from "express";
 
 import { version } from "../../package.json";
 import { env } from "../config/env";
@@ -114,7 +116,11 @@ export async function simulate(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+  const { xdr, network, webhookUrl } = req.body as {
+    xdr?: string;
+    network?: Network;
+    webhookUrl?: string;
+  };
 
   const xdrCheck = validateXdrInput(xdr);
   if (!xdrCheck.valid) {
@@ -144,6 +150,28 @@ export async function simulate(
     const duration = (Date.now() - start) / 1000;
     metrics.recordSimulation(net, result.success);
     metrics.recordSimulationDuration(net, duration);
+
+    // Record history for this IP
+    const ip =
+      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+      req.socket.remoteAddress ||
+      "unknown";
+    recordHistory(ip, {
+      timestamp: new Date().toISOString(),
+      network: net,
+      success: result.success,
+      readOnlyCount: result.footprint?.readOnly?.length ?? 0,
+      readWriteCount: result.footprint?.readWrite?.length ?? 0,
+    });
+
+    // Fire webhook asynchronously if requested
+    if (webhookUrl) {
+      const jobId = createJob(webhookUrl);
+      // Deliver in background — do not await
+      deliverWebhook(jobId, result).catch(() => {
+        // swallow — webhook delivery failures must not affect the response
+      });
+    }
 
     res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
     res
@@ -518,4 +546,115 @@ export function openApiSpec(req: Request, res: Response): void {
     return;
   }
   res.json(YAML.parse(fs.readFileSync(specPath, "utf8")));
+}
+
+// ---------------------------------------------------------------------------
+// #333 — Dry-run: parse XDR locally, no RPC call
+// ---------------------------------------------------------------------------
+
+const NETWORK_PASSPHRASES: Record<string, string> = {
+  mainnet: StellarSdk.Networks.PUBLIC,
+  testnet: StellarSdk.Networks.TESTNET,
+  futurenet: StellarSdk.Networks.FUTURENET,
+};
+
+export function simulateDryRun(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  const { xdr, network } = req.body as { xdr?: string; network?: string };
+
+  const xdrCheck = validateXdrInput(xdr);
+  if (!xdrCheck.valid) {
+    return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
+  }
+
+  const net = (network as Network) || DEFAULT_NETWORK;
+  const passphrase = NETWORK_PASSPHRASES[net] ?? StellarSdk.Networks.TESTNET;
+
+  try {
+    const tx = StellarSdk.TransactionBuilder.fromXDR(xdr!, passphrase);
+
+    // FeeBumpTransaction wraps an inner transaction
+    const inner =
+      tx instanceof StellarSdk.FeeBumpTransaction ? tx.innerTransaction : tx;
+
+    const operations = inner.operations.map((op) => ({
+      type: op.type,
+      source: op.source ?? null,
+    }));
+
+    res.status(HTTP_STATUS.OK).json({
+      dryRun: true,
+      network: net,
+      sourceAccount: inner.source,
+      sequence: inner.sequence,
+      operationCount: operations.length,
+      operations,
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Failed to parse XDR";
+    next(new AppError(message, HTTP_STATUS.BAD_REQUEST));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// #331 — Simulation history per IP (in-memory, last 100, with TTL)
+// ---------------------------------------------------------------------------
+
+export interface HistoryEntry {
+  timestamp: string;
+  network: string;
+  success: boolean;
+  readOnlyCount: number;
+  readWriteCount: number;
+}
+
+const HISTORY_MAX = 100;
+const HISTORY_TTL_MS = 24 * 60 * 60 * 1000; // 24 h
+
+// ip -> array of entries (newest last)
+const historyStore = new Map<string, { entry: HistoryEntry; expiresAt: number }[]>();
+
+export function recordHistory(ip: string, entry: HistoryEntry): void {
+  let list = historyStore.get(ip) ?? [];
+  // Evict expired
+  const now = Date.now();
+  list = list.filter((e) => e.expiresAt > now);
+  list.push({ entry, expiresAt: now + HISTORY_TTL_MS });
+  if (list.length > HISTORY_MAX) list.shift();
+  historyStore.set(ip, list);
+}
+
+export function getSimulateHistory(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  try {
+    const ip =
+      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+      req.socket.remoteAddress ||
+      "unknown";
+
+    const limitParam = parseInt((req.query.limit as string) || "10", 10);
+    const limit = isNaN(limitParam) || limitParam < 1 ? 10 : Math.min(limitParam, HISTORY_MAX);
+
+    const now = Date.now();
+    const raw = (historyStore.get(ip) ?? []).filter((e) => e.expiresAt > now);
+    const entries = raw.map((e) => e.entry).reverse().slice(0, limit);
+
+    res.status(HTTP_STATUS.OK).json({
+      ip,
+      total: raw.length,
+      limit,
+      results: entries,
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
 }

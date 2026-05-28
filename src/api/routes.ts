@@ -16,6 +16,8 @@ import {
   costBreakdownController,
   openApiSpec,
   supportedNetworks,
+  simulateDryRun,
+  getSimulateHistory,
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
 
@@ -35,6 +37,12 @@ router.get("/simulate/supported-networks", supportedNetworks);
 
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulateRateLimiter, simulate);
+
+// POST /simulate/dry-run — parse XDR locally, return metadata without calling RPC
+router.post("/simulate/dry-run", simulateDryRun);
+
+// GET /simulate/history — return last N simulation results for the caller's IP
+router.get("/simulate/history", getSimulateHistory);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);

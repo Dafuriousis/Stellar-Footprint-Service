@@ -44,9 +44,33 @@ app.use(cors(buildCorsOptions()));
 app.use(
   helmet({
     contentSecurityPolicy: {
+      // OWASP API Security: APIs typically should not serve executable
+      // content to browsers. Keep a very restrictive CSP suitable for
+      // a JSON API while permitting same-origin connections for tooling
+      // (e.g. Swagger UI in non-production). The chosen directives:
+      // - default-src 'none' : deny everything by default
+      // - base-uri 'none'    : prevent base tag attacks
+      // - object-src 'none'  : disallow plugins
+      // - frame-ancestors 'none' : prevent clickjacking / framing
+      // - form-action 'none' : disallow form submissions
+      // - script-src 'self'  : only allow scripts from same origin (needed for dev docs)
+      // - style-src 'self'   : only allow styles from same origin
+      // - img-src 'none'     : disallow images
+      // - connect-src 'self' : allow fetch/XHR to same origin
+      // These choices align with OWASP guidance to minimise browser-executable
+      // surface for API responses while keeping developer tooling functional.
       directives: {
         defaultSrc: ["'none'"],
+        baseUri: ["'none'"],
+        objectSrc: ["'none'"],
         frameAncestors: ["'none'"],
+        formAction: ["'none'"],
+        // Allow same-origin scripts/styles/connects to support Swagger UI during
+        // development. In production the UI is not enabled and these remain safe.
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'none'"],
+        connectSrc: ["'self'"],
       },
     },
     referrerPolicy: { policy: "no-referrer" },

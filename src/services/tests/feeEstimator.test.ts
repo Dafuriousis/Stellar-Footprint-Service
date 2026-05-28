@@ -341,7 +341,11 @@ describe("estimateFeeDetailed", () => {
   });
 
   it("handles very large values in detailed breakdown", async () => {
-    const result = await estimateFeeDetailed("1000000000", "5000000", "testnet");
+    const result = await estimateFeeDetailed(
+      "1000000000",
+      "5000000",
+      "testnet",
+    );
 
     expect(result.breakdown.cpuFee).toBeDefined();
     expect(result.breakdown.memoryFee).toBeDefined();

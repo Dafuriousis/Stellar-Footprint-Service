@@ -1,5 +1,5 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
-import { decodeXdr, XdrType } from "../decoder";
+
 import {
   SOROBAN_INVOKE_XDR,
   CLASSIC_PAYMENT_XDR,
@@ -7,6 +7,7 @@ import {
   INVALID_BASE64_XDR,
   INVALID_XDR_BYTES,
 } from "../../tests/fixtures/xdr";
+import { decodeXdr, XdrType } from "../decoder";
 
 // ── Test Fixtures ────────────────────────────────────────────────────────────
 

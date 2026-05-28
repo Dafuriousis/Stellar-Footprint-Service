@@ -158,10 +158,11 @@ paths:
           in: query
           required: false
           description: |
-            XDR type hint for decoding. If omitted the service will attempt
-            auto-detection. Common values: `transaction`, `ledgerEntry`, `operationResult`.
+            XDR type hint for decoding. If omitted defaults to `transaction`.
+            Supported values: `transaction`, `operation`, `ledger_key`, `auth_entry`.
           schema:
             type: string
+            enum: [transaction, operation, ledger_key, auth_entry]
             example: transaction
       responses:
         "200":

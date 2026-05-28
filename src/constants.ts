@@ -30,7 +30,11 @@ export const SIMULATION_CACHE_TTL_MS =
 export const SIMULATION_CACHE_MAX_SIZE =
   parseInt(process.env.CACHE_MAX_SIZE ?? "500", 10) || 500;
 
-export const BATCH_MAX_SIZE = 10;
+const _batchMaxSizeEnv = parseInt(process.env.BATCH_MAX_SIZE ?? "10", 10);
+export const BATCH_MAX_SIZE =
+  Number.isFinite(_batchMaxSizeEnv) && _batchMaxSizeEnv > 0
+    ? _batchMaxSizeEnv
+    : 10;
 
 export const ERROR_MESSAGES = {
   MISSING_XDR: "Missing required field: xdr",

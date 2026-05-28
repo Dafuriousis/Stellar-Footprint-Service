@@ -10,6 +10,7 @@ import {
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 // import { calculateResourceFee } from "./feeEstimator"; // unused
+import { CACHE_TTL, ErrorCode } from "../constants";
 import metrics from "../middleware/metrics";
 import {
   FootprintStats,
@@ -21,7 +22,6 @@ import {
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import { withRetry } from "../utils/retry";
 import { sanitizeRpcError } from "../utils/rpcErrorSanitizer";
-import { CACHE_TTL } from "../constants";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -39,8 +39,7 @@ function extractRequiredSigners(
       if (credentials.switch().name === "sorobanCredentialsAddress") {
         const address = credentials.address();
 
-        const credAddress =
-          address as StellarSdk.xdr.SorobanAddressCredentials;
+        const credAddress = address as StellarSdk.xdr.SorobanAddressCredentials;
         const accountId = StellarSdk.StrKey.encodeEd25519PublicKey(
           credAddress.address().accountId().ed25519(),
         );
@@ -240,7 +239,10 @@ function _extractEvents(
     (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
 
   return events.map((event: unknown) => {
-    const e = event as { type?: () => { name?: string }; contractId?: () => Buffer };
+    const e = event as {
+      type?: () => { name?: string };
+      contractId?: () => Buffer;
+    };
     return {
       type: e.type?.()?.name || "unknown",
       contractId: e.contractId?.()?.toString("hex") || "",
@@ -282,6 +284,7 @@ export interface SimulateResult {
   };
   resourceFee?: string;
   error?: string;
+  code?: ErrorCode;
   contractId?: string;
   raw?: StellarSdk.rpc.Api.SimulateTransactionResponse;
   requiredSigners?: string[];
@@ -326,7 +329,9 @@ async function _processSimulationResult(
 
   // SorobanTransactionData.build() returns xdr.SorobanTransactionData which
   // exposes auth() at the XDR level; use unknown cast to avoid any.
-  const builtData = transactionData as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+  const builtData = transactionData as unknown as {
+    auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[];
+  };
   const auth = builtData.auth?.() ?? [];
   const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
@@ -337,7 +342,6 @@ async function _processSimulationResult(
 
   return {
     success: true,
-    simulatedAt: new Date().toISOString(),
     footprint: {
       readOnly: optimizationResult.readOnly,
       readWrite: optimizationResult.readWrite,
@@ -417,6 +421,7 @@ export async function simulateTransaction(
       success: false,
       error:
         "Transaction must contain a Soroban operation (invokeHostFunction).",
+      code: ErrorCode.TRANSACTION_MISSING_SOROBAN_OPERATION,
     };
   }
 
@@ -424,8 +429,13 @@ export async function simulateTransaction(
     signal?: AbortSignal;
     includeEvents?: boolean;
     ledger?: number;
+    cpuInstructions: number;
   }
-  const simOptions: SimulateOptions = { signal, includeEvents: true };
+  const simOptions: SimulateOptions = {
+    signal,
+    includeEvents: true,
+    cpuInstructions: 0,
+  };
   if (ledgerSequence !== undefined) {
     simOptions.ledger = ledgerSequence;
   }
@@ -435,10 +445,7 @@ export async function simulateTransaction(
     response = await withRetry(
       () =>
         rpcCircuitBreaker.call(() =>
-          server.simulateTransaction(
-            tx as StellarSdk.Transaction,
-            simOptions,
-          ),
+          server.simulateTransaction(tx as StellarSdk.Transaction, simOptions),
         ),
       `simulateTransaction:${network}`,
     );
@@ -452,6 +459,7 @@ export async function simulateTransaction(
       success: false,
       type: "simulation_error" as const,
       error: sanitizeRpcError(response.error),
+      code: ErrorCode.RPC_SIMULATION_ERROR,
       raw: response,
     };
   }
@@ -461,6 +469,7 @@ export async function simulateTransaction(
       success: false,
       type: "restoration_required" as const,
       error: "Transaction requires ledger entry restoration before simulation.",
+      code: ErrorCode.SIMULATION_RESTORE_REQUIRED,
       raw: response,
     };
   }
@@ -474,6 +483,7 @@ export async function simulateTransaction(
       success: false,
       error:
         "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+      code: ErrorCode.SIMULATION_DATA_MISSING,
       raw: response,
     };
   }
@@ -494,6 +504,7 @@ export async function simulateTransaction(
         success: false,
         error:
           "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+        code: ErrorCode.SIMULATION_DATA_MISSING,
         raw: response,
       };
     }
@@ -507,28 +518,22 @@ export async function simulateTransaction(
 
     return {
       success: true,
-      footprint: {
-        readOnly: optimizationResult.readOnly,
-        readWrite: optimizationResult.readWrite,
+      footprint: processed.footprint,
+      contracts: processed.contracts,
+      contractType: processed.contractType,
+      ttl: processed.ttl,
+      optimized: processed.optimized,
+      rawFootprint: processed.rawFootprint,
+      cost: processed.cost ?? {
+        cpuInsns: responseCost?.cpuInsns ?? "0",
+        memBytes: responseCost?.memBytes ?? "0",
       },
-      contracts,
-      contractType,
-      ttl,
-      optimized: optimizationResult.optimized,
-      rawFootprint,
-      cost: {
-        cpuInsns: response.cost?.cpuInsns ?? "0",
-        memBytes: response.cost?.memBytes ?? "0",
-      },
-      warnings: buildTtlWarnings(ttl),
-      requiredSigners,
-      threshold,
+      warnings: buildTtlWarnings(processed.ttl ?? {}),
+      requiredSigners: processed.requiredSigners,
+      threshold: processed.threshold,
       raw: response,
       upgradedFromV0: upgradedFromV0 || undefined,
-      diagnosticEvents:
-        response.events
-          ?.filter((e) => (e as unknown as { type?: () => { name?: string } }).type?.()?.name === "diagnostic")
-          .map((e) => e.toXDR("base64")) || [],
+      diagnosticEvents,
     };
   } else {
     // Multi operation — call helper per result and merge
@@ -550,6 +555,7 @@ export async function simulateTransaction(
           success: false,
           error:
             "Simulation succeeded but transactionData is missing for one operation; cannot extract footprint.",
+          code: ErrorCode.SIMULATION_DATA_MISSING,
           raw: response,
         };
       }
@@ -561,19 +567,21 @@ export async function simulateTransaction(
       );
 
       const allXdrEntries = [
-        ...rawFootprint.readOnly,
-        ...rawFootprint.readWrite,
+        ...(processed.rawFootprint?.readOnly ?? []),
+        ...(processed.rawFootprint?.readWrite ?? []),
       ];
 
       const ttl = await fetchTtlInfo(server, allXdrEntries, network);
 
-      const builtOpData = result.transactionData?.build() as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+      const builtOpData = result.transactionData?.build() as unknown as {
+        auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[];
+      };
       const auth = builtOpData?.auth?.() ?? [];
       const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
       const opContractType =
-        contracts.length > 0
-          ? await detectTokenContract(contracts[0], server)
+        (processed.contracts?.length ?? 0) > 0
+          ? await detectTokenContract(processed.contracts![0], server)
           : "unknown";
 
       if (contractType === "unknown") contractType = opContractType;
@@ -587,15 +595,12 @@ export async function simulateTransaction(
 
       const opResult: SimulateResult = {
         success: true,
-        footprint: {
-          readOnly: optimizationResult.readOnly,
-          readWrite: optimizationResult.readWrite,
-        },
-        contracts,
+        footprint: processed.footprint,
+        contracts: processed.contracts,
         contractType: opContractType,
         ttl,
-        optimized: optimizationResult.optimized,
-        rawFootprint,
+        optimized: processed.optimized,
+        rawFootprint: processed.rawFootprint,
         cost: {
           cpuInsns: opCpuInsns,
           memBytes: opMemBytes,
@@ -630,12 +635,16 @@ export async function simulateTransaction(
 
     // Dedup
     const dedupReadOnly = allReadOnly.filter(
-      (item, index, arr) =>
-        arr.findIndex((i) => i.xdr === item.xdr) === index,
+      (item, index, arr) => arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
     const dedupReadWrite = allReadWrite.filter(
-      (item, index, arr) =>
-        arr.findIndex((i) => i.xdr === item.xdr) === index,
+      (item, index, arr) => arr.findIndex((i) => i.xdr === item.xdr) === index,
+    );
+    const dedupRawReadOnly = allRawReadOnly.filter(
+      (item, index, arr) => arr.indexOf(item) === index,
+    );
+    const dedupRawReadWrite = allRawReadWrite.filter(
+      (item, index, arr) => arr.indexOf(item) === index,
     );
 
     return {

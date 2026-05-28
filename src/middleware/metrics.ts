@@ -70,6 +70,23 @@ const activeSimulations = new client.Gauge({
   registers: [register],
 });
 
+// Cache operation latency histogram
+const cacheOperationDuration = new client.Histogram({
+  name: "cache_operation_duration_seconds",
+  help: "Duration of cache get/set operations in seconds",
+  labelNames: ["operation", "backend"],
+  buckets: [0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5],
+  registers: [register],
+});
+
+// XDR payload size histogram
+const simulateRequestXdrBytes = new client.Histogram({
+  name: "simulate_request_xdr_bytes",
+  help: "Size of incoming XDR payloads in bytes",
+  buckets: [256, 512, 1024, 4096, 16384, 65536],
+  registers: [register],
+});
+
 // Footprint entry count histogram (#423)
 const footprintEntriesHistogram = new client.Histogram({
   name: "simulate_footprint_entries",
@@ -122,6 +139,14 @@ export const metrics = {
 
   recordCacheMiss: (cacheType: string = "simulation") => {
     cacheMissesTotal.inc({ cache_type: cacheType });
+  },
+
+  recordCacheLatency: (
+    operation: "get" | "set",
+    backend: string,
+    durationSeconds: number,
+  ) => {
+    cacheOperationDuration.observe({ operation, backend }, durationSeconds);
   },
 
   recordSimulation: (network: string, success: boolean) => {

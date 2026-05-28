@@ -162,16 +162,22 @@ function buildTtlWarnings(ttl: Record<string, TtlInfo>): string[] {
 
 /**
  */
+function base64ByteLength(b64: string): number {
+  const len = b64.length;
+  const padding = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+  return (len * 3) / 4 - padding;
+}
+
 function calculateFootprintStats(
   readOnly: string[],
   readWrite: string[],
 ): FootprintStats {
   const readOnlySize = readOnly.reduce(
-    (sum, xdr) => sum + Buffer.from(xdr, "base64").length,
+    (sum, xdr) => sum + base64ByteLength(xdr),
     0,
   );
   const readWriteSize = readWrite.reduce(
-    (sum, xdr) => sum + Buffer.from(xdr, "base64").length,
+    (sum, xdr) => sum + base64ByteLength(xdr),
     0,
   );
 

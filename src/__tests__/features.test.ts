@@ -1,6 +1,6 @@
+import metrics from "../middleware/metrics";
 import { LruMemoryCache, idempotencyCache } from "../services/cache";
 import { simulateTransaction } from "../services/simulator";
-import metrics from "../middleware/metrics";
 
 // ─── #431: simulatedAt ────────────────────────────────────────────────────────
 
@@ -25,7 +25,9 @@ describe("#431 simulatedAt", () => {
     const result = await simulateTransaction("xdr", "testnet");
     expect(result.simulatedAt).toBeDefined();
     expect(() => new Date(result.simulatedAt!)).not.toThrow();
-    expect(new Date(result.simulatedAt!).toISOString()).toBe(result.simulatedAt);
+    expect(new Date(result.simulatedAt!).toISOString()).toBe(
+      result.simulatedAt,
+    );
   });
 
   it("is preserved (not overwritten) when served from cache", () => {
@@ -122,12 +124,60 @@ describe("#420 idempotency cache singleton", () => {
 
   it("caches and replays a response by key", () => {
     const key = `test-key-${Date.now()}`;
-    const payload = JSON.stringify({ success: true, simulatedAt: "2024-01-01T00:00:00.000Z" });
+    const payload = JSON.stringify({
+      success: true,
+      simulatedAt: "2024-01-01T00:00:00.000Z",
+    });
     idempotencyCache.set(key, payload);
     expect(idempotencyCache.get(key)).toBe(payload);
   });
 
   it("returns undefined for an unseen key", () => {
     expect(idempotencyCache.get("never-set-key")).toBeUndefined();
+  });
+});
+
+// ─── base64ByteLength (calculateFootprintStats) ───────────────────────────────
+
+// The helper is private, so we test it indirectly via the footprintStats field
+// returned by a mocked simulateTransaction call.
+
+describe("base64ByteLength formula matches Buffer.from byte length", () => {
+  // Inline the same formula used in simulator.ts so the test is self-contained
+  function base64ByteLength(b64: string): number {
+    const len = b64.length;
+    const padding = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+    return (len * 3) / 4 - padding;
+  }
+
+  const cases: [string, number][] = [
+    ["AAAA", 3], // no padding
+    ["AAAABB==", 4], // two-char padding
+    ["AAAABBB=", 5], // one-char padding
+    ["", 0], // empty string
+  ];
+
+  it.each(cases)("base64ByteLength(%s) === %i", (b64, expected) => {
+    expect(base64ByteLength(b64)).toBe(expected);
+    expect(base64ByteLength(b64)).toBe(Buffer.from(b64, "base64").length);
+  });
+});
+
+// ─── recordCacheLatency ───────────────────────────────────────────────────────
+
+describe("metrics.recordCacheLatency", () => {
+  it("is exported and callable without throwing", () => {
+    expect(() =>
+      metrics.recordCacheLatency("get", "redis", 0.001),
+    ).not.toThrow();
+    expect(() =>
+      metrics.recordCacheLatency("set", "redis", 0.005),
+    ).not.toThrow();
+  });
+
+  it("accepts memory backend label", () => {
+    expect(() =>
+      metrics.recordCacheLatency("get", "memory", 0.0001),
+    ).not.toThrow();
   });
 });

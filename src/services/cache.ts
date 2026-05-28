@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 
 import Redis from "ioredis";
 
+import metrics from "../middleware/metrics";
 import { logger } from "../utils/logger";
 
 // ---------------------------------------------------------------------------
@@ -83,14 +84,18 @@ class RedisCache implements CacheService {
   constructor(private readonly client: Redis) {}
 
   async get<T>(key: string): Promise<T | null> {
+    const start = Date.now();
     const raw = await this.client.get(key);
+    metrics.recordCacheLatency("get", "redis", (Date.now() - start) / 1000);
     if (raw === null) return null;
     return JSON.parse(raw) as T;
   }
 
   async set<T>(key: string, value: T, ttlMs: number): Promise<void> {
+    const start = Date.now();
     // PX = millisecond precision TTL
     await this.client.set(key, JSON.stringify(value), "PX", ttlMs);
+    metrics.recordCacheLatency("set", "redis", (Date.now() - start) / 1000);
   }
 
   async delete(key: string): Promise<void> {

@@ -14,6 +14,7 @@ import {
   invalidateCache,
   estimateFeeController,
   costBreakdownController,
+  openApiSpec,
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
 

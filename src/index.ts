@@ -49,6 +49,7 @@ app.use(
         frameAncestors: ["'none'"],
       },
     },
+    referrerPolicy: { policy: "no-referrer" },
   }),
 );
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));

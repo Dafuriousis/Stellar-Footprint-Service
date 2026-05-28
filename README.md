@@ -500,7 +500,10 @@ cp .env.example .env
 
 ```bash
 npm run dev
+npm run dev:watch
 ```
+
+`npm run dev:watch` uses `nodemon` and the project's `nodemon.json` configuration to restart automatically on `src/**/*.ts` changes.
 
 ### Production Build
 

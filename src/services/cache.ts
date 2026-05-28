@@ -24,12 +24,79 @@ export interface CacheService {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory LRU cache
+// Exported synchronous LRU cache (used by tests and idempotency layer)
+// ---------------------------------------------------------------------------
+
+export class LruMemoryCache<T> {
+  readonly backend = "lru-memory" as const;
+  private readonly store = new Map<string, { value: T; expiresAt: number }>();
+  private hits = 0;
+  private misses = 0;
+  private readonly ttlMs: number;
+  private readonly maxSize: number;
+
+  constructor(maxSize: number, ttlMs: number) {
+    this.maxSize = maxSize;
+    this.ttlMs = ttlMs;
+  }
+
+  get(key: string): T | undefined {
+    const entry = this.store.get(key);
+    if (!entry) {
+      this.misses++;
+      return undefined;
+    }
+    if (Date.now() > entry.expiresAt) {
+      this.store.delete(key);
+      this.misses++;
+      return undefined;
+    }
+    // LRU: move to end
+    this.store.delete(key);
+    this.store.set(key, entry);
+    this.hits++;
+    return entry.value;
+  }
+
+  set(key: string, value: T): void {
+    if (this.store.size >= this.maxSize && !this.store.has(key)) {
+      const oldest = this.store.keys().next().value;
+      if (oldest !== undefined) this.store.delete(oldest);
+    }
+    this.store.set(key, { value, expiresAt: Date.now() + this.ttlMs });
+  }
+
+  delete(key: string): void {
+    this.store.delete(key);
+  }
+
+  stats() {
+    const total = this.hits + this.misses;
+    return {
+      hits: this.hits,
+      misses: this.misses,
+      hitRate: total === 0 ? 0 : this.hits / total,
+      missRate: total === 0 ? 0 : this.misses / total,
+      size: this.store.size,
+      backend: this.backend,
+      ttlSeconds: this.ttlMs / 1000,
+    };
+  }
+}
+
+/** Singleton idempotency cache with 24-hour TTL */
+export const idempotencyCache = new LruMemoryCache<string>(
+  10_000,
+  24 * 60 * 60 * 1000,
+);
+
+// ---------------------------------------------------------------------------
+// In-memory LRU cache (async CacheService implementation)
 // ---------------------------------------------------------------------------
 
 const DEFAULT_MAX_SIZE = 500;
 
-class LruMemoryCache implements CacheService {
+class AsyncLruMemoryCache implements CacheService {
   readonly backend = "memory" as const;
 
   private readonly store = new Map<string, CacheEntry<unknown>>();
@@ -132,7 +199,7 @@ export function getCache(): CacheService {
           { err: err.message },
           "Redis error — falling back to in-memory cache",
         );
-        _cache = new LruMemoryCache();
+        _cache = new AsyncLruMemoryCache();
       });
 
       client.on("connect", () => {
@@ -150,10 +217,10 @@ export function getCache(): CacheService {
         { err },
         "Failed to initialise Redis — falling back to in-memory cache",
       );
-      _cache = new LruMemoryCache();
+      _cache = new AsyncLruMemoryCache();
     }
   } else {
-    _cache = new LruMemoryCache();
+    _cache = new AsyncLruMemoryCache();
     logger.info("Cache backend: in-memory LRU (REDIS_URL not set)");
   }
 

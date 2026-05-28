@@ -176,6 +176,11 @@ export const metrics = {
     simulateRequestXdrBytes.observe(bytes);
   },
 
+  recordFootprintEntries: (readOnly: number, readWrite: number) => {
+    footprintEntriesHistogram.observe({ type: "read_only" }, readOnly);
+    footprintEntriesHistogram.observe({ type: "read_write" }, readWrite);
+  },
+
   getMetrics: async (): Promise<string> => {
     return await register.metrics();
   },

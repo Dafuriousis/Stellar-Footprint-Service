@@ -261,6 +261,7 @@ function _extractEvents(
  */
 export interface SimulateResult {
   success: boolean;
+  simulatedAt?: string;
   upgradedFromV0?: boolean;
   footprint?: {
     readOnly: FootprintEntry[];
@@ -439,7 +440,10 @@ export async function simulateTransaction(
     response = await withRetry(
       () =>
         rpcCircuitBreaker.call(() =>
-          server.simulateTransaction(tx as StellarSdk.Transaction, simOptions),
+          server.simulateTransaction(
+            tx as StellarSdk.Transaction,
+            simOptions as Parameters<typeof server.simulateTransaction>[1],
+          ),
         ),
       `simulateTransaction:${network}`,
     );
@@ -509,21 +513,21 @@ export async function simulateTransaction(
     return {
       success: true,
       footprint: {
-        readOnly: optimizationResult.readOnly,
-        readWrite: optimizationResult.readWrite,
+        readOnly: processed.footprint?.readOnly ?? [],
+        readWrite: processed.footprint?.readWrite ?? [],
       },
-      contracts,
-      contractType,
-      ttl,
-      optimized: optimizationResult.optimized,
-      rawFootprint,
+      contracts: processed.contracts,
+      contractType: processed.contractType,
+      ttl: processed.ttl,
+      optimized: processed.optimized,
+      rawFootprint: processed.rawFootprint,
       cost: {
-        cpuInsns: response.cost?.cpuInsns ?? "0",
-        memBytes: response.cost?.memBytes ?? "0",
+        cpuInsns: responseCost?.cpuInsns ?? "0",
+        memBytes: responseCost?.memBytes ?? "0",
       },
-      warnings: buildTtlWarnings(ttl),
-      requiredSigners,
-      threshold,
+      warnings: buildTtlWarnings(processed.ttl ?? {}),
+      requiredSigners: processed.requiredSigners,
+      threshold: processed.threshold,
       raw: response,
       upgradedFromV0: upgradedFromV0 || undefined,
       diagnosticEvents:
@@ -566,8 +570,8 @@ export async function simulateTransaction(
       );
 
       const allXdrEntries = [
-        ...rawFootprint.readOnly,
-        ...rawFootprint.readWrite,
+        ...(processed.rawFootprint?.readOnly ?? []),
+        ...(processed.rawFootprint?.readWrite ?? []),
       ];
 
       const ttl = await fetchTtlInfo(server, allXdrEntries, network);
@@ -578,9 +582,10 @@ export async function simulateTransaction(
       const auth = builtOpData?.auth?.() ?? [];
       const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
+      const opContracts = processed.contracts ?? [];
       const opContractType =
-        contracts.length > 0
-          ? await detectTokenContract(contracts[0], server)
+        opContracts.length > 0
+          ? await detectTokenContract(opContracts[0], server)
           : "unknown";
 
       if (contractType === "unknown") contractType = opContractType;
@@ -595,14 +600,14 @@ export async function simulateTransaction(
       const opResult: SimulateResult = {
         success: true,
         footprint: {
-          readOnly: optimizationResult.readOnly,
-          readWrite: optimizationResult.readWrite,
+          readOnly: processed.footprint?.readOnly ?? [],
+          readWrite: processed.footprint?.readWrite ?? [],
         },
-        contracts,
+        contracts: opContracts,
         contractType: opContractType,
         ttl,
-        optimized: optimizationResult.optimized,
-        rawFootprint,
+        optimized: processed.optimized,
+        rawFootprint: processed.rawFootprint,
         cost: {
           cpuInsns: opCpuInsns,
           memBytes: opMemBytes,
@@ -651,8 +656,8 @@ export async function simulateTransaction(
       ttl: allTtl,
       optimized,
       rawFootprint: {
-        readOnly: dedupRawReadOnly,
-        readWrite: dedupRawReadWrite,
+        readOnly: allRawReadOnly,
+        readWrite: allRawReadWrite,
       },
       cost: {
         cpuInsns: totalCpuInsns.toString(),

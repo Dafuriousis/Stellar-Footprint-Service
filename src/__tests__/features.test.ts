@@ -181,3 +181,66 @@ describe("metrics.recordCacheLatency", () => {
     ).not.toThrow();
   });
 });
+
+// ─── networkStatus TTL caching ────────────────────────────────────────────────
+
+jest.mock("../config/stellar", () => ({
+  getRpcServer: jest.fn(),
+  getNetworkConfig: jest.fn().mockReturnValue({
+    networkPassphrase: "Test SDF Network ; September 2015",
+  }),
+}));
+
+describe("getNetworkStatus caching", () => {
+  const mockGetLatestLedger = jest.fn();
+
+  beforeEach(() => {
+    jest.resetModules();
+    mockGetLatestLedger.mockReset();
+    const { getRpcServer } = require("../config/stellar") as {
+      getRpcServer: jest.Mock;
+    };
+    getRpcServer.mockReturnValue({ getLatestLedger: mockGetLatestLedger });
+    mockGetLatestLedger.mockResolvedValue({ sequence: 100 });
+  });
+
+  it("returns cached result within TTL without calling RPC again", async () => {
+    const { getNetworkStatus } = await import("../services/networkStatus");
+    await getNetworkStatus("testnet");
+    await getNetworkStatus("testnet");
+    expect(mockGetLatestLedger).toHaveBeenCalledTimes(1);
+  });
+
+  it("respects NETWORK_STATUS_TTL_MS env var", async () => {
+    process.env.NETWORK_STATUS_TTL_MS = "1";
+    const { getNetworkStatus } = await import("../services/networkStatus");
+    await getNetworkStatus("testnet");
+    await new Promise((r) => setTimeout(r, 5));
+    await getNetworkStatus("testnet");
+    expect(mockGetLatestLedger).toHaveBeenCalledTimes(2);
+    delete process.env.NETWORK_STATUS_TTL_MS;
+  });
+});
+
+// ─── server keep-alive defaults ───────────────────────────────────────────────
+
+describe("server timeout env defaults", () => {
+  it("KEEP_ALIVE_TIMEOUT_MS defaults to 65000", () => {
+    const val = parseInt(process.env.KEEP_ALIVE_TIMEOUT_MS || "65000", 10);
+    expect(val).toBe(65000);
+  });
+
+  it("HEADERS_TIMEOUT_MS defaults to 66000", () => {
+    const val = parseInt(process.env.HEADERS_TIMEOUT_MS || "66000", 10);
+    expect(val).toBe(66000);
+  });
+
+  it("headersTimeout is greater than keepAliveTimeout to avoid LB race", () => {
+    const keepAlive = parseInt(
+      process.env.KEEP_ALIVE_TIMEOUT_MS || "65000",
+      10,
+    );
+    const headers = parseInt(process.env.HEADERS_TIMEOUT_MS || "66000", 10);
+    expect(headers).toBeGreaterThan(keepAlive);
+  });
+});

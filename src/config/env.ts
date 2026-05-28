@@ -36,6 +36,9 @@ export const EnvSchema = z.object({
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
   GRAFANA_USER: z.string().default("admin"),
   GRAFANA_PASSWORD: z.string().default("admin"),
+  NETWORK_STATUS_TTL_MS: z.coerce.number().int().positive().default(10000),
+  KEEP_ALIVE_TIMEOUT_MS: z.coerce.number().int().positive().default(65000),
+  HEADERS_TIMEOUT_MS: z.coerce.number().int().positive().default(66000),
 });
 
 export type EnvConfig = z.infer<typeof EnvSchema>;

@@ -8,7 +8,10 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node -r tsconfig-paths/register dist/index.js",
+    "clean": "rm -rf dist coverage",
+    "build:clean": "npm run clean && npm run build",
+    "env:check": "node scripts/check-env.js",
+    "start": "npm run env:check && node -r tsconfig-paths/register dist/index.js",
     "dev": "ts-node -r tsconfig-paths/register src/index.ts",
     "pm2:start": "pm2 start ecosystem.config.js --env production",
     "pm2:start:staging": "pm2 start ecosystem.config.js --env staging",

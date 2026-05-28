@@ -6,20 +6,35 @@ const RATE_LIMIT_WINDOW_MS = parseInt(
   10,
 );
 
-export const simulateRateLimiter = rateLimit({
-  windowMs: RATE_LIMIT_WINDOW_MS,
-  max: RATE_LIMIT_MAX,
-  standardHeaders: true, // sets RateLimit-* headers (draft-7 standard)
-  legacyHeaders: true, // sets X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
-  handler: (req, res) => {
-    const retryAfter = Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
-    // X-RateLimit-Reset is set by legacyHeaders but express-rate-limit uses epoch seconds;
-    // Retry-After is the number of seconds until the window resets.
-    res.setHeader("Retry-After", retryAfter);
-    res.status(429).json({
-      error: "Too Many Requests",
-      message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
-      retryAfter,
-    });
-  },
-});
+function makeLimiter(max: number, windowMs: number) {
+  return rateLimit({
+    windowMs,
+    max,
+    standardHeaders: true,
+    legacyHeaders: true,
+    handler: (_req, res) => {
+      const retryAfter = Math.ceil(windowMs / 1000);
+      res.setHeader("Retry-After", retryAfter);
+      res.status(429).json({
+        error: "Too Many Requests",
+        message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
+        retryAfter,
+      });
+    },
+  });
+}
+
+export const simulateRateLimiter = makeLimiter(
+  RATE_LIMIT_MAX,
+  RATE_LIMIT_WINDOW_MS,
+);
+
+export const decodeRateLimiter = makeLimiter(
+  parseInt(process.env.DECODE_RATE_LIMIT_MAX || "120", 10),
+  parseInt(process.env.DECODE_RATE_LIMIT_WINDOW_MS || "60000", 10),
+);
+
+export const feeRateLimiter = makeLimiter(
+  parseInt(process.env.FEE_RATE_LIMIT_MAX || "60", 10),
+  parseInt(process.env.FEE_RATE_LIMIT_WINDOW_MS || "60000", 10),
+);

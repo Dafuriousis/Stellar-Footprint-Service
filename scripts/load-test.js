@@ -5,6 +5,11 @@ const defaultPath = process.env.LOAD_TEST_PATH || "/health";
 const target = new URL(defaultPath, baseUrl).toString();
 const duration = parseInt(process.env.LOAD_TEST_DURATION || "25", 10);
 const scenarios = [10, 50, 100];
+const scenario = process.env.LOAD_TEST_SCENARIO || "health";
+
+// Sample Soroban transaction XDR for batch simulation testing
+const SAMPLE_XDR =
+  "AAAAAgAAAACnDQTKOBdaOH0ynf6k7SpkytahlUjNsWgm4WEB8rmE1QAAAGQAAAAAAAAAZwAAAAEAAAAAAAAAAAAAAABp6joKAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFaGVsbG8AAAAAAAABAAAAAQAAAAAAAAAAAAAAAfK5hNUAAABAIbPVF4x6vSLx/J3T0SDhvTNtytA/BNO+qMJ74p/b3Y8xpBhR7xzy68FuEyffaF9fNXHEC+77WK+oOJpfon1tCg==";
 
 function formatNumber(value) {
   return String(value).padStart(5, " ");
@@ -18,16 +23,37 @@ function calculateErrorRate(result) {
 }
 
 async function runScenario(connections) {
+  const isHealthCheck = scenario === "health";
+  const targetUrl = isHealthCheck
+    ? target
+    : new URL("/api/simulate/batch", baseUrl).toString();
+
   console.log(
-    `\nRunning load test: ${connections} connections for ${duration}s against ${target}`,
+    `\nRunning load test: ${connections} connections for ${duration}s against ${targetUrl}`,
   );
 
-  const result = await autocannon({
-    url: target,
+  const config = {
+    url: targetUrl,
     connections,
     duration,
     timeout: 30000,
-  });
+  };
+
+  // Add POST body for batch simulation scenario
+  if (!isHealthCheck) {
+    config.method = "POST";
+    config.headers = {
+      "Content-Type": "application/json",
+    };
+    config.body = JSON.stringify({
+      transactions: Array(5)
+        .fill(null)
+        .map(() => ({ xdr: SAMPLE_XDR })),
+      network: "testnet",
+    });
+  }
+
+  const result = await autocannon(config);
 
   return {
     connections,
@@ -58,7 +84,9 @@ function printSummary(results) {
 
 async function runLoadTests() {
   try {
-    console.log("Starting autocannon load tests...");
+    console.log(
+      `Starting autocannon load tests (scenario: ${scenario})...`,
+    );
     const results = [];
 
     for (const connections of scenarios) {

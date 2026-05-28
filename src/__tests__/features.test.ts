@@ -1,6 +1,18 @@
+import request from "supertest";
+
+import app from "../index";
+import metrics from "../middleware/metrics";
 import { LruMemoryCache, idempotencyCache } from "../services/cache";
 import { simulateTransaction } from "../services/simulator";
-import metrics from "../middleware/metrics";
+
+// ─── Referrer-Policy header ───────────────────────────────────────────────────
+
+describe("Referrer-Policy header", () => {
+  it("is set to no-referrer on all responses", async () => {
+    const res = await request(app).get("/api/v1/health");
+    expect(res.headers["referrer-policy"]).toBe("no-referrer");
+  });
+});
 
 // ─── #431: simulatedAt ────────────────────────────────────────────────────────
 
@@ -25,7 +37,9 @@ describe("#431 simulatedAt", () => {
     const result = await simulateTransaction("xdr", "testnet");
     expect(result.simulatedAt).toBeDefined();
     expect(() => new Date(result.simulatedAt!)).not.toThrow();
-    expect(new Date(result.simulatedAt!).toISOString()).toBe(result.simulatedAt);
+    expect(new Date(result.simulatedAt!).toISOString()).toBe(
+      result.simulatedAt,
+    );
   });
 
   it("is preserved (not overwritten) when served from cache", () => {
@@ -122,7 +136,10 @@ describe("#420 idempotency cache singleton", () => {
 
   it("caches and replays a response by key", () => {
     const key = `test-key-${Date.now()}`;
-    const payload = JSON.stringify({ success: true, simulatedAt: "2024-01-01T00:00:00.000Z" });
+    const payload = JSON.stringify({
+      success: true,
+      simulatedAt: "2024-01-01T00:00:00.000Z",
+    });
     idempotencyCache.set(key, payload);
     expect(idempotencyCache.get(key)).toBe(payload);
   });

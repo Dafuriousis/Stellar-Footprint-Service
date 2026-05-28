@@ -10,6 +10,7 @@ import {
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 // import { calculateResourceFee } from "./feeEstimator"; // unused
+import { CACHE_TTL } from "../constants";
 import metrics from "../middleware/metrics";
 import {
   FootprintStats,
@@ -21,7 +22,6 @@ import {
 import { rpcCircuitBreaker } from "../utils/circuitBreaker";
 import { withRetry } from "../utils/retry";
 import { sanitizeRpcError } from "../utils/rpcErrorSanitizer";
-import { CACHE_TTL } from "../constants";
 
 // Cache for contract existence checks (contractIdString -> { exists: boolean, timestamp: number })
 const contractExistenceCache = new Map<
@@ -39,8 +39,7 @@ function extractRequiredSigners(
       if (credentials.switch().name === "sorobanCredentialsAddress") {
         const address = credentials.address();
 
-        const credAddress =
-          address as StellarSdk.xdr.SorobanAddressCredentials;
+        const credAddress = address as StellarSdk.xdr.SorobanAddressCredentials;
         const accountId = StellarSdk.StrKey.encodeEd25519PublicKey(
           credAddress.address().accountId().ed25519(),
         );
@@ -240,7 +239,10 @@ function _extractEvents(
     (response.events as unknown as StellarSdk.xdr.DiagnosticEvent[]) ?? [];
 
   return events.map((event: unknown) => {
-    const e = event as { type?: () => { name?: string }; contractId?: () => Buffer };
+    const e = event as {
+      type?: () => { name?: string };
+      contractId?: () => Buffer;
+    };
     return {
       type: e.type?.()?.name || "unknown",
       contractId: e.contractId?.()?.toString("hex") || "",
@@ -326,7 +328,9 @@ async function _processSimulationResult(
 
   // SorobanTransactionData.build() returns xdr.SorobanTransactionData which
   // exposes auth() at the XDR level; use unknown cast to avoid any.
-  const builtData = transactionData as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+  const builtData = transactionData as unknown as {
+    auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[];
+  };
   const auth = builtData.auth?.() ?? [];
   const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
@@ -435,10 +439,7 @@ export async function simulateTransaction(
     response = await withRetry(
       () =>
         rpcCircuitBreaker.call(() =>
-          server.simulateTransaction(
-            tx as StellarSdk.Transaction,
-            simOptions,
-          ),
+          server.simulateTransaction(tx as StellarSdk.Transaction, simOptions),
         ),
       `simulateTransaction:${network}`,
     );
@@ -527,7 +528,11 @@ export async function simulateTransaction(
       upgradedFromV0: upgradedFromV0 || undefined,
       diagnosticEvents:
         response.events
-          ?.filter((e) => (e as unknown as { type?: () => { name?: string } }).type?.()?.name === "diagnostic")
+          ?.filter(
+            (e) =>
+              (e as unknown as { type?: () => { name?: string } }).type?.()
+                ?.name === "diagnostic",
+          )
           .map((e) => e.toXDR("base64")) || [],
     };
   } else {
@@ -567,7 +572,9 @@ export async function simulateTransaction(
 
       const ttl = await fetchTtlInfo(server, allXdrEntries, network);
 
-      const builtOpData = result.transactionData?.build() as unknown as { auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[] };
+      const builtOpData = result.transactionData?.build() as unknown as {
+        auth?: () => StellarSdk.xdr.SorobanAuthorizationEntry[];
+      };
       const auth = builtOpData?.auth?.() ?? [];
       const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
@@ -630,12 +637,10 @@ export async function simulateTransaction(
 
     // Dedup
     const dedupReadOnly = allReadOnly.filter(
-      (item, index, arr) =>
-        arr.findIndex((i) => i.xdr === item.xdr) === index,
+      (item, index, arr) => arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
     const dedupReadWrite = allReadWrite.filter(
-      (item, index, arr) =>
-        arr.findIndex((i) => i.xdr === item.xdr) === index,
+      (item, index, arr) => arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
 
     return {

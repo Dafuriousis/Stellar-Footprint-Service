@@ -79,6 +79,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
 |---|---|
 | `pnpm run dev` | Start dev server with hot reload |
 | `pnpm run build` | Compile TypeScript |
+| `pnpm run typecheck` | Run TypeScript type checking without emitting files |
 | `pnpm run start` | Start production server |
 | `pnpm run lint` | Run ESLint |
 | `pnpm run lint:fix` | Auto-fix lint issues |
@@ -178,6 +179,7 @@ chore(deps): update @stellar/stellar-sdk to 12.1.0
 2. **Run all checks locally:**
    ```bash
    pnpm run lint
+   pnpm run typecheck
    pnpm run format:check
    pnpm run build
    pnpm test

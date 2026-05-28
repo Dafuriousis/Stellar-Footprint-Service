@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage",
     "build:clean": "npm run clean && npm run build",
     "env:check": "node scripts/check-env.js",

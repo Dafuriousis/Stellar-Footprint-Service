@@ -1,0 +1,84 @@
+import { sanitizeRpcError } from "../rpcErrorSanitizer";
+
+describe("sanitizeRpcError", () => {
+  // Known pattern mappings
+  it("maps contract not found error", () => {
+    expect(sanitizeRpcError("no such contract on ledger")).toBe(
+      "Contract not found on the specified network.",
+    );
+  });
+
+  it("maps invalid XDR error", () => {
+    expect(sanitizeRpcError("failed to decode transaction XDR")).toBe(
+      "Invalid transaction XDR provided.",
+    );
+  });
+
+  it("maps insufficient balance error", () => {
+    expect(sanitizeRpcError("account not found in ledger")).toBe(
+      "Source account not found or has insufficient balance.",
+    );
+  });
+
+  it("maps CPU limit error", () => {
+    expect(sanitizeRpcError("exceeded instructions limit")).toBe(
+      "Transaction exceeded CPU instruction limit.",
+    );
+  });
+
+  it("maps memory limit error", () => {
+    expect(sanitizeRpcError("exceeded memory limit")).toBe(
+      "Transaction exceeded memory limit.",
+    );
+  });
+
+  it("maps host/wasm error", () => {
+    expect(sanitizeRpcError("wasm trap: unreachable")).toBe(
+      "Contract execution failed during simulation.",
+    );
+  });
+
+  it("maps network timeout error", () => {
+    expect(sanitizeRpcError("ECONNREFUSED")).toBe(
+      "RPC network error. Please try again.",
+    );
+  });
+
+  // Stack trace stripping
+  it("strips stack traces from error strings", () => {
+    const raw =
+      "Something went wrong\n    at Object.<anonymous> (/app/src/services/simulator.ts:42:10)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)";
+    const result = sanitizeRpcError(raw);
+    expect(result).not.toContain("at Object");
+    expect(result).not.toContain("simulator.ts");
+  });
+
+  // Internal URL stripping
+  it("strips internal RPC provider URLs", () => {
+    const raw =
+      "Request failed: https://mainnet.stellar.validationcloud.io/v1/SECRETAPIKEY123456789";
+    const result = sanitizeRpcError(raw);
+    expect(result).not.toContain("validationcloud.io");
+    expect(result).not.toContain("SECRETAPIKEY");
+  });
+
+  // File path stripping
+  it("strips Unix file paths", () => {
+    const raw = "Error loading /etc/stellar/config.json: permission denied";
+    const result = sanitizeRpcError(raw);
+    expect(result).not.toContain("/etc/stellar/config.json");
+  });
+
+  // Provider identifier stripping
+  it("strips provider-specific API key identifiers in URL paths", () => {
+    const raw = "Failed at /v1/abcdefghijklmnopqrstuvwxyz123456";
+    const result = sanitizeRpcError(raw);
+    expect(result).not.toContain("abcdefghijklmnopqrstuvwxyz123456");
+  });
+
+  // Actionable fallback
+  it("returns a non-empty fallback for unknown errors", () => {
+    const result = sanitizeRpcError("some unknown rpc error");
+    expect(result.length).toBeGreaterThan(0);
+  });
+});

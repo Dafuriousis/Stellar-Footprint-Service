@@ -5,6 +5,7 @@ This directory contains Architecture Decision Records for the Stellar Footprint 
 ## List of ADRs
 
 - [ADR 001: Caching Strategy](./001-caching-strategy.md) - Documents the decision to use in-memory LRU cache with optional Redis backend
+- [ADR 002: Circuit Breaker](./002-circuit-breaker.md) - Documents the three-state circuit breaker wrapping outbound RPC calls
 
 ## What is an ADR?
 

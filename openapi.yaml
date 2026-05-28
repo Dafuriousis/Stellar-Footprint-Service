@@ -307,3 +307,9 @@ components:
         error:
           type: string
           description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code (optional)
+        requestId:
+          type: string
+          description: Request correlation ID from X-Request-ID header

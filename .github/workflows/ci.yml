@@ -38,6 +38,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Coverage
+        run: npm run test:coverage
+
       - name: Build
         run: pnpm run build
 

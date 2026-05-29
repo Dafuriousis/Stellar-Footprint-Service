@@ -29,6 +29,10 @@ Thumbs.db
 apps/contracts/*/test_snapshots/
 proptest-regressions/
 
+# Jest snapshots
+__snapshots__/
+*.snap
+
 # JS / Node
 node_modules/
 coverage/

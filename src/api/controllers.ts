@@ -12,6 +12,7 @@ import { simulateTransaction } from "@services/simulator";
 import { AppError } from "@utils/AppError";
 import { rpcCircuitBreaker } from "@utils/circuitBreaker";
 import { validateXdrInput } from "@utils/validateXdrInput";
+import { validateXdr } from "../services/validator";
 import { Request, Response, NextFunction } from "express";
 
 import { version } from "../../package.json";
@@ -309,22 +310,41 @@ export async function footprintDiffController(
 }
 
 export async function validate(
-  _req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const response: ResponseEnvelope = {
-      success: true,
-      data: { message: "Not implemented" },
-    };
-    res.status(HTTP_STATUS.OK).json(response);
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
-    next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
-  }
-}
+   req: Request,
+   res: Response,
+   next: NextFunction,
+ ): Promise<void> {
+   try {
+     const { xdr, network } = req.body as { xdr?: string; network?: Network };
+
+     // Validate that xdr and network are present
+     if (!xdr) {
+       return next(new AppError("Missing required field: xdr", HTTP_STATUS.BAD_REQUEST));
+     }
+     if (!network) {
+       return next(new AppError("Missing required field: network", HTTP_STATUS.BAD_REQUEST));
+     }
+
+     // Validate network value
+     if (network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+       return next(new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST));
+     }
+
+     // Call the validator service
+     const result = validateXdr(xdr, network);
+
+     // Return the result
+     const response: ResponseEnvelope = {
+       success: true,
+       data: result,
+     };
+     res.status(HTTP_STATUS.OK).json(response);
+   } catch (err: unknown) {
+     const message =
+       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+     next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+   }
+ }
 
 export async function restore(
   req: Request,

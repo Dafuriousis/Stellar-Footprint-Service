@@ -27,3 +27,39 @@ export const simulateRateLimiter = rateLimit({
     });
   },
 });
+
+export const decodeRateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: true,
+  handler: (req, res) => {
+    const retryAfter = Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
+    res.setHeader("Retry-After", retryAfter);
+    res.status(429).json({
+      success: false,
+      error: "Too Many Requests",
+      code: ErrorCode.RATE_LIMIT_EXCEEDED,
+      message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
+      retryAfter,
+    });
+  },
+});
+
+export const feeRateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: true,
+  handler: (req, res) => {
+    const retryAfter = Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
+    res.setHeader("Retry-After", retryAfter);
+    res.status(429).json({
+      success: false,
+      error: "Too Many Requests",
+      code: ErrorCode.RATE_LIMIT_EXCEEDED,
+      message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
+      retryAfter,
+    });
+  },
+});

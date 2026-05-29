@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { createHmac, randomUUID } from "crypto";
 
 import { SimulateResult } from "./simulator";
 
@@ -20,6 +20,19 @@ export function getJob(jobId: string): WebhookJob | undefined {
   return jobs.get(jobId);
 }
 
+/**
+ * Sign a payload with HMAC-SHA256 using WEBHOOK_SECRET env var.
+ * Returns hex digest, or empty string if no secret is configured.
+ */
+function signPayload(payload: string): string {
+  const secret = process.env.WEBHOOK_SECRET;
+  if (!secret) return "";
+  return createHmac("sha256", secret).update(payload).digest("hex");
+}
+
+/**
+ * Deliver a webhook with HMAC-SHA256 signature header and up to `retries` attempts.
+ */
 export async function deliverWebhook(
   jobId: string,
   result: SimulateResult,
@@ -29,20 +42,29 @@ export async function deliverWebhook(
   if (!job) return;
 
   const payload = JSON.stringify({ jobId, ...result });
+  const signature = signPayload(payload);
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (signature) {
+        headers["X-Webhook-Signature"] = `sha256=${signature}`;
+      }
+
       const res = await fetch(job.webhookUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: payload,
       });
+
       if (res.ok) {
         job.status = "delivered";
         return;
       }
     } catch {
-      // retry
+      // retry on network errors
     }
   }
 

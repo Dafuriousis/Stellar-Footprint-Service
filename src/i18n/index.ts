@@ -2,7 +2,7 @@ import { en } from "./en";
 import { es } from "./es";
 
 export type TranslationKey = keyof typeof en;
-export type Translations = typeof en;
+export type Translations = Record<TranslationKey, string>;
 
 const locales: Record<string, Translations> = {
   en,

@@ -79,12 +79,24 @@ Thank you for your interest in contributing! This guide covers everything you ne
 |---|---|
 | `pnpm run dev` | Start dev server with hot reload |
 | `pnpm run build` | Compile TypeScript |
+| `pnpm run typecheck` | Run TypeScript type checking without emitting files |
 | `pnpm run start` | Start production server |
 | `pnpm run lint` | Run ESLint |
 | `pnpm run lint:fix` | Auto-fix lint issues |
 | `pnpm run format` | Format code with Prettier |
 | `pnpm run format:check` | Check formatting without writing |
 | `pnpm test` | Run test suite |
+| `pnpm test --updateSnapshot` | Refresh Jest snapshots after intentional response shape changes |
+
+### Updating Jest snapshots
+
+Snapshot coverage in this repository is maintained through Jest snapshots. When an endpoint response shape intentionally changes, refresh the snapshots with:
+
+```bash
+pnpm test --updateSnapshot
+```
+
+This updates inline snapshots and generated snapshot files in place. Review the updated snapshot blocks before committing.
 
 ---
 
@@ -178,6 +190,7 @@ chore(deps): update @stellar/stellar-sdk to 12.1.0
 2. **Run all checks locally:**
    ```bash
    pnpm run lint
+   pnpm run typecheck
    pnpm run format:check
    pnpm run build
    pnpm test

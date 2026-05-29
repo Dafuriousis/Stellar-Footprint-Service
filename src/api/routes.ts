@@ -15,6 +15,7 @@ import {
   estimateFeeController,
   costBreakdownController,
   openApiSpec,
+  supportedNetworks,
 } from "./controllers";
 import { simulateRateLimiter } from "../middleware/rateLimiter";
 
@@ -29,6 +30,9 @@ router.get("/health/live", liveness);
 // GET /health/ready — readiness check (Redis and RPC circuit breaker are healthy)
 router.get("/health/ready", readiness);
 
+// GET /simulate/supported-networks — returns list of networks with configured RPC URLs
+router.get("/simulate/supported-networks", supportedNetworks);
+
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulateRateLimiter, simulate);
 
@@ -37,6 +41,9 @@ router.post("/simulate/batch", simulateBatch);
 
 // GET /simulate/cost-breakdown — accepts ?cpuInsns=&memBytes=&network= and returns detailed cost breakdown
 router.get("/simulate/cost-breakdown", costBreakdownController);
+
+// GET /simulate/supported-networks — returns networks that have configured RPC URLs
+router.get("/simulate/supported-networks", supportedNetworks);
 
 // POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
 router.post("/simulate/batch", simulateBatch);

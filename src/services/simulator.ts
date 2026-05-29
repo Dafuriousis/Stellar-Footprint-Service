@@ -10,7 +10,7 @@ import {
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 // import { calculateResourceFee } from "./feeEstimator"; // unused
-import { CACHE_TTL } from "../constants";
+import { CACHE_TTL, ErrorCode } from "../constants";
 import metrics from "../middleware/metrics";
 import {
   FootprintStats,
@@ -261,6 +261,7 @@ function _extractEvents(
  */
 export interface SimulateResult {
   success: boolean;
+  simulatedAt?: string;
   upgradedFromV0?: boolean;
   footprint?: {
     readOnly: FootprintEntry[];
@@ -284,6 +285,7 @@ export interface SimulateResult {
   };
   resourceFee?: string;
   error?: string;
+  code?: ErrorCode;
   contractId?: string;
   raw?: StellarSdk.rpc.Api.SimulateTransactionResponse;
   requiredSigners?: string[];
@@ -341,7 +343,6 @@ async function _processSimulationResult(
 
   return {
     success: true,
-    simulatedAt: new Date().toISOString(),
     footprint: {
       readOnly: optimizationResult.readOnly,
       readWrite: optimizationResult.readWrite,
@@ -421,6 +422,7 @@ export async function simulateTransaction(
       success: false,
       error:
         "Transaction must contain a Soroban operation (invokeHostFunction).",
+      code: ErrorCode.TRANSACTION_MISSING_SOROBAN_OPERATION,
     };
   }
 
@@ -428,8 +430,13 @@ export async function simulateTransaction(
     signal?: AbortSignal;
     includeEvents?: boolean;
     ledger?: number;
+    cpuInstructions: number;
   }
-  const simOptions: SimulateOptions = { signal, includeEvents: true };
+  const simOptions: SimulateOptions = {
+    signal,
+    includeEvents: true,
+    cpuInstructions: 0,
+  };
   if (ledgerSequence !== undefined) {
     simOptions.ledger = ledgerSequence;
   }
@@ -439,7 +446,10 @@ export async function simulateTransaction(
     response = await withRetry(
       () =>
         rpcCircuitBreaker.call(() =>
-          server.simulateTransaction(tx as StellarSdk.Transaction, simOptions),
+          server.simulateTransaction(
+            tx as StellarSdk.Transaction,
+            simOptions as Parameters<typeof server.simulateTransaction>[1],
+          ),
         ),
       `simulateTransaction:${network}`,
     );
@@ -453,6 +463,7 @@ export async function simulateTransaction(
       success: false,
       type: "simulation_error" as const,
       error: sanitizeRpcError(response.error),
+      code: ErrorCode.RPC_SIMULATION_ERROR,
       raw: response,
     };
   }
@@ -462,6 +473,7 @@ export async function simulateTransaction(
       success: false,
       type: "restoration_required" as const,
       error: "Transaction requires ledger entry restoration before simulation.",
+      code: ErrorCode.SIMULATION_RESTORE_REQUIRED,
       raw: response,
     };
   }
@@ -475,6 +487,7 @@ export async function simulateTransaction(
       success: false,
       error:
         "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+      code: ErrorCode.SIMULATION_DATA_MISSING,
       raw: response,
     };
   }
@@ -495,6 +508,7 @@ export async function simulateTransaction(
         success: false,
         error:
           "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+        code: ErrorCode.SIMULATION_DATA_MISSING,
         raw: response,
       };
     }
@@ -509,31 +523,24 @@ export async function simulateTransaction(
     return {
       success: true,
       footprint: {
-        readOnly: optimizationResult.readOnly,
-        readWrite: optimizationResult.readWrite,
+        readOnly: processed.footprint?.readOnly ?? [],
+        readWrite: processed.footprint?.readWrite ?? [],
       },
-      contracts,
-      contractType,
-      ttl,
-      optimized: optimizationResult.optimized,
-      rawFootprint,
+      contracts: processed.contracts,
+      contractType: processed.contractType,
+      ttl: processed.ttl,
+      optimized: processed.optimized,
+      rawFootprint: processed.rawFootprint,
       cost: {
-        cpuInsns: response.cost?.cpuInsns ?? "0",
-        memBytes: response.cost?.memBytes ?? "0",
+        cpuInsns: responseCost?.cpuInsns ?? "0",
+        memBytes: responseCost?.memBytes ?? "0",
       },
-      warnings: buildTtlWarnings(ttl),
-      requiredSigners,
-      threshold,
+      warnings: buildTtlWarnings(processed.ttl ?? {}),
+      requiredSigners: processed.requiredSigners,
+      threshold: processed.threshold,
       raw: response,
       upgradedFromV0: upgradedFromV0 || undefined,
-      diagnosticEvents:
-        response.events
-          ?.filter(
-            (e) =>
-              (e as unknown as { type?: () => { name?: string } }).type?.()
-                ?.name === "diagnostic",
-          )
-          .map((e) => e.toXDR("base64")) || [],
+      diagnosticEvents,
     };
   } else {
     // Multi operation — call helper per result and merge
@@ -555,6 +562,7 @@ export async function simulateTransaction(
           success: false,
           error:
             "Simulation succeeded but transactionData is missing for one operation; cannot extract footprint.",
+          code: ErrorCode.SIMULATION_DATA_MISSING,
           raw: response,
         };
       }
@@ -566,8 +574,8 @@ export async function simulateTransaction(
       );
 
       const allXdrEntries = [
-        ...rawFootprint.readOnly,
-        ...rawFootprint.readWrite,
+        ...(processed.rawFootprint?.readOnly ?? []),
+        ...(processed.rawFootprint?.readWrite ?? []),
       ];
 
       const ttl = await fetchTtlInfo(server, allXdrEntries, network);
@@ -578,9 +586,10 @@ export async function simulateTransaction(
       const auth = builtOpData?.auth?.() ?? [];
       const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
+      const opContracts = processed.contracts ?? [];
       const opContractType =
-        contracts.length > 0
-          ? await detectTokenContract(contracts[0], server)
+        opContracts.length > 0
+          ? await detectTokenContract(opContracts[0], server)
           : "unknown";
 
       if (contractType === "unknown") contractType = opContractType;
@@ -595,14 +604,14 @@ export async function simulateTransaction(
       const opResult: SimulateResult = {
         success: true,
         footprint: {
-          readOnly: optimizationResult.readOnly,
-          readWrite: optimizationResult.readWrite,
+          readOnly: processed.footprint?.readOnly ?? [],
+          readWrite: processed.footprint?.readWrite ?? [],
         },
-        contracts,
+        contracts: opContracts,
         contractType: opContractType,
         ttl,
-        optimized: optimizationResult.optimized,
-        rawFootprint,
+        optimized: processed.optimized,
+        rawFootprint: processed.rawFootprint,
         cost: {
           cpuInsns: opCpuInsns,
           memBytes: opMemBytes,
@@ -642,6 +651,12 @@ export async function simulateTransaction(
     const dedupReadWrite = allReadWrite.filter(
       (item, index, arr) => arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
+    const dedupRawReadOnly = allRawReadOnly.filter(
+      (item, index, arr) => arr.indexOf(item) === index,
+    );
+    const dedupRawReadWrite = allRawReadWrite.filter(
+      (item, index, arr) => arr.indexOf(item) === index,
+    );
 
     return {
       success: true,
@@ -651,8 +666,8 @@ export async function simulateTransaction(
       ttl: allTtl,
       optimized,
       rawFootprint: {
-        readOnly: dedupRawReadOnly,
-        readWrite: dedupRawReadWrite,
+        readOnly: allRawReadOnly,
+        readWrite: allRawReadWrite,
       },
       cost: {
         cpuInsns: totalCpuInsns.toString(),

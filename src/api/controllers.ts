@@ -5,6 +5,7 @@ import { Network } from "@config/stellar";
 import metrics from "@middleware/metrics";
 import { getCache } from "@services/cache";
 import { decodeXdr, type XdrType } from "@services/decoder";
+import { footprintDiff, type FootprintInput } from "@services/footprintDiff";
 import { estimateFee, estimateFeeDetailed } from "@services/feeEstimator";
 import { getNetworkStatus } from "@services/networkStatus";
 import { buildRestoreTransaction } from "@services/restorer";
@@ -284,7 +285,7 @@ export async function footprintDiffController(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const { before, after } = req.body as { before?: unknown; after?: unknown };
+  const { before, after } = req.body as { before?: FootprintInput; after?: FootprintInput };
 
   if (!before || !after) {
     return next(
@@ -295,10 +296,29 @@ export async function footprintDiffController(
     );
   }
 
+  if (!Array.isArray(before.readOnly) || !Array.isArray(before.readWrite)) {
+    return next(
+      new AppError(
+        "Invalid before footprint: readOnly and readWrite must be arrays",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
+  if (!Array.isArray(after.readOnly) || !Array.isArray(after.readWrite)) {
+    return next(
+      new AppError(
+        "Invalid after footprint: readOnly and readWrite must be arrays",
+        HTTP_STATUS.BAD_REQUEST,
+      ),
+    );
+  }
+
   try {
-    const response: ResponseEnvelope = {
+    const diff = footprintDiff(before, after);
+    const response: ResponseEnvelope<FootprintDiffResult> = {
       success: true,
-      data: { message: "Not fully implemented" },
+      data: diff,
     };
     res.status(HTTP_STATUS.OK).json(response);
   } catch (err: unknown) {

@@ -308,10 +308,117 @@ describe("network label in HTTP metrics", () => {
     };
     mockSimulateTransaction.mockResolvedValueOnce(mockResult);
 
-    await request(app)
-      .post("/api/v1/simulate")
-      .send({ xdr: VALID_XDR, network: "mainnet" });
+await request(app)
+       .post("/api/v1/simulate")
+       .send({ xdr: VALID_XDR, network: "mainnet" });
 
     expect(mockMetrics.recordSimulation).toHaveBeenCalledWith("mainnet", true);
+  });
+});
+
+// ── POST /footprint/diff ────────────────────────────────────────────────────
+
+describe("POST /api/v1/footprint/diff", () => {
+  it("returns 400 when before is missing", async () => {
+    const res = await request(app)
+      .post("/api/v1/footprint/diff")
+      .send({ after: { readOnly: [], readWrite: [] } });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/missing required fields: before and after/i);
+  });
+
+  it("returns 400 when after is missing", async () => {
+    const res = await request(app)
+      .post("/api/v1/footprint/diff")
+      .send({ before: { readOnly: [], readWrite: [] } });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/missing required fields: before and after/i);
+  });
+
+  it("returns 400 when before.readOnly is not an array", async () => {
+    const res = await request(app)
+      .post("/api/v1/footprint/diff")
+      .send({ before: { readOnly: "not-an-array", readWrite: [] }, after: { readOnly: [], readWrite: [] } });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/invalid before footprint/i);
+  });
+
+  it("returns 400 when after.readWrite is not an array", async () => {
+    const res = await request(app)
+      .post("/api/v1/footprint/diff")
+      .send({ before: { readOnly: [], readWrite: [] }, after: { readOnly: [], readWrite: "not-an-array" } });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/invalid after footprint/i);
+  });
+
+  it("returns diff with added entries on successful comparison", async () => {
+    const xdr1 = "AAAA1";
+    const xdr2 = "AAAA2";
+
+    const res = await request(app)
+      .post("/api/v1/footprint/diff")
+      .send({
+        before: { readOnly: [xdr1], readWrite: [] },
+        after: { readOnly: [xdr1, xdr2], readWrite: [] },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.added.readOnly).toContain(xdr2);
+    expect(res.body.data.removed.readOnly).toEqual([]);
+    expect(res.body.data.unchanged.readOnly).toContain(xdr1);
+  });
+
+  it("returns diff with removed entries on successful comparison", async () => {
+    const xdr1 = "AAAA1";
+    const xdr2 = "AAAA2";
+
+    const res = await request(app)
+      .post("/api/v1/footprint/diff")
+      .send({
+        before: { readOnly: [xdr1, xdr2], readWrite: [] },
+        after: { readOnly: [xdr1], readWrite: [] },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.added.readOnly).toEqual([]);
+    expect(res.body.data.removed.readOnly).toContain(xdr2);
+    expect(res.body.data.unchanged.readOnly).toContain(xdr1);
+  });
+
+  it("handles empty footprints", async () => {
+    const res = await request(app)
+      .post("/api/v1/footprint/diff")
+      .send({
+        before: { readOnly: [], readWrite: [] },
+        after: { readOnly: [], readWrite: [] },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.added.readOnly).toEqual([]);
+    expect(res.body.data.removed.readOnly).toEqual([]);
+    expect(res.body.data.unchanged.readOnly).toEqual([]);
+  });
+
+  it("handles readWrite footprint entries", async () => {
+    const xdr1 = "BBBB1";
+    const xdr2 = "BBBB2";
+
+    const res = await request(app)
+      .post("/api/v1/footprint/diff")
+      .send({
+        before: { readOnly: [], readWrite: [xdr1] },
+        after: { readOnly: [], readWrite: [xdr1, xdr2] },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.added.readWrite).toContain(xdr2);
+    expect(res.body.data.unchanged.readWrite).toContain(xdr1);
   });
 });

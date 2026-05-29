@@ -56,7 +56,11 @@ describe("POST /api/v1/simulate", () => {
       .send({ network: "testnet" });
 
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({ error: "Missing required field: xdr" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "Missing required field: xdr",
+      code: "MISSING_XDR",
+    });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
 
@@ -66,7 +70,11 @@ describe("POST /api/v1/simulate", () => {
       .send({ xdr: "", network: "testnet" });
 
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({ error: "Missing required field: xdr" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "Missing required field: xdr",
+      code: "MISSING_XDR",
+    });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
 
@@ -77,7 +85,9 @@ describe("POST /api/v1/simulate", () => {
 
     expect(res.status).toBe(400);
     expect(res.body).toMatchObject({
+      success: false,
       error: "Invalid network. Use 'testnet', 'mainnet', or 'futurenet'",
+      code: "INVALID_NETWORK",
     });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
@@ -173,6 +183,7 @@ describe("POST /api/v1/simulate", () => {
     expect(res.body).toMatchObject({
       success: false,
       error: "Transaction simulation failed: insufficient balance",
+      code: "RPC_SIMULATION_ERROR",
     });
   });
 
@@ -186,7 +197,11 @@ describe("POST /api/v1/simulate", () => {
       .send({ xdr: VALID_XDR, network: "testnet" });
 
     expect(res.status).toBe(500);
-    expect(res.body).toMatchObject({ error: "RPC connection refused" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "RPC connection refused",
+      code: "INTERNAL_SERVER_ERROR",
+    });
   });
 
   it("returns 500 with generic message when a non-Error is thrown", async () => {
@@ -197,7 +212,11 @@ describe("POST /api/v1/simulate", () => {
       .send({ xdr: VALID_XDR, network: "testnet" });
 
     expect(res.status).toBe(500);
-    expect(res.body).toMatchObject({ error: "Unexpected error" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "Unexpected error",
+      code: "UNEXPECTED_ERROR",
+    });
   });
 
   it("records XDR byte length via metrics.recordXdrBytes", async () => {

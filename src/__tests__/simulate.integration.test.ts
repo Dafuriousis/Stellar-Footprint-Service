@@ -188,3 +188,37 @@ describe("GET /api/v1/health", () => {
     expect(res.body.status).toBe("ok");
   });
 });
+
+describe("X-Cache header integration", () => {
+  it("returns X-Cache: HIT on second identical request when cache is populated", async () => {
+    const xdr = VALID_XDR;
+
+    mockSimulate.mockResolvedValueOnce({
+      success: true,
+      footprint: { readOnly: ["entry1"], readWrite: [] },
+      cost: { cpuInsns: "1000", memBytes: "500" },
+      cacheHit: false,
+    } as never);
+
+    const res1 = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr, network: "testnet" });
+
+    expect(res1.status).toBe(200);
+    expect(res1.headers["x-cache"]).toBe("MISS");
+
+    mockSimulate.mockResolvedValueOnce({
+      success: true,
+      footprint: { readOnly: ["entry1"], readWrite: [] },
+      cost: { cpuInsns: "1000", memBytes: "500" },
+      cacheHit: true,
+    } as never);
+
+    const res2 = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr, network: "testnet" });
+
+    expect(res2.status).toBe(200);
+    expect(res2.headers["x-cache"]).toBe("HIT");
+  });
+});

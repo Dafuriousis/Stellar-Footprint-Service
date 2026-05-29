@@ -85,6 +85,17 @@ Thank you for your interest in contributing! This guide covers everything you ne
 | `pnpm run format` | Format code with Prettier |
 | `pnpm run format:check` | Check formatting without writing |
 | `pnpm test` | Run test suite |
+| `pnpm test --updateSnapshot` | Refresh Jest snapshots after intentional response shape changes |
+
+### Updating Jest snapshots
+
+Snapshot coverage in this repository is maintained through Jest snapshots. When an endpoint response shape intentionally changes, refresh the snapshots with:
+
+```bash
+pnpm test --updateSnapshot
+```
+
+This updates inline snapshots and generated snapshot files in place. Review the updated snapshot blocks before committing.
 
 ---
 

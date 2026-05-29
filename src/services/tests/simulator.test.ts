@@ -125,6 +125,7 @@ describe("simulateTransaction", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("contract panic");
+    expect(result.code).toBe("RPC_SIMULATION_ERROR");
     expect(result.raw).toBeDefined();
   });
 
@@ -136,6 +137,7 @@ describe("simulateTransaction", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/restoration/i);
+    expect(result.code).toBe("SIMULATION_RESTORE_REQUIRED");
   });
 
   it("returns failure when transactionData is missing", async () => {
@@ -148,6 +150,7 @@ describe("simulateTransaction", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/transactionData is missing/i);
+    expect(result.code).toBe("SIMULATION_DATA_MISSING");
   });
 
   it("propagates SDK throw as unhandled rejection", async () => {

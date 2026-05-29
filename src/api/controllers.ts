@@ -22,8 +22,11 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   BATCH_MAX_SIZE,
+  ErrorCode,
+  getErrorCodeByMessage,
 } from "../constants";
 import { ResponseEnvelope } from "../types";
+import { validateXdrInput } from "../utils/validateXdrInput";
 
 export function supportedNetworks(_req: Request, res: Response): void {
   const networks: string[] = [];
@@ -121,6 +124,8 @@ export async function simulate(
     return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
+  const xdrValue = xdr as string;
+
   if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
@@ -145,12 +150,26 @@ export async function simulate(
     metrics.recordSimulation(net, result.success);
     metrics.recordSimulationDuration(net, duration);
 
+    const resultWithCode = result.success
+      ? result
+      : {
+          ...result,
+          code:
+            result.code ??
+            getErrorCodeByMessage(
+              result.error ?? ERROR_MESSAGES.UNEXPECTED_ERROR,
+              HTTP_STATUS.UNPROCESSABLE_ENTITY,
+            ),
+        };
+
     res.setHeader("X-Cache", result.cacheHit ? "HIT" : "MISS");
     res
       .status(
-        result.success ? HTTP_STATUS.OK : HTTP_STATUS.UNPROCESSABLE_ENTITY,
+        resultWithCode.success
+          ? HTTP_STATUS.OK
+          : HTTP_STATUS.UNPROCESSABLE_ENTITY,
       )
-      .json(result);
+      .json(resultWithCode);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -208,9 +227,11 @@ export async function simulateBatch(
   try {
     const tasks = transactions.map(({ xdr }, index) => () => {
       if (!xdr) return Promise.reject(new Error(ERROR_MESSAGES.MISSING_XDR));
-      return simulateTransaction(xdr, net, res.locals.abortSignal).then(
-        (result) => ({ index, ...result }),
-      );
+      return simulateTransaction(
+        xdr as string,
+        net,
+        res.locals.abortSignal,
+      ).then((result) => ({ index, ...result }));
     });
 
     const settled: PromiseSettledResult<{
@@ -225,15 +246,28 @@ export async function simulateBatch(
 
     const results = settled.map((outcome, index) => {
       if (outcome.status === "fulfilled") {
-        metrics.recordSimulation(net, outcome.value.success);
-        return outcome.value;
+        const value = outcome.value as {
+          index: number;
+          success: boolean;
+          [key: string]: unknown;
+        };
+        metrics.recordSimulation(net, value.success);
+        return value;
       } else {
         metrics.recordSimulation(net, false);
         const message =
           outcome.reason instanceof Error
             ? outcome.reason.message
             : ERROR_MESSAGES.UNEXPECTED_ERROR;
-        return { index, success: false, error: message };
+        return {
+          index,
+          success: false,
+          error: message,
+          code: getErrorCodeByMessage(
+            message,
+            HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          ),
+        };
       }
     });
 
@@ -514,7 +548,11 @@ export function openApiSpec(req: Request, res: Response): void {
   const YAML = require("yaml") as { parse: (s: string) => unknown };
   const specPath = path.join(__dirname, "..", "..", "openapi.yaml");
   if (!fs.existsSync(specPath)) {
-    res.status(404).json({ error: "OpenAPI spec not found" });
+    res.status(404).json({
+      success: false,
+      error: "OpenAPI spec not found",
+      code: ErrorCode.OPENAPI_SPEC_NOT_FOUND,
+    });
     return;
   }
   res.json(YAML.parse(fs.readFileSync(specPath, "utf8")));

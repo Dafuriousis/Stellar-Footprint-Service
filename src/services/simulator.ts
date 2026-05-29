@@ -10,7 +10,7 @@ import {
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 // import { calculateResourceFee } from "./feeEstimator"; // unused
-import { CACHE_TTL } from "../constants";
+import { CACHE_TTL, ErrorCode } from "../constants";
 import metrics from "../middleware/metrics";
 import {
   FootprintStats,
@@ -285,6 +285,7 @@ export interface SimulateResult {
   };
   resourceFee?: string;
   error?: string;
+  code?: ErrorCode;
   contractId?: string;
   raw?: StellarSdk.rpc.Api.SimulateTransactionResponse;
   requiredSigners?: string[];
@@ -342,7 +343,6 @@ async function _processSimulationResult(
 
   return {
     success: true,
-    simulatedAt: new Date().toISOString(),
     footprint: {
       readOnly: optimizationResult.readOnly,
       readWrite: optimizationResult.readWrite,
@@ -422,6 +422,7 @@ export async function simulateTransaction(
       success: false,
       error:
         "Transaction must contain a Soroban operation (invokeHostFunction).",
+      code: ErrorCode.TRANSACTION_MISSING_SOROBAN_OPERATION,
     };
   }
 
@@ -429,8 +430,13 @@ export async function simulateTransaction(
     signal?: AbortSignal;
     includeEvents?: boolean;
     ledger?: number;
+    cpuInstructions: number;
   }
-  const simOptions: SimulateOptions = { signal, includeEvents: true };
+  const simOptions: SimulateOptions = {
+    signal,
+    includeEvents: true,
+    cpuInstructions: 0,
+  };
   if (ledgerSequence !== undefined) {
     simOptions.ledger = ledgerSequence;
   }
@@ -457,6 +463,7 @@ export async function simulateTransaction(
       success: false,
       type: "simulation_error" as const,
       error: sanitizeRpcError(response.error),
+      code: ErrorCode.RPC_SIMULATION_ERROR,
       raw: response,
     };
   }
@@ -466,6 +473,7 @@ export async function simulateTransaction(
       success: false,
       type: "restoration_required" as const,
       error: "Transaction requires ledger entry restoration before simulation.",
+      code: ErrorCode.SIMULATION_RESTORE_REQUIRED,
       raw: response,
     };
   }
@@ -479,6 +487,7 @@ export async function simulateTransaction(
       success: false,
       error:
         "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+      code: ErrorCode.SIMULATION_DATA_MISSING,
       raw: response,
     };
   }
@@ -499,6 +508,7 @@ export async function simulateTransaction(
         success: false,
         error:
           "Simulation succeeded but transactionData is missing; cannot extract footprint.",
+        code: ErrorCode.SIMULATION_DATA_MISSING,
         raw: response,
       };
     }
@@ -530,14 +540,7 @@ export async function simulateTransaction(
       threshold: processed.threshold,
       raw: response,
       upgradedFromV0: upgradedFromV0 || undefined,
-      diagnosticEvents:
-        response.events
-          ?.filter(
-            (e) =>
-              (e as unknown as { type?: () => { name?: string } }).type?.()
-                ?.name === "diagnostic",
-          )
-          .map((e) => e.toXDR("base64")) || [],
+      diagnosticEvents,
     };
   } else {
     // Multi operation — call helper per result and merge
@@ -559,6 +562,7 @@ export async function simulateTransaction(
           success: false,
           error:
             "Simulation succeeded but transactionData is missing for one operation; cannot extract footprint.",
+          code: ErrorCode.SIMULATION_DATA_MISSING,
           raw: response,
         };
       }
@@ -646,6 +650,12 @@ export async function simulateTransaction(
     );
     const dedupReadWrite = allReadWrite.filter(
       (item, index, arr) => arr.findIndex((i) => i.xdr === item.xdr) === index,
+    );
+    const dedupRawReadOnly = allRawReadOnly.filter(
+      (item, index, arr) => arr.indexOf(item) === index,
+    );
+    const dedupRawReadWrite = allRawReadWrite.filter(
+      (item, index, arr) => arr.indexOf(item) === index,
     );
 
     return {

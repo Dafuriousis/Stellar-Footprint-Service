@@ -1,7 +1,10 @@
+import { ErrorCode } from "./constants";
+
 export interface ResponseEnvelope<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
+  code?: ErrorCode;
 }
 
 export interface FootprintStats {

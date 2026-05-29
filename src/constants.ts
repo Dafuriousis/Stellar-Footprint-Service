@@ -30,7 +30,11 @@ export const SIMULATION_CACHE_TTL_MS =
 export const SIMULATION_CACHE_MAX_SIZE =
   parseInt(process.env.CACHE_MAX_SIZE ?? "500", 10) || 500;
 
-export const BATCH_MAX_SIZE = 10;
+const _batchMaxSizeEnv = parseInt(process.env.BATCH_MAX_SIZE ?? "10", 10);
+export const BATCH_MAX_SIZE =
+  Number.isFinite(_batchMaxSizeEnv) && _batchMaxSizeEnv > 0
+    ? _batchMaxSizeEnv
+    : 10;
 
 export enum ErrorCode {
   MISSING_XDR = "MISSING_XDR",
@@ -154,6 +158,7 @@ export const HTTP_STATUS = {
   OK: 200,
   ACCEPTED: 202,
   BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
   UNPROCESSABLE_ENTITY: 422,
   UNSUPPORTED_MEDIA_TYPE: 415,
   FORBIDDEN: 403,
@@ -161,5 +166,6 @@ export const HTTP_STATUS = {
   NOT_FOUND: 404,
   GATEWAY_TIMEOUT: 504,
   INTERNAL_SERVER_ERROR: 500,
+  NOT_IMPLEMENTED: 501,
   SERVICE_UNAVAILABLE: 503,
 } as const;

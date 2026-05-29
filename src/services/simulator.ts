@@ -335,12 +335,13 @@ async function _processSimulationResult(
 
   const allXdrEntries = [...rawFootprint.readOnly, ...rawFootprint.readWrite];
   const contracts = extractContracts(allXdrEntries);
-  const ttl = await fetchTtlInfo(server, allXdrEntries, network);
 
-  const contractType =
+  const [ttl, contractType] = await Promise.all([
+    fetchTtlInfo(server, allXdrEntries, network),
     contracts.length > 0
-      ? await detectTokenContract(contracts[0], server)
-      : "unknown";
+      ? detectTokenContract(contracts[0], server)
+      : Promise.resolve<ContractType>("unknown"),
+  ]);
 
   // SorobanTransactionData.build() returns xdr.SorobanTransactionData which
   // exposes auth() at the XDR level; use unknown cast to avoid any.
@@ -550,6 +551,7 @@ export async function simulateTransaction(
       ttl: processed.ttl,
       optimized: processed.optimized,
       rawFootprint: processed.rawFootprint,
+      footprintStats: processed.footprintStats,
       cost: {
         cpuInsns: responseCost?.cpuInsns ?? "0",
         memBytes: responseCost?.memBytes ?? "0",
@@ -634,6 +636,7 @@ export async function simulateTransaction(
         ttl,
         optimized: processed.optimized,
         rawFootprint: processed.rawFootprint,
+        footprintStats: processed.footprintStats,
         cost: {
           cpuInsns: opCpuInsns,
           memBytes: opMemBytes,
@@ -696,6 +699,7 @@ export async function simulateTransaction(
         readOnly: allRawReadOnly,
         readWrite: allRawReadWrite,
       },
+      footprintStats: calculateFootprintStats(allRawReadOnly, allRawReadWrite),
       cost: {
         cpuInsns: totalCpuInsns.toString(),
         memBytes: totalMemBytes.toString(),

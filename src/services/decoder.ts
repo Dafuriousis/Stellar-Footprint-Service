@@ -1,6 +1,6 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
 
-export type XdrType = "transaction" | "operation" | "ledger_key";
+export type XdrType = "transaction" | "operation" | "ledger_key" | "auth_entry";
 
 export interface DecodeResult {
   success: boolean;
@@ -130,11 +130,20 @@ export function decodeXdr(xdr: string, type: XdrType): DecodeResult {
         break;
       }
 
+      case "auth_entry": {
+        const entry = StellarSdk.xdr.SorobanAuthorizationEntry.fromXDR(
+          xdr,
+          "base64",
+        );
+        decoded = normalizeXdrValue(entry);
+        break;
+      }
+
       default:
         return {
           success: false,
           type,
-          error: `Unsupported type. Supported types: transaction, operation, ledger_key`,
+          error: `Unsupported type. Supported types: transaction, operation, ledger_key, auth_entry`,
         };
     }
 

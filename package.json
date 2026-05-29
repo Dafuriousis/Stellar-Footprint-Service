@@ -48,7 +48,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.3",
+    "@commitlint/cli": "^21.0.1",
     "@commitlint/config-conventional": "^19.0.0",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.17",
@@ -67,7 +67,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "husky": "^9.1.7",
     "jest": "^30.4.0",
-    "lint-staged": "16.4.0",
+    "lint-staged": "17.0.5",
     "prettier": "^3.8.3",
     "solhint": "^6.2.1",
     "supertest": "^7.0.0",

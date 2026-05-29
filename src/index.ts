@@ -11,10 +11,12 @@ import express from "express";
 import helmet from "helmet";
 
 import routes from "./api/routes";
+import { apiKeyAuth } from "./middleware/apiKeyAuth";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
+import { httpCacheMiddleware } from "./middleware/httpCache";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { requestLogger } from "./middleware/requestLogger";
@@ -86,6 +88,7 @@ app.use(metricsMiddleware);
 app.use(timeoutMiddleware);
 app.use(bruteForceMiddleware);
 app.use(contentTypeMiddleware);
+app.use(httpCacheMiddleware);
 
 // Swagger UI — development only
 if (process.env.NODE_ENV !== "production") {
@@ -118,7 +121,7 @@ app.get("/metrics", async (_req, res) => {
   }
 });
 
-app.use("/api/v1", routes);
+app.use("/api/v1", apiKeyAuth, routes);
 
 app.use("/api/*path", (req, res) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

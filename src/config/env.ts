@@ -34,6 +34,7 @@ export const EnvSchema = z.object({
   BATCH_CONCURRENCY: z.coerce.number().int().positive().default(5),
   REDIS_HOST: z.string().default("redis"),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
+  BRUTE_FORCE_REDIS_URL: z.string().default(""),
   GRAFANA_USER: z.string().default("admin"),
   GRAFANA_PASSWORD: z.string().default("admin"),
 });

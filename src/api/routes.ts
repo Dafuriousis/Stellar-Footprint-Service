@@ -17,7 +17,11 @@ import {
   openApiSpec,
   supportedNetworks,
 } from "./controllers";
-import { simulateRateLimiter } from "../middleware/rateLimiter";
+import {
+  simulateRateLimiter,
+  decodeRateLimiter,
+  feeRateLimiter,
+} from "../middleware/rateLimiter";
 
 const router = Router();
 
@@ -58,13 +62,13 @@ router.post("/footprint/diff", footprintDiffController);
 router.post("/validate", validate);
 
 // GET /decode — accepts ?xdr=&type= and returns human-readable JSON of the XDR
-router.get("/decode", decode);
+router.get("/decode", decodeRateLimiter, decode);
 
 // POST /restore — returns a restoration transaction if the transaction requires it
 router.post("/restore", restore);
 
 // POST /estimate-fee — accepts { cpuInsns, memBytes, network } and returns fee breakdown
-router.post("/estimate-fee", estimateFeeController);
+router.post("/estimate-fee", feeRateLimiter, estimateFeeController);
 
 // DELETE /cache — flush all cache entries (Redis or in-memory)
 router.delete("/cache", invalidateCache);

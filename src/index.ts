@@ -11,6 +11,7 @@ import express from "express";
 import helmet from "helmet";
 
 import routes from "./api/routes";
+import { apiKeyAuth } from "./middleware/apiKeyAuth";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
@@ -120,7 +121,7 @@ app.get("/metrics", async (_req, res) => {
   }
 });
 
-app.use("/api/v1", routes);
+app.use("/api/v1", apiKeyAuth, routes);
 
 app.use("/api/*path", (req, res) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

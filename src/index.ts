@@ -15,6 +15,7 @@ import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
+import { httpCacheMiddleware } from "./middleware/httpCache";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { requestLogger } from "./middleware/requestLogger";
@@ -86,6 +87,7 @@ app.use(metricsMiddleware);
 app.use(timeoutMiddleware);
 app.use(bruteForceMiddleware);
 app.use(contentTypeMiddleware);
+app.use(httpCacheMiddleware);
 
 // Swagger UI — development only
 if (process.env.NODE_ENV !== "production") {

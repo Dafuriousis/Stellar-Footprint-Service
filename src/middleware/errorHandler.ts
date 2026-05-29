@@ -36,7 +36,8 @@ export function errorHandler(
     res.status(503).json({
       success: false,
       error: t.CIRCUIT_OPEN,
-    } satisfies ResponseEnvelope);
+      ...(res.locals.requestId ? { requestId: res.locals.requestId as string } : {}),
+    } satisfies ResponseEnvelope & { requestId?: string });
     return;
   }
 
@@ -47,9 +48,10 @@ export function errorHandler(
   const key = enValueToKey[rawMessage];
   const message = key ? (t[key] as string) : rawMessage;
 
-  const response: ResponseEnvelope = {
+  const response: ResponseEnvelope & { requestId?: string } = {
     success: false,
     error: message,
+    ...(res.locals.requestId ? { requestId: res.locals.requestId as string } : {}),
   };
 
   res.status(statusCode).json(response);

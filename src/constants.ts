@@ -51,6 +51,7 @@ export enum ErrorCode {
   INVALID_XDR_TYPE = "INVALID_XDR_TYPE",
   MISSING_REQUIRED_FIELDS = "MISSING_REQUIRED_FIELDS",
   INVALID_QUERY_PARAMETERS = "INVALID_QUERY_PARAMETERS",
+  INVALID_LEDGER_SEQUENCE = "INVALID_LEDGER_SEQUENCE",
   BATCH_SIZE_EXCEEDED = "BATCH_SIZE_EXCEEDED",
   TRANSACTION_MISSING_SOROBAN_OPERATION = "TRANSACTION_MISSING_SOROBAN_OPERATION",
   RPC_SIMULATION_ERROR = "RPC_SIMULATION_ERROR",
@@ -68,6 +69,7 @@ export const ERROR_MESSAGES = {
   TRANSACTION_DATA_MISSING:
     "Simulation succeeded but transactionData is missing; cannot extract footprint.",
   UNEXPECTED_ERROR: "Unexpected error",
+  INVALID_LEDGER_SEQUENCE: "ledgerSequence must be a positive integer",
 } as const;
 
 export function getErrorCodeByMessage(
@@ -92,6 +94,8 @@ export function getErrorCodeByMessage(
     case "Missing required query parameters: cpuInsns and memBytes":
     case "Missing required fields: cpuInsns and memBytes":
       return ErrorCode.MISSING_REQUIRED_FIELDS;
+    case ERROR_MESSAGES.INVALID_LEDGER_SEQUENCE:
+      return ErrorCode.INVALID_LEDGER_SEQUENCE;
     case "cpuInsns and memBytes must be non-negative integer strings":
       return ErrorCode.INVALID_QUERY_PARAMETERS;
     case "Transaction must contain a Soroban operation (invokeHostFunction).":

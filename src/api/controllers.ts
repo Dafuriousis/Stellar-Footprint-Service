@@ -117,7 +117,11 @@ export async function simulate(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const { xdr, network } = req.body as { xdr?: string; network?: Network };
+  const { xdr, network, ledgerSequence } = req.body as {
+    xdr?: string;
+    network?: Network;
+    ledgerSequence?: number;
+  };
 
   const xdrCheck = validateXdrInput(xdr);
   if (!xdrCheck.valid) {
@@ -130,6 +134,17 @@ export async function simulate(
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
+  }
+
+  if (ledgerSequence !== undefined) {
+    if (!Number.isInteger(ledgerSequence) || ledgerSequence <= 0) {
+      return next(
+        new AppError(
+          ERROR_MESSAGES.INVALID_LEDGER_SEQUENCE,
+          HTTP_STATUS.BAD_REQUEST,
+        ),
+      );
+    }
   }
 
   const net: Network = (network as Network) || DEFAULT_NETWORK;
@@ -145,7 +160,12 @@ export async function simulate(
   }
 
   try {
-    const result = await simulateTransaction(xdr!, net, res.locals.abortSignal);
+    const result = await simulateTransaction(
+      xdr!,
+      net,
+      res.locals.abortSignal,
+      ledgerSequence,
+    );
     const duration = (Date.now() - start) / 1000;
     metrics.recordSimulation(net, result.success);
     metrics.recordSimulationDuration(net, duration);

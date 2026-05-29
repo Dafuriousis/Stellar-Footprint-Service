@@ -261,6 +261,7 @@ function _extractEvents(
  */
 export interface SimulateResult {
   success: boolean;
+  simulatedAt?: string;
   upgradedFromV0?: boolean;
   footprint?: {
     readOnly: FootprintEntry[];
@@ -445,7 +446,10 @@ export async function simulateTransaction(
     response = await withRetry(
       () =>
         rpcCircuitBreaker.call(() =>
-          server.simulateTransaction(tx as StellarSdk.Transaction, simOptions),
+          server.simulateTransaction(
+            tx as StellarSdk.Transaction,
+            simOptions as Parameters<typeof server.simulateTransaction>[1],
+          ),
         ),
       `simulateTransaction:${network}`,
     );
@@ -518,13 +522,16 @@ export async function simulateTransaction(
 
     return {
       success: true,
-      footprint: processed.footprint,
+      footprint: {
+        readOnly: processed.footprint?.readOnly ?? [],
+        readWrite: processed.footprint?.readWrite ?? [],
+      },
       contracts: processed.contracts,
       contractType: processed.contractType,
       ttl: processed.ttl,
       optimized: processed.optimized,
       rawFootprint: processed.rawFootprint,
-      cost: processed.cost ?? {
+      cost: {
         cpuInsns: responseCost?.cpuInsns ?? "0",
         memBytes: responseCost?.memBytes ?? "0",
       },
@@ -579,9 +586,10 @@ export async function simulateTransaction(
       const auth = builtOpData?.auth?.() ?? [];
       const { requiredSigners, threshold } = extractRequiredSigners(auth);
 
+      const opContracts = processed.contracts ?? [];
       const opContractType =
-        (processed.contracts?.length ?? 0) > 0
-          ? await detectTokenContract(processed.contracts![0], server)
+        opContracts.length > 0
+          ? await detectTokenContract(opContracts[0], server)
           : "unknown";
 
       if (contractType === "unknown") contractType = opContractType;
@@ -595,8 +603,11 @@ export async function simulateTransaction(
 
       const opResult: SimulateResult = {
         success: true,
-        footprint: processed.footprint,
-        contracts: processed.contracts,
+        footprint: {
+          readOnly: processed.footprint?.readOnly ?? [],
+          readWrite: processed.footprint?.readWrite ?? [],
+        },
+        contracts: opContracts,
         contractType: opContractType,
         ttl,
         optimized: processed.optimized,
@@ -655,8 +666,8 @@ export async function simulateTransaction(
       ttl: allTtl,
       optimized,
       rawFootprint: {
-        readOnly: dedupRawReadOnly,
-        readWrite: dedupRawReadWrite,
+        readOnly: allRawReadOnly,
+        readWrite: allRawReadWrite,
       },
       cost: {
         cpuInsns: totalCpuInsns.toString(),

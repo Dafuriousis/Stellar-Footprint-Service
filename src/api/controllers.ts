@@ -11,6 +11,7 @@ import { buildRestoreTransaction } from "@services/restorer";
 import { simulateTransaction } from "@services/simulator";
 import { AppError } from "@utils/AppError";
 import { rpcCircuitBreaker } from "@utils/circuitBreaker";
+import { validateXdrInput } from "@utils/validateXdrInput";
 import { Request, Response, NextFunction } from "express";
 
 import { version } from "../../package.json";
@@ -138,17 +139,13 @@ export async function simulate(
 
   // Record XDR payload size (decoded byte length)
   try {
-    metrics.recordXdrBytes(Buffer.from(xdrValue, "base64").length);
+    metrics.recordXdrBytes(Buffer.from(xdr!, "base64").length);
   } catch {
     // ignore — never block the request for a metrics failure
   }
 
   try {
-    const result = await simulateTransaction(
-      xdrValue,
-      net,
-      res.locals.abortSignal,
-    );
+    const result = await simulateTransaction(xdr!, net, res.locals.abortSignal);
     const duration = (Date.now() - start) / 1000;
     metrics.recordSimulation(net, result.success);
     metrics.recordSimulationDuration(net, duration);
@@ -240,6 +237,7 @@ export async function simulateBatch(
     const settled: PromiseSettledResult<{
       index: number;
       success: boolean;
+      cacheHit?: boolean;
     }>[] = [];
     for (let i = 0; i < tasks.length; i += concurrency) {
       const chunk = tasks.slice(i, i + concurrency).map((t) => t());
@@ -378,7 +376,7 @@ export async function restore(
     network === NETWORKS.MAINNET ? NETWORKS.MAINNET : DEFAULT_NETWORK;
 
   try {
-    const result = await buildRestoreTransaction(xdr as string, net);
+    const result = await buildRestoreTransaction(xdr!, net);
     const response: ResponseEnvelope = { success: true, data: result };
     res.status(HTTP_STATUS.OK).json(response);
   } catch (err: unknown) {
@@ -479,7 +477,7 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
     );
   }
 
-  const result = decodeXdr(xdr as string, type as XdrType);
+  const result = decodeXdr(xdr!, type as XdrType);
 
   if (!result.success) {
     return next(

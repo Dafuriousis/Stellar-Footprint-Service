@@ -30,6 +30,9 @@ router.get("/health/live", liveness);
 // GET /health/ready — readiness check (Redis and RPC circuit breaker are healthy)
 router.get("/health/ready", readiness);
 
+// GET /simulate/supported-networks — returns list of networks with configured RPC URLs
+router.get("/simulate/supported-networks", supportedNetworks);
+
 // POST /simulate — accepts { xdr, network } and returns footprint + cost
 router.post("/simulate", simulateRateLimiter, simulate);
 

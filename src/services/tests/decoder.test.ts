@@ -12,25 +12,23 @@ import { decodeXdr, XdrType } from "../decoder";
 // ── Test Fixtures ────────────────────────────────────────────────────────────
 
 /**
- * A valid Operation XDR (CreateAccount operation).
- * Base64-encoded XDR for a CreateAccount operation.
+ * A valid Operation XDR (InvokeHostFunction operation extracted from SOROBAN_INVOKE_XDR).
  */
 const VALID_OPERATION_XDR =
-  "AAAAAAAAAAAAAAAAAIBuLLqvxKKYKqJqLqJqLqJqLqJqLqJqLqJqLqJqLqJqAAAAAlQL5AA=";
+  "AAAAAAAAABgAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABWhlbGxvAAAAAAAAAQAAAAEAAAAA";
 
 /**
- * A valid LedgerKey XDR (Account ledger key).
- * Base64-encoded XDR for an account ledger key.
+ * A valid LedgerKey XDR (Account ledger key for the source account of SOROBAN_INVOKE_XDR).
  */
 const VALID_LEDGER_KEY_XDR =
-  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  "AAAAAAAAAACnDQTKOBdaOH0ynf6k7SpkytahlUjNsWgm4WEB8rmE1Q==";
 
 /**
  * A valid LedgerKey XDR for a contract data entry.
  * This represents a more complex ledger key with nested structures.
  */
 const CONTRACT_DATA_LEDGER_KEY_XDR =
-  "AAAABgAAAAGnDQTKOBdaOH0ynf6k7SpkytahlUjNsWgm4WEB8rmE1QAAAA8AAAAHQ291bnRlcgA=";
+  "AAAABgAAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAA4AAAAFaGVsbG8AAAAAAAAB";
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
@@ -144,8 +142,13 @@ describe("decodeXdr", () => {
         SOROBAN_INVOKE_XDR,
         StellarSdk.Networks.TESTNET,
       );
-      const operations = (tx as StellarSdk.Transaction).operations;
-      const opXdr = operations[0].toXDR("base64");
+      // In SDK v15, Transaction.operations returns plain JS objects without toXDR.
+      // Use the raw XDR operations from the internal transaction structure.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawOps = (tx as any)._tx._attributes.operations as Array<{
+        toXDR: (fmt: string) => string;
+      }>;
+      const opXdr = rawOps[0].toXDR("base64");
 
       const result = decodeXdr(opXdr, "operation");
 
@@ -163,8 +166,12 @@ describe("decodeXdr", () => {
         CLASSIC_PAYMENT_XDR,
         StellarSdk.Networks.TESTNET,
       );
-      const operations = (tx as StellarSdk.Transaction).operations;
-      const opXdr = operations[0].toXDR("base64");
+      // In SDK v15, Transaction.operations returns plain JS objects without toXDR.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawOps = (tx as any)._tx._attributes.operations as Array<{
+        toXDR: (fmt: string) => string;
+      }>;
+      const opXdr = rawOps[0].toXDR("base64");
 
       const result = decodeXdr(opXdr, "operation");
 

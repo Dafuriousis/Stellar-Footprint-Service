@@ -327,4 +327,7 @@ components:
           description: Human-readable error message
         code:
           type: string
-          description: Machine-readable error code
+          description: Machine-readable error code (optional)
+        requestId:
+          type: string
+          description: Request correlation ID from X-Request-ID header

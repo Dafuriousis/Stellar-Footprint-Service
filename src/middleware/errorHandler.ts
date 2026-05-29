@@ -51,8 +51,8 @@ export function errorHandler(
     res.status(503).json({
       success: false,
       error: t.CIRCUIT_OPEN,
-      code: ErrorCode.CIRCUIT_OPEN,
-    } satisfies ResponseEnvelope);
+      ...(res.locals.requestId ? { requestId: res.locals.requestId as string } : {}),
+    } satisfies ResponseEnvelope & { requestId?: string });
     return;
   }
 
@@ -69,10 +69,10 @@ export function errorHandler(
       ? err.code
       : getErrorCodeByMessage(rawMessage, statusCode);
 
-  const response: ResponseEnvelope = {
+  const response: ResponseEnvelope & { requestId?: string } = {
     success: false,
     error: message,
-    code,
+    ...(res.locals.requestId ? { requestId: res.locals.requestId as string } : {}),
   };
 
   res.status(statusCode).json(response);

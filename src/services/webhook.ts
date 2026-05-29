@@ -8,9 +8,28 @@ export interface WebhookJob {
   status: "pending" | "delivered" | "failed";
 }
 
+export class InvalidWebhookUrlError extends Error {
+  constructor(url: string) {
+    super(`Webhook URL must use HTTPS: ${url}`);
+    this.name = "InvalidWebhookUrlError";
+  }
+}
+
+function isValidHttpsUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 const jobs = new Map<string, WebhookJob>();
 
 export function createJob(webhookUrl: string): string {
+  if (!isValidHttpsUrl(webhookUrl)) {
+    throw new InvalidWebhookUrlError(webhookUrl);
+  }
   const jobId = randomUUID();
   jobs.set(jobId, { jobId, webhookUrl, status: "pending" });
   return jobId;

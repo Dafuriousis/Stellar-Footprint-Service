@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
+import { ErrorCode } from "../../constants";
 import { AppError } from "../../utils/AppError";
 import { errorHandler } from "../errorHandler";
 
@@ -36,7 +37,10 @@ describe("errorHandler", () => {
     expect(res.status).toHaveBeenCalledWith(503);
     expect(res.set).toHaveBeenCalledWith("Retry-After", "15");
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: false }),
+      expect.objectContaining({
+        success: false,
+        code: ErrorCode.CIRCUIT_OPEN,
+      }),
     );
   });
 
@@ -60,7 +64,10 @@ describe("errorHandler", () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "Missing required field: xdr" }),
+      expect.objectContaining({
+        error: "Missing required field: xdr",
+        code: ErrorCode.MISSING_XDR,
+      }),
     );
   });
 
@@ -79,6 +86,12 @@ describe("errorHandler", () => {
     errorHandler(err, makeReq(), res, next);
 
     expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: ErrorCode.INTERNAL_SERVER_ERROR,
+        error: "Something broke",
+      }),
+    );
   });
 
   it("includes requestId in error response body when set (#340)", () => {

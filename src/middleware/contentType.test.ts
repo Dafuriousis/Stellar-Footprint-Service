@@ -34,7 +34,9 @@ describe("Content-Type middleware", () => {
 
     expect(res.status).toHaveBeenCalledWith(415);
     expect(res.json).toHaveBeenCalledWith({
+      success: false,
       error: "Content-Type must be application/json",
+      code: "CONTENT_TYPE_INVALID",
       received: "none",
     });
     expect(next).not.toHaveBeenCalled();
@@ -49,7 +51,9 @@ describe("Content-Type middleware", () => {
 
     expect(res.status).toHaveBeenCalledWith(415);
     expect(res.json).toHaveBeenCalledWith({
+      success: false,
       error: "Content-Type must be application/json",
+      code: "CONTENT_TYPE_INVALID",
       received: "text/plain",
     });
     expect(next).not.toHaveBeenCalled();

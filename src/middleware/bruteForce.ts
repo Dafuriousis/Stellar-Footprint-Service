@@ -34,6 +34,8 @@ export function recordFailure(ip: string): void {
   }
 }
 
+import { ErrorCode } from "../constants";
+
 export async function bruteForceMiddleware(
   req: Request,
   res: Response,
@@ -50,7 +52,9 @@ export async function bruteForceMiddleware(
   if (record.blockedUntil && now < record.blockedUntil) {
     const retryAfter = Math.ceil((record.blockedUntil - now) / 1000);
     res.status(429).json({
+      success: false,
       error: "Too many failed requests. Try again later.",
+      code: ErrorCode.RATE_LIMIT_EXCEEDED,
       retryAfter,
     });
     return;

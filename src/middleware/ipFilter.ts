@@ -2,6 +2,8 @@ import { isIPv4, isIPv6 } from "net";
 
 import { Request, Response, NextFunction } from "express";
 
+import { ErrorCode } from "../constants";
+
 function ipToInt(ip: string): number {
   return (
     ip
@@ -73,12 +75,20 @@ export function ipFilterMiddleware(
   const ip = req.ip || req.socket.remoteAddress || "";
 
   if (blocklist.length > 0 && matchesAny(ip, blocklist)) {
-    res.status(403).json({ error: "Forbidden" });
+    res.status(403).json({
+      success: false,
+      error: "Forbidden",
+      code: ErrorCode.FORBIDDEN,
+    });
     return;
   }
 
   if (allowlist.length > 0 && !matchesAny(ip, allowlist)) {
-    res.status(403).json({ error: "Forbidden" });
+    res.status(403).json({
+      success: false,
+      error: "Forbidden",
+      code: ErrorCode.FORBIDDEN,
+    });
     return;
   }
 

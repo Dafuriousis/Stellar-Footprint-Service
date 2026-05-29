@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
+import { ErrorCode } from "../constants";
+
 const TIMEOUT_MS = parseInt(process.env.SIMULATE_TIMEOUT_MS ?? "30000", 10);
 
 export function timeoutMiddleware(
@@ -14,7 +16,11 @@ export function timeoutMiddleware(
     controller.abort();
     if (!res.headersSent) {
       res.set("Retry-After", String(Math.ceil(TIMEOUT_MS / 1000)));
-      res.status(504).json({ error: "Request timed out" });
+      res.status(504).json({
+        success: false,
+        error: "Request timed out",
+        code: ErrorCode.REQUEST_TIMEOUT,
+      });
     }
   }, TIMEOUT_MS);
 

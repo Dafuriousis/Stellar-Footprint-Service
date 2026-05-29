@@ -80,7 +80,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
+                success: false
                 error: "Missing required field: xdr"
+                code: "MISSING_XDR"
         "422":
           description: Simulation failed (contract error or restoration required)
           content:
@@ -93,11 +95,13 @@ paths:
                   value:
                     success: false
                     error: "contract panic: assertion failed"
+                    code: "RPC_SIMULATION_ERROR"
                 restoreRequired:
                   summary: Ledger entry restoration required
                   value:
                     success: false
                     error: "Transaction requires ledger entry restoration before simulation."
+                    code: "SIMULATION_RESTORE_REQUIRED"
         "429":
           description: Rate limit exceeded
           headers:
@@ -126,7 +130,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
+                success: false
                 error: "Too Many Requests"
+                code: "RATE_LIMIT_EXCEEDED"
                 message: "Rate limit exceeded. Try again in 60 seconds."
                 retryAfter: 60
         "500":
@@ -136,7 +142,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
+                success: false
                 error: "Unexpected error"
+                code: "INTERNAL_SERVER_ERROR"
 
   /decode:
     get:
@@ -182,7 +190,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
+                success: false
                 error: "Missing required query parameter: xdr"
+                code: "BAD_REQUEST"
         "422":
           description: XDR could not be decoded
           content:
@@ -190,7 +200,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
+                success: false
                 error: "Failed to decode XDR: invalid base64"
+                code: "INVALID_XDR"
         "500":
           description: Internal server error
           content:
@@ -279,7 +291,7 @@ components:
 
     SimulateFailureResponse:
       type: object
-      required: [success, error]
+      required: [success, error, code]
       properties:
         success:
           type: boolean
@@ -287,6 +299,9 @@ components:
         error:
           type: string
           description: Human-readable error message from the simulation
+        code:
+          type: string
+          description: Machine-readable error code
 
     DecodeResponse:
       type: object
@@ -302,8 +317,11 @@ components:
 
     ErrorResponse:
       type: object
-      required: [error]
+      required: [success, error, code]
       properties:
+        success:
+          type: boolean
+          enum: [false]
         error:
           type: string
           description: Human-readable error message

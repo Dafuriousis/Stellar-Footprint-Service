@@ -1,5 +1,7 @@
+import { jest } from "@jest/globals";
 import * as StellarSdk from "@stellar/stellar-sdk";
 
+import * as cacheModule from "../../services/cache";
 import { getRpcServer } from "../../config/stellar";
 import {
   SOROBAN_INVOKE_XDR,
@@ -86,6 +88,30 @@ const mockServer = {
   getLedgerEntries: mockGetLedgerEntries,
 };
 
+let mockCacheStore = new Map<string, unknown>();
+const mockCache = {
+  backend: "memory" as const,
+  get: jest.fn().mockImplementation(async (key: string) => mockCacheStore.get(key) ?? null),
+  set: jest.fn().mockImplementation(async (key: string, value: unknown) => { mockCacheStore.set(key, value); }),
+  delete: jest.fn().mockImplementation(async (key: string) => { mockCacheStore.delete(key); }),
+  flush: jest.fn().mockImplementation(async () => { mockCacheStore.clear(); }),
+};
+
+jest.mock("../../services/cache", () => ({
+  buildCacheKey: jest.fn((data: Record<string, unknown>) => {
+    const { createHash } = require("crypto");
+    const canonical = JSON.stringify(
+      Object.keys(data).sort().reduce<Record<string, unknown>>((acc, k) => {
+        acc[k] = data[k];
+        return acc;
+      }, {}),
+    );
+    return createHash("sha256").update(canonical).digest("hex");
+  }),
+  getCache: jest.fn(() => mockCache),
+  setCache: jest.fn(),
+}));
+
 function makeSuccessResponse() {
   return {
     transactionData: mockTransactionData,
@@ -98,6 +124,7 @@ function makeSuccessResponse() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockCacheStore.clear();
   (getRpcServer as jest.Mock).mockReturnValue(mockServer);
   isSimulationError.mockReturnValue(false);
   isSimulationRestore.mockReturnValue(false);
@@ -280,5 +307,57 @@ describe("simulateTransaction", () => {
     const result = await simulateTransaction(DUMMY_XDR, "testnet");
 
     expect(result.warnings).toEqual([]);
+  });
+
+  // ── Cache hit and miss tests ────────────────────────────────────────────────
+
+  it("returns cached result with cacheHit true on cache hit", async () => {
+    const cachedResult = {
+      success: true,
+      footprint: { readOnly: [], readWrite: [] },
+      cost: { cpuInsns: "5000", memBytes: "3000" },
+    };
+
+    jest.spyOn(cacheModule, "buildCacheKey").mockReturnValue("cached-key");
+
+    mockCacheStore.set("cached-key", cachedResult);
+
+    const result = await simulateTransaction(DUMMY_XDR, "testnet");
+
+    expect(result.cacheHit).toBe(true);
+    expect(result.cost?.cpuInsns).toBe("5000");
+  });
+
+  it("stores successful results in cache on cache miss", async () => {
+    mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
+
+    const result = await simulateTransaction(DUMMY_XDR, "testnet");
+
+    expect(result.success).toBe(true);
+    expect(result.cacheHit).toBeUndefined();
+    expect(mockCache.set).toHaveBeenCalled();
+  });
+
+  it("does not cache failures", async () => {
+    const errorResponse = { error: "contract panic", raw: {} };
+    isSimulationError.mockReturnValue(true);
+    mockSimulateTransaction.mockResolvedValue(errorResponse);
+
+    await simulateTransaction(DUMMY_XDR, "testnet");
+
+    expect(mockCache.set).not.toHaveBeenCalled();
+  });
+
+  it("uses cache key based on xdr, network, and ledgerSequence", async () => {
+    mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
+
+    await simulateTransaction(DUMMY_XDR, "testnet", undefined, 999);
+    await simulateTransaction(DUMMY_XDR, "testnet");
+
+    const calls = (cacheModule.buildCacheKey as jest.Mock).mock.calls;
+
+    expect(calls.length).toBe(2);
+    expect(calls[0][0]).toEqual({ xdr: DUMMY_XDR, network: "testnet", ledgerSequence: 999 });
+    expect(calls[1][0]).toEqual({ xdr: DUMMY_XDR, network: "testnet" });
   });
 });

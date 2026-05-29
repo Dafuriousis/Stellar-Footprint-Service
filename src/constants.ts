@@ -24,6 +24,9 @@ export const CACHE_TTL = {
   SIMULATION_MS: 60000,
 } as const;
 
+export const CACHE_TTL_MS =
+  parseInt(process.env.CACHE_TTL_MS ?? "60000", 10) || 60000;
+
 /** Simulation result LRU cache — configurable via env vars */
 export const SIMULATION_CACHE_TTL_MS =
   (parseInt(process.env.CACHE_TTL_SECONDS ?? "60", 10) || 60) * 1000;

@@ -10,8 +10,9 @@ import {
 } from "./footprintParser";
 import { optimizeFootprint } from "./optimizer";
 // import { calculateResourceFee } from "./feeEstimator"; // unused
-import { CACHE_TTL } from "../constants";
+import { CACHE_TTL, CACHE_TTL_MS } from "../constants";
 import metrics from "../middleware/metrics";
+import { buildCacheKey, getCache } from "../services/cache";
 import {
   FootprintStats,
   AuthEntry,
@@ -371,6 +372,17 @@ export async function simulateTransaction(
   signal?: AbortSignal,
   ledgerSequence?: number,
 ): Promise<SimulateResult> {
+  const cache = getCache();
+  const cacheKey = buildCacheKey({ xdr, network, ledgerSequence });
+
+  const cached = await cache.get<SimulateResult>(cacheKey);
+  if (cached) {
+    cached.cacheHit = true;
+    metrics.recordCacheHit("simulation");
+    return cached;
+  }
+  metrics.recordCacheMiss("simulation");
+
   // getNetworkConfig and getRpcServer are called inside the try block so that
   // synchronous throws (e.g. missing RPC URL) are caught by the caller's
   // error handler rather than propagating as unhandled rejections.
@@ -491,6 +503,8 @@ export async function simulateTransaction(
       ?.filter((e) => (e as any).type?.()?.name === "diagnostic")
       .map((e) => e.toXDR("base64")) || [];
 
+  let finalResult: SimulateResult;
+
   if (results.length === 1) {
     // Single operation — delegate to shared helper
     const result = results[0];
@@ -510,7 +524,7 @@ export async function simulateTransaction(
       responseCost,
     );
 
-    return {
+    finalResult = {
       success: true,
       footprint: {
         readOnly: processed.footprint?.readOnly ?? [],
@@ -648,7 +662,7 @@ export async function simulateTransaction(
       (item, index, arr) => arr.findIndex((i) => i.xdr === item.xdr) === index,
     );
 
-    return {
+    finalResult = {
       success: true,
       footprint: { readOnly: dedupReadOnly, readWrite: dedupReadWrite },
       contracts: [...new Set(allContracts)],
@@ -669,4 +683,10 @@ export async function simulateTransaction(
       diagnosticEvents,
     };
   }
+
+  if (finalResult.success) {
+    await cache.set(cacheKey, finalResult, CACHE_TTL_MS);
+  }
+
+  return finalResult;
 }

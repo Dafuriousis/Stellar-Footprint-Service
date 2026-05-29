@@ -531,6 +531,7 @@ export async function simulateTransaction(
       ttl: processed.ttl,
       optimized: processed.optimized,
       rawFootprint: processed.rawFootprint,
+      footprintStats: processed.footprintStats,
       cost: {
         cpuInsns: responseCost?.cpuInsns ?? "0",
         memBytes: responseCost?.memBytes ?? "0",
@@ -612,6 +613,7 @@ export async function simulateTransaction(
         ttl,
         optimized: processed.optimized,
         rawFootprint: processed.rawFootprint,
+        footprintStats: processed.footprintStats,
         cost: {
           cpuInsns: opCpuInsns,
           memBytes: opMemBytes,
@@ -669,6 +671,7 @@ export async function simulateTransaction(
         readOnly: allRawReadOnly,
         readWrite: allRawReadWrite,
       },
+      footprintStats: calculateFootprintStats(allRawReadOnly, allRawReadWrite),
       cost: {
         cpuInsns: totalCpuInsns.toString(),
         memBytes: totalMemBytes.toString(),

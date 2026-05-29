@@ -296,7 +296,37 @@ export async function networkStatus(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const network = (req.query.network as Network) || DEFAULT_NETWORK;
+  const networkParam = (req.query.network as string) || DEFAULT_NETWORK;
+
+  if (networkParam === "all") {
+    try {
+      const configured: Network[] = [];
+      if (process.env.TESTNET_RPC_URL) configured.push(NETWORKS.TESTNET as Network);
+      if (process.env.MAINNET_RPC_URL) configured.push(NETWORKS.MAINNET as Network);
+      if (process.env.FUTURENET_RPC_URL) configured.push(NETWORKS.FUTURENET as Network);
+
+      const entries = await Promise.all(
+        configured.map(async (net) => {
+          try {
+            const status = await getNetworkStatus(net);
+            return [net, status] as const;
+          } catch (err) {
+            return [net, { error: err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR }] as const;
+          }
+        }),
+      );
+
+      const data = Object.fromEntries(entries);
+      res.status(HTTP_STATUS.OK).json({ success: true, data });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
+      next(new AppError(message, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+    }
+    return;
+  }
+
+  const network = networkParam as Network;
 
   if (
     network !== NETWORKS.MAINNET &&
@@ -473,7 +503,7 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
     return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
-  const validTypes: XdrType[] = ["transaction", "operation", "ledger_key"];
+  const validTypes: XdrType[] = ["transaction", "operation", "ledger_key", "auth_entry"];
   if (!validTypes.includes(type as XdrType)) {
     return next(
       new AppError(

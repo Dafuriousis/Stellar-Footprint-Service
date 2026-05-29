@@ -367,10 +367,10 @@ export async function footprintDiffController(
 
   try {
     const response: ResponseEnvelope = {
-      success: true,
+      success: false,
       data: { message: "Not fully implemented" },
     };
-    res.status(HTTP_STATUS.OK).json(response);
+    res.status(HTTP_STATUS.NOT_IMPLEMENTED).json(response);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -385,10 +385,10 @@ export async function validate(
 ): Promise<void> {
   try {
     const response: ResponseEnvelope = {
-      success: true,
+      success: false,
       data: { message: "Not implemented" },
     };
-    res.status(HTTP_STATUS.OK).json(response);
+    res.status(HTTP_STATUS.NOT_IMPLEMENTED).json(response);
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR;

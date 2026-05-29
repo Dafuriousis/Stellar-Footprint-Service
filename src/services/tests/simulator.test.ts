@@ -281,4 +281,27 @@ describe("simulateTransaction", () => {
 
     expect(result.warnings).toEqual([]);
   });
+
+  // ── #359: parallelised TTL fetch and contract type detection ─────────────
+
+  it("returns both ttl and contractType fields in a successful response", async () => {
+    mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
+
+    const result = await simulateTransaction(DUMMY_XDR, "testnet");
+
+    expect(result.success).toBe(true);
+    expect(result).toHaveProperty("ttl");
+    expect(result).toHaveProperty("contractType");
+  });
+
+  it("resolves ttl and contractType even when getLedgerEntries returns no entries", async () => {
+    mockGetLedgerEntries.mockResolvedValue({ entries: [], latestLedger: 50 });
+    mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
+
+    const result = await simulateTransaction(DUMMY_XDR, "testnet");
+
+    expect(result.success).toBe(true);
+    expect(result.ttl).toBeDefined();
+    expect(result.contractType).toBeDefined();
+  });
 });

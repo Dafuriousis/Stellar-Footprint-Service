@@ -1,9 +1,11 @@
 import { createHash } from "crypto";
 
-import Redis from "ioredis";
-
 import metrics from "../middleware/metrics";
 import { logger } from "../utils/logger";
+
+// ioredis is lazy-loaded only when REDIS_URL is present to avoid the ~40ms
+// module-parse cost during cold starts where Redis is not configured.
+type RedisClient = import("ioredis").default;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -12,6 +14,8 @@ import { logger } from "../utils/logger";
 export interface CacheEntry<T> {
   value: T;
   expiresAt: number;
+  /** When set, the entry is considered stale after this timestamp (SWR window) */
+  staleAt?: number;
 }
 
 export interface CacheService {
@@ -21,7 +25,17 @@ export interface CacheService {
   flush(): Promise<void>;
   /** Which backend is currently active */
   readonly backend: "redis" | "memory";
+  /** Whether stale-while-revalidate is enabled */
+  readonly staleWhileRevalidate: boolean;
+  /**
+   * Returns the cached value (even if stale) plus whether it is stale.
+   * Callers can use this to trigger a background refresh when stale.
+   */
+  getWithMeta<T>(key: string): Promise<{ value: T; isStale: boolean } | null>;
 }
+
+/** Milliseconds of the stale-while-revalidate window (from CACHE_SWR_MS env var) */
+export const CACHE_SWR_MS = parseInt(process.env.CACHE_SWR_MS ?? "0", 10) || 0;
 
 // ---------------------------------------------------------------------------
 // Exported synchronous LRU cache (used by tests and idempotency layer)
@@ -98,12 +112,16 @@ const DEFAULT_MAX_SIZE = 500;
 
 class AsyncLruMemoryCache implements CacheService {
   readonly backend = "memory" as const;
+  readonly staleWhileRevalidate: boolean;
 
   private readonly store = new Map<string, CacheEntry<unknown>>();
   private readonly maxSize: number;
+  private readonly swrMs: number;
 
-  constructor(maxSize = DEFAULT_MAX_SIZE) {
+  constructor(maxSize = DEFAULT_MAX_SIZE, swrMs = CACHE_SWR_MS) {
     this.maxSize = maxSize;
+    this.swrMs = swrMs;
+    this.staleWhileRevalidate = swrMs > 0;
   }
 
   async get<T>(key: string): Promise<T | null> {
@@ -122,6 +140,26 @@ class AsyncLruMemoryCache implements CacheService {
     return entry.value as T;
   }
 
+  async getWithMeta<T>(
+    key: string,
+  ): Promise<{ value: T; isStale: boolean } | null> {
+    const entry = this.store.get(key);
+    if (!entry) return null;
+
+    const now = Date.now();
+    if (now > entry.expiresAt) {
+      this.store.delete(key);
+      return null;
+    }
+
+    // LRU: move to end
+    this.store.delete(key);
+    this.store.set(key, entry);
+
+    const isStale = entry.staleAt !== undefined && now > entry.staleAt;
+    return { value: entry.value as T, isStale };
+  }
+
   async set<T>(key: string, value: T, ttlMs: number): Promise<void> {
     // Evict oldest entry when at capacity
     if (this.store.size >= this.maxSize && !this.store.has(key)) {
@@ -129,7 +167,13 @@ class AsyncLruMemoryCache implements CacheService {
       if (oldest !== undefined) this.store.delete(oldest);
     }
 
-    this.store.set(key, { value, expiresAt: Date.now() + ttlMs });
+    const now = Date.now();
+    const staleAt =
+      this.staleWhileRevalidate && ttlMs > this.swrMs
+        ? now + (ttlMs - this.swrMs)
+        : undefined;
+
+    this.store.set(key, { value, expiresAt: now + ttlMs, staleAt });
   }
 
   async delete(key: string): Promise<void> {
@@ -147,8 +191,17 @@ class AsyncLruMemoryCache implements CacheService {
 
 class RedisCache implements CacheService {
   readonly backend = "redis" as const;
+  readonly staleWhileRevalidate: boolean;
 
-  constructor(private readonly client: Redis) {}
+  private readonly swrMs: number;
+
+  constructor(
+    private readonly client: RedisClient,
+    swrMs = CACHE_SWR_MS,
+  ) {
+    this.swrMs = swrMs;
+    this.staleWhileRevalidate = swrMs > 0;
+  }
 
   async get<T>(key: string): Promise<T | null> {
     const start = Date.now();
@@ -156,6 +209,22 @@ class RedisCache implements CacheService {
     metrics.recordCacheLatency("get", "redis", (Date.now() - start) / 1000);
     if (raw === null) return null;
     return JSON.parse(raw) as T;
+  }
+
+  async getWithMeta<T>(
+    key: string,
+  ): Promise<{ value: T; isStale: boolean } | null> {
+    const start = Date.now();
+    const [raw, ttlMs] = await Promise.all([
+      this.client.get(key),
+      this.client.pttl(key),
+    ]);
+    metrics.recordCacheLatency("get", "redis", (Date.now() - start) / 1000);
+    if (raw === null) return null;
+    const value = JSON.parse(raw) as T;
+    const isStale =
+      this.staleWhileRevalidate && ttlMs >= 0 && ttlMs < this.swrMs;
+    return { value, isStale };
   }
 
   async set<T>(key: string, value: T, ttlMs: number): Promise<void> {
@@ -187,6 +256,7 @@ export function getCache(): CacheService {
 
   if (redisUrl) {
     try {
+      const Redis = require("ioredis") as typeof import("ioredis").default;
       const client = new Redis(redisUrl, {
         connectTimeout: 3000,
         maxRetriesPerRequest: 1,

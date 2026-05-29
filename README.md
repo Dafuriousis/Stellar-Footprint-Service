@@ -861,6 +861,14 @@ For a beginner-friendly guide explaining what Soroban footprints are, why they a
 
 For details on the Redis vs in-memory dual-backend strategy, TTL configuration, cache key structure, and when to use `DELETE /cache`, see [docs/guides/caching.md](./docs/guides/caching.md).
 
+## ⚠️ Error Handling Guide
+
+For a full reference of error codes, HTTP status codes, response shapes, and retry recommendations, see [docs/guides/error-handling.md](./docs/guides/error-handling.md).
+
+## 📊 Monitoring Guide
+
+For production monitoring setup (Prometheus + Grafana), available metrics, dashboard import, and alerting recommendations, see [docs/guides/monitoring.md](./docs/guides/monitoring.md).
+
 ## 🧩 Integration Guide
 
 ### Step 1: Build Transaction

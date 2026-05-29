@@ -40,14 +40,14 @@ function extractContractId(xdrBase64: string): string | undefined {
     const switchName = getLedgerKeySwitchName(ledgerKey);
 
     // Check if this is a ContractData or ContractCode entry
-    if (switchName === "ledgerKeyContractData") {
+    if (switchName === "contractData") {
       const contractData = ledgerKey.contractData();
       return (contractData.contract().value() as unknown as Buffer).toString(
         "hex",
       );
     }
 
-    if (switchName === "ledgerKeyContractCode") {
+    if (switchName === "contractCode") {
       const contractCode = ledgerKey.contractCode();
       return contractCode.hash().toString("hex");
     }
@@ -69,13 +69,13 @@ function classifyEntryType(xdrBase64: string): LedgerKeyType {
     const switchName = getLedgerKeySwitchName(ledgerKey);
 
     switch (switchName) {
-      case "ledgerKeyContractData":
+      case "contractData":
         return "ContractData";
-      case "ledgerKeyContractCode":
+      case "contractCode":
         return "ContractCode";
-      case "ledgerKeyAccount":
+      case "account":
         return "Account";
-      case "ledgerKeyTrustLine":
+      case "trustline":
         return "TrustLine";
       default:
         return "Unknown";

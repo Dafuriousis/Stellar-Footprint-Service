@@ -1,60 +1,86 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
+import { Network, getNetworkConfig } from "../config/stellar";
 
-export type XdrInputType = "transaction" | "operation";
-
-export interface ValidateResult {
+export interface XdrValidationResult {
   valid: boolean;
-  type?: XdrInputType;
-  operationCount?: number;
-  operationType?: string;
-  error?: string;
+  errors: string[];
+  warnings: string[];
 }
 
-export function validateXdr(
-  xdr: string,
-  type: XdrInputType = "transaction",
-): ValidateResult {
-  try {
-    if (type === "transaction") {
-      // Try both testnet and mainnet passphrases
-      let tx: StellarSdk.Transaction | StellarSdk.FeeBumpTransaction;
-      try {
-        tx = StellarSdk.TransactionBuilder.fromXDR(
-          xdr,
-          StellarSdk.Networks.TESTNET,
-        );
-      } catch {
-        tx = StellarSdk.TransactionBuilder.fromXDR(
-          xdr,
-          StellarSdk.Networks.PUBLIC,
-        );
-      }
+/**
+ * Validate XDR transaction for Soroban invokeHostFunction operation and network match.
+ * @param xdr - Base64 encoded XDR transaction
+ * @param network - Stellar network (mainnet or testnet)
+ * @returns Validation result with valid flag, errors, and warnings
+ */
+export function validateXdr(xdr: string, network: Network): XdrValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
 
-      const ops =
-        tx instanceof StellarSdk.FeeBumpTransaction
-          ? tx.innerTransaction.operations
-          : tx.operations;
-
-      return {
-        valid: true,
-        type: "transaction",
-        operationCount: ops.length,
-        operationType: ops[0]?.type ?? "unknown",
-      };
-    } else {
-      const op = StellarSdk.xdr.Operation.fromXDR(xdr, "base64");
-      const decoded = StellarSdk.Operation.fromXDRObject(op);
-      return {
-        valid: true,
-        type: "operation",
-        operationCount: 1,
-        operationType: decoded.type,
-      };
-    }
-  } catch (err: unknown) {
-    return {
-      valid: false,
-      error: err instanceof Error ? err.message : "Failed to parse XDR",
-    };
+  // 1. Validate base64 format
+  const BASE64_RE = /^[A-Za-z0-9+/]+=*$/;
+  if (!BASE64_RE.test(xdr)) {
+    errors.push("Invalid XDR: must be valid base64");
+    return { valid: false, errors, warnings };
   }
+
+  // 2. Validate size (optional but good practice)
+  const MAX_XDR_BYTES = 100 * 1024; // 100KB
+  if (xdr.length > MAX_XDR_BYTES) {
+    errors.push("XDR too large: maximum 100kb");
+    return { valid: false, errors, warnings };
+  }
+
+  // 3. Get network passphrase
+  let networkPassphrase: string;
+  try {
+    const networkConfig = getNetworkConfig(network);
+    networkPassphrase = networkConfig.networkPassphrase;
+  } catch (err) {
+    errors.push(`Network configuration not found for: ${network}`);
+    return { valid: false, errors, warnings };
+  }
+
+  // 4. Parse XDR as a transaction
+  let tx: StellarSdk.Transaction | StellarSdk.FeeBumpTransaction;
+  try {
+    tx = StellarSdk.TransactionBuilder.fromXDR(xdr, networkPassphrase);
+  } catch (err) {
+    errors.push("Failed to parse XDR as a transaction");
+    return { valid: false, errors, warnings };
+  }
+
+  // 5. Extract operations (handle fee bump transaction)
+  const ops =
+    tx instanceof StellarSdk.FeeBumpTransaction
+      ? tx.innerTransaction.operations
+      : tx.operations;
+
+  if (ops.length === 0) {
+    errors.push("Transaction contains no operations");
+    return { valid: false, errors, warnings };
+  }
+
+  // 6. Check for at least one invokeHostFunction operation (Soroban operation)
+  const hasInvokeHostFunction = ops.some(
+    (op) => op.type === StellarSdk.OperationType.invokeHostFunction
+  );
+
+  if (!hasInvokeHostFunction) {
+    errors.push("Transaction must contain at least one Soroban invokeHostFunction operation");
+    return { valid: false, errors, warnings };
+  }
+
+  // 7. Optional warnings: if there are operations other than invokeHostFunction, we can warn
+  const nonSorobanOps = ops.filter(
+    (op) => op.type !== StellarSdk.OperationType.invokeHostFunction
+  );
+  if (nonSorobanOps.length > 0) {
+    warnings.push(
+      `Transaction contains ${nonSorobanOps.length} non-Soroban operation(s); only invokeHostFunction operations are processed`
+    );
+  }
+
+  // If we reach here, the XDR is valid
+  return { valid: true, errors: [], warnings };
 }

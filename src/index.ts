@@ -3,6 +3,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+const _startupBegin = process.hrtime.bigint();
+
 import path from "path";
 
 import compression from "compression";
@@ -145,11 +147,13 @@ if (require.main === module) {
   );
 
   const server = app.listen(PORT, () => {
+    const coldStartMs = Number(process.hrtime.bigint() - _startupBegin) / 1e6;
     logger.info(
       {
         port: PORT,
         nodeVersion: process.version,
         environment: process.env.NODE_ENV || "development",
+        coldStartMs: Math.round(coldStartMs),
       },
       "stellar-footprint-service started",
     );

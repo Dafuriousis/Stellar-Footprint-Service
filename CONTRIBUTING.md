@@ -6,6 +6,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
 
 - [Fork and Clone](#fork-and-clone)
 - [Local Development Setup](#local-development-setup)
+- [Running Tests](#running-tests)
 - [Code Style](#code-style)
 - [Commit Message Format](#commit-message-format)
 - [Pull Request Process](#pull-request-process)
@@ -79,12 +80,82 @@ Thank you for your interest in contributing! This guide covers everything you ne
 |---|---|
 | `pnpm run dev` | Start dev server with hot reload |
 | `pnpm run build` | Compile TypeScript |
+| `pnpm run typecheck` | Run TypeScript type checking without emitting files |
 | `pnpm run start` | Start production server |
 | `pnpm run lint` | Run ESLint |
 | `pnpm run lint:fix` | Auto-fix lint issues |
 | `pnpm run format` | Format code with Prettier |
 | `pnpm run format:check` | Check formatting without writing |
 | `pnpm test` | Run test suite |
+| `pnpm test --updateSnapshot` | Refresh Jest snapshots after intentional response shape changes |
+
+### Updating Jest snapshots
+
+Snapshot coverage in this repository is maintained through Jest snapshots. When an endpoint response shape intentionally changes, refresh the snapshots with:
+
+```bash
+pnpm test --updateSnapshot
+```
+
+This updates inline snapshots and generated snapshot files in place. Review the updated snapshot blocks before committing.
+
+---
+
+## Running Tests
+
+### Basic Commands
+
+**Run the full test suite:**
+```bash
+pnpm test
+```
+
+**Run tests with coverage report:**
+```bash
+pnpm run test:coverage
+```
+This generates a coverage report showing which lines of code are tested. Aim for high coverage on critical services like `feeEstimator.ts`, `footprintExtractor.ts`, and `simulator.ts`.
+
+**Run a single test file:**
+```bash
+pnpm test -- src/__tests__/features.test.ts
+```
+Or with coverage for a specific file:
+```bash
+pnpm test -- --coverage src/__tests__/features.test.ts
+```
+
+### Integration Tests
+
+Integration tests require the following environment variables to be set in your `.env` file:
+
+- `STELLAR_HORIZON_URL` — URL to Stellar Horizon server (e.g., `https://horizon.stellar.org`)
+- `STELLAR_RPC_URL` — URL to Stellar RPC endpoint (e.g., `https://soroban-testnet.stellar.org`)
+- `NETWORK_PASSPHRASE` — The network where contracts are deployed (e.g., `Test SDF Network ; September 2015`)
+
+These are used by tests in `src/__tests__/integration.test.ts` and `src/__tests__/simulate.integration.test.ts` to verify real API interactions.
+
+### Unit Testing and Mocking
+
+Unit tests should **mock the Stellar RPC** rather than making real network requests. This ensures:
+
+- **Fast test execution** — No network latency
+- **Deterministic tests** — Consistent results regardless of network state
+- **No external dependencies** — Tests pass in any environment
+- **Cost efficiency** — Unlimited mock calls without hitting rate limits
+
+**Example:**
+```typescript
+jest.mock('../services/rpcClient');
+
+const mockRpcClient = rpcClient as jest.Mocked<typeof rpcClient>;
+
+mockRpcClient.simulateTransaction.mockResolvedValue({
+  // mock response
+});
+```
+
+Check `src/__tests__/fixtures/` for pre-built mock data and `src/services/tests/` for examples of properly mocked service tests.
 
 ---
 
@@ -178,6 +249,7 @@ chore(deps): update @stellar/stellar-sdk to 12.1.0
 2. **Run all checks locally:**
    ```bash
    pnpm run lint
+   pnpm run typecheck
    pnpm run format:check
    pnpm run build
    pnpm test

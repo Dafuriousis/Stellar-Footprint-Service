@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
+import { CounterStore, getCounterStore } from "./counterStore";
+
 const DELAY_THRESHOLD = parseInt(
   process.env.BRUTE_FORCE_DELAY_THRESHOLD || "10",
 );
@@ -10,20 +12,15 @@ const WINDOW_MS = parseInt(process.env.BRUTE_FORCE_WINDOW_MS || "60000");
 const DELAY_MS = parseInt(process.env.BRUTE_FORCE_DELAY_MS || "5000");
 const BLOCK_MS = parseInt(process.env.BRUTE_FORCE_BLOCK_MS || "300000");
 
-interface IpRecord {
-  count: number;
-  windowStart: number;
-  blockedUntil?: number;
-}
+const TTL_MS = Math.max(WINDOW_MS, BLOCK_MS) + 5000;
+const store: CounterStore = getCounterStore();
 
-const ipRecords = new Map<string, IpRecord>();
-
-export function recordFailure(ip: string): void {
+export async function recordFailure(ip: string): Promise<void> {
   const now = Date.now();
-  const record = ipRecords.get(ip);
+  const record = await store.get(ip);
 
   if (!record || now - record.windowStart > WINDOW_MS) {
-    ipRecords.set(ip, { count: 1, windowStart: now });
+    await store.set(ip, { count: 1, windowStart: now }, TTL_MS);
     return;
   }
 
@@ -32,7 +29,11 @@ export function recordFailure(ip: string): void {
   if (record.count >= BLOCK_THRESHOLD) {
     record.blockedUntil = now + BLOCK_MS;
   }
+
+  await store.set(ip, record, TTL_MS);
 }
+
+import { ErrorCode } from "../constants";
 
 export async function bruteForceMiddleware(
   req: Request,
@@ -41,7 +42,7 @@ export async function bruteForceMiddleware(
 ): Promise<void> {
   const ip = req.ip || req.socket.remoteAddress || "unknown";
   const now = Date.now();
-  const record = ipRecords.get(ip);
+  const record = await store.get(ip);
 
   if (!record || now - record.windowStart > WINDOW_MS) {
     return next();
@@ -50,7 +51,9 @@ export async function bruteForceMiddleware(
   if (record.blockedUntil && now < record.blockedUntil) {
     const retryAfter = Math.ceil((record.blockedUntil - now) / 1000);
     res.status(429).json({
+      success: false,
       error: "Too many failed requests. Try again later.",
+      code: ErrorCode.RATE_LIMIT_EXCEEDED,
       retryAfter,
     });
     return;

@@ -159,6 +159,20 @@ function buildTtlWarnings(ttl: Record<string, TtlInfo>): string[] {
     );
 }
 
+function buildLedgerSequenceWarning(
+  ledgerSequence: number | undefined,
+  latestLedger: number | undefined,
+): string | undefined {
+  if (
+    ledgerSequence !== undefined &&
+    latestLedger !== undefined &&
+    latestLedger - ledgerSequence > 100
+  ) {
+    return `ledgerSequence ${ledgerSequence} is more than 100 ledgers behind latest ledger ${latestLedger}.`;
+  }
+  return undefined;
+}
+
 /**
  */
 function base64ByteLength(b64: string): number {
@@ -521,6 +535,11 @@ export async function simulateTransaction(
       responseCost,
     );
 
+    const ledgerWarning = buildLedgerSequenceWarning(
+      ledgerSequence,
+      response.latestLedger,
+    );
+
     return {
       success: true,
       footprint: {
@@ -537,7 +556,10 @@ export async function simulateTransaction(
         cpuInsns: responseCost?.cpuInsns ?? "0",
         memBytes: responseCost?.memBytes ?? "0",
       },
-      warnings: buildTtlWarnings(processed.ttl ?? {}),
+      warnings: [
+        ...buildTtlWarnings(processed.ttl ?? {}),
+        ...(ledgerWarning ? [ledgerWarning] : []),
+      ],
       requiredSigners: processed.requiredSigners,
       threshold: processed.threshold,
       raw: response,
@@ -661,6 +683,11 @@ export async function simulateTransaction(
       (item, index, arr) => arr.indexOf(item) === index,
     );
 
+    const multiLedgerWarning = buildLedgerSequenceWarning(
+      ledgerSequence,
+      response.latestLedger,
+    );
+
     return {
       success: true,
       footprint: { readOnly: dedupReadOnly, readWrite: dedupReadWrite },
@@ -677,7 +704,10 @@ export async function simulateTransaction(
         cpuInsns: totalCpuInsns.toString(),
         memBytes: totalMemBytes.toString(),
       },
-      warnings: buildTtlWarnings(allTtl),
+      warnings: [
+        ...buildTtlWarnings(allTtl),
+        ...(multiLedgerWarning ? [multiLedgerWarning] : []),
+      ],
       operations,
       raw: response,
       diagnosticEvents,

@@ -92,6 +92,88 @@ describe("POST /api/v1/simulate", () => {
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
 
+  it("returns 400 when ledgerSequence is 0", async () => {
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: 0 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "ledgerSequence must be a positive integer",
+      code: "INVALID_LEDGER_SEQUENCE",
+    });
+    expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when ledgerSequence is negative", async () => {
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: -5 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "ledgerSequence must be a positive integer",
+      code: "INVALID_LEDGER_SEQUENCE",
+    });
+    expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when ledgerSequence is a float", async () => {
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: 1.5 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "ledgerSequence must be a positive integer",
+      code: "INVALID_LEDGER_SEQUENCE",
+    });
+    expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when ledgerSequence is not a number", async () => {
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: "abc" });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "ledgerSequence must be a positive integer",
+      code: "INVALID_LEDGER_SEQUENCE",
+    });
+    expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("passes ledgerSequence to simulateTransaction when valid", async () => {
+    const mockResult = {
+      success: true,
+      footprint: { readOnly: [], readWrite: [] },
+      contracts: [],
+      contractType: "unknown" as const,
+      ttl: {},
+      optimized: false,
+      rawFootprint: { readOnly: [], readWrite: [] },
+      cost: { cpuInsns: "0", memBytes: "0" },
+    };
+    mockSimulateTransaction.mockResolvedValueOnce(mockResult);
+
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: 123456 });
+
+    expect(res.status).toBe(200);
+    expect(mockSimulateTransaction).toHaveBeenCalledWith(
+      VALID_XDR,
+      "testnet",
+      expect.anything(),
+      123456,
+    );
+  });
+
   it("returns 200 with result on successful simulation", async () => {
     const mockResult = {
       success: true,
@@ -115,6 +197,7 @@ describe("POST /api/v1/simulate", () => {
       VALID_XDR,
       "testnet",
       expect.anything(),
+      undefined,
     );
   });
 
@@ -140,6 +223,7 @@ describe("POST /api/v1/simulate", () => {
       VALID_XDR,
       "testnet",
       expect.anything(),
+      undefined,
     );
   });
 
@@ -165,6 +249,7 @@ describe("POST /api/v1/simulate", () => {
       VALID_XDR,
       "mainnet",
       expect.anything(),
+      undefined,
     );
   });
 

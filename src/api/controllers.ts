@@ -138,6 +138,17 @@ export async function simulate(
     );
   }
 
+  if (ledgerSequence !== undefined) {
+    if (!Number.isInteger(ledgerSequence) || ledgerSequence <= 0) {
+      return next(
+        new AppError(
+          ERROR_MESSAGES.INVALID_LEDGER_SEQUENCE,
+          HTTP_STATUS.BAD_REQUEST,
+        ),
+      );
+    }
+  }
+
   const net: Network = (network as Network) || DEFAULT_NETWORK;
 
   metrics.incrementActiveSimulations();
@@ -151,7 +162,12 @@ export async function simulate(
   }
 
   try {
-    const result = await simulateTransaction(xdr!, net, res.locals.abortSignal);
+    const result = await simulateTransaction(
+      xdr!,
+      net,
+      res.locals.abortSignal,
+      ledgerSequence,
+    );
     const duration = (Date.now() - start) / 1000;
     metrics.recordSimulation(net, result.success);
     metrics.recordSimulationDuration(net, duration);

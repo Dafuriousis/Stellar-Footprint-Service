@@ -46,6 +46,10 @@ build/
 .cache/
 *.tsbuildinfo
 
+# Test snapshots
+src/**/*.snap
+**/*.snap
+
 package-lock.json
 
 # Logs

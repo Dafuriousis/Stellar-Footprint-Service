@@ -3,6 +3,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+const _startupBegin = process.hrtime.bigint();
+
 import path from "path";
 
 import compression from "compression";
@@ -11,10 +13,12 @@ import express from "express";
 import helmet from "helmet";
 
 import routes from "./api/routes";
+import { apiKeyAuth } from "./middleware/apiKeyAuth";
 import { bruteForceMiddleware } from "./middleware/bruteForce";
 import { contentTypeMiddleware } from "./middleware/contentType";
 import { errorHandler } from "./middleware/errorHandler";
 import { ipFilterMiddleware } from "./middleware/ipFilter";
+import { httpCacheMiddleware } from "./middleware/httpCache";
 import { metricsMiddleware, metrics } from "./middleware/metrics";
 import { requestIdMiddleware } from "./middleware/requestId";
 import { requestLogger } from "./middleware/requestLogger";
@@ -76,6 +80,13 @@ app.use(
     referrerPolicy: { policy: "no-referrer" },
   }),
 );
+app.use((_req, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "accelerometer=(),ambient-light-sensor=(),autoplay=(),battery=(),camera=(),cross-origin-isolated=(),display-capture=(),document-domain=(),encrypted-media=(),execution-while-not-rendered=(),execution-while-out-of-viewport=(),fullscreen=(),geolocation=(),gyroscope=(),keyboard-map=(),magnetometer=(),microphone=(),midi=(),navigation-override=(),payment=(),picture-in-picture=(),publickey-credentials-get=(),screen-wake-lock=(),sync-xhr=(),usb=(),web-share=(),xr-spatial-tracking=()",
+  );
+  next();
+});
 app.use(compression({ threshold: COMPRESSION_THRESHOLD }));
 app.use(express.json({ limit: process.env.BODY_LIMIT || "100kb" }));
 app.use(responseTimeMiddleware);
@@ -86,6 +97,7 @@ app.use(metricsMiddleware);
 app.use(timeoutMiddleware);
 app.use(bruteForceMiddleware);
 app.use(contentTypeMiddleware);
+app.use(httpCacheMiddleware);
 
 // Swagger UI — development only
 if (process.env.NODE_ENV !== "production") {
@@ -118,7 +130,7 @@ app.get("/metrics", async (_req, res) => {
   }
 });
 
-app.use("/api/v1", routes);
+app.use("/api/v1", apiKeyAuth, routes);
 
 app.use("/api/*path", (req, res) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,11 +154,13 @@ if (require.main === module) {
   );
 
   const server = app.listen(PORT, () => {
+    const coldStartMs = Number(process.hrtime.bigint() - _startupBegin) / 1e6;
     logger.info(
       {
         port: PORT,
         nodeVersion: process.version,
         environment: process.env.NODE_ENV || "development",
+        coldStartMs: Math.round(coldStartMs),
       },
       "stellar-footprint-service started",
     );

@@ -152,6 +152,7 @@ describe("simulateTransaction", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe("contract panic");
+    expect(result.code).toBe("RPC_SIMULATION_ERROR");
     expect(result.raw).toBeDefined();
   });
 
@@ -163,6 +164,7 @@ describe("simulateTransaction", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/restoration/i);
+    expect(result.code).toBe("SIMULATION_RESTORE_REQUIRED");
   });
 
   it("returns failure when transactionData is missing", async () => {
@@ -175,6 +177,7 @@ describe("simulateTransaction", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/transactionData is missing/i);
+    expect(result.code).toBe("SIMULATION_DATA_MISSING");
   });
 
   it("propagates SDK throw as unhandled rejection", async () => {
@@ -309,55 +312,26 @@ describe("simulateTransaction", () => {
     expect(result.warnings).toEqual([]);
   });
 
-  // ── Cache hit and miss tests ────────────────────────────────────────────────
+  // ── #359: parallelised TTL fetch and contract type detection ─────────────
 
-  it("returns cached result with cacheHit true on cache hit", async () => {
-    const cachedResult = {
-      success: true,
-      footprint: { readOnly: [], readWrite: [] },
-      cost: { cpuInsns: "5000", memBytes: "3000" },
-    };
-
-    jest.spyOn(cacheModule, "buildCacheKey").mockReturnValue("cached-key");
-
-    mockCacheStore.set("cached-key", cachedResult);
-
-    const result = await simulateTransaction(DUMMY_XDR, "testnet");
-
-    expect(result.cacheHit).toBe(true);
-    expect(result.cost?.cpuInsns).toBe("5000");
-  });
-
-  it("stores successful results in cache on cache miss", async () => {
+  it("returns both ttl and contractType fields in a successful response", async () => {
     mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
 
     const result = await simulateTransaction(DUMMY_XDR, "testnet");
 
     expect(result.success).toBe(true);
-    expect(result.cacheHit).toBeUndefined();
-    expect(mockCache.set).toHaveBeenCalled();
+    expect(result).toHaveProperty("ttl");
+    expect(result).toHaveProperty("contractType");
   });
 
-  it("does not cache failures", async () => {
-    const errorResponse = { error: "contract panic", raw: {} };
-    isSimulationError.mockReturnValue(true);
-    mockSimulateTransaction.mockResolvedValue(errorResponse);
-
-    await simulateTransaction(DUMMY_XDR, "testnet");
-
-    expect(mockCache.set).not.toHaveBeenCalled();
-  });
-
-  it("uses cache key based on xdr, network, and ledgerSequence", async () => {
+  it("resolves ttl and contractType even when getLedgerEntries returns no entries", async () => {
+    mockGetLedgerEntries.mockResolvedValue({ entries: [], latestLedger: 50 });
     mockSimulateTransaction.mockResolvedValue(makeSuccessResponse());
 
-    await simulateTransaction(DUMMY_XDR, "testnet", undefined, 999);
-    await simulateTransaction(DUMMY_XDR, "testnet");
+    const result = await simulateTransaction(DUMMY_XDR, "testnet");
 
-    const calls = (cacheModule.buildCacheKey as jest.Mock).mock.calls;
-
-    expect(calls.length).toBe(2);
-    expect(calls[0][0]).toEqual({ xdr: DUMMY_XDR, network: "testnet", ledgerSequence: 999 });
-    expect(calls[1][0]).toEqual({ xdr: DUMMY_XDR, network: "testnet" });
+    expect(result.success).toBe(true);
+    expect(result.ttl).toBeDefined();
+    expect(result.contractType).toBeDefined();
   });
 });

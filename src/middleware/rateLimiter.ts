@@ -1,5 +1,7 @@
 import rateLimit from "express-rate-limit";
 
+import { ErrorCode } from "../constants";
+
 const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || "60", 10);
 const RATE_LIMIT_WINDOW_MS = parseInt(
   process.env.RATE_LIMIT_WINDOW_MS || "60000",
@@ -17,7 +19,9 @@ export const simulateRateLimiter = rateLimit({
     // Retry-After is the number of seconds until the window resets.
     res.setHeader("Retry-After", retryAfter);
     res.status(429).json({
+      success: false,
       error: "Too Many Requests",
+      code: ErrorCode.RATE_LIMIT_EXCEEDED,
       message: `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
       retryAfter,
     });

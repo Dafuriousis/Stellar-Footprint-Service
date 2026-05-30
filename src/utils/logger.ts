@@ -10,4 +10,14 @@ export const logger = pino({
       return { level: label };
     },
   },
+  redact: {
+    paths: [
+      "secretKey",
+      "MAINNET_SECRET_KEY",
+      "TESTNET_SECRET_KEY",
+      "authorization",
+      "password",
+    ],
+    censor: "[Redacted]",
+  },
 });

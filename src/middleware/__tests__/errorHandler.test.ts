@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 
+import { ErrorCode } from "../../constants";
 import { AppError } from "../../utils/AppError";
 import { errorHandler } from "../errorHandler";
 
-function makeRes() {
+function makeRes(requestId?: string) {
   const headers: Record<string, string> = {};
   return {
     set: jest.fn((k: string, v: string) => {
@@ -11,6 +12,7 @@ function makeRes() {
     }),
     status: jest.fn().mockReturnThis(),
     json: jest.fn(),
+    locals: { requestId },
     _headers: headers,
   } as unknown as Response & { _headers: Record<string, string> };
 }
@@ -35,7 +37,10 @@ describe("errorHandler", () => {
     expect(res.status).toHaveBeenCalledWith(503);
     expect(res.set).toHaveBeenCalledWith("Retry-After", "15");
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: false }),
+      expect.objectContaining({
+        success: false,
+        code: ErrorCode.CIRCUIT_OPEN,
+      }),
     );
   });
 
@@ -59,7 +64,10 @@ describe("errorHandler", () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "Missing required field: xdr" }),
+      expect.objectContaining({
+        error: "Missing required field: xdr",
+        code: ErrorCode.MISSING_XDR,
+      }),
     );
   });
 
@@ -78,5 +86,41 @@ describe("errorHandler", () => {
     errorHandler(err, makeReq(), res, next);
 
     expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: ErrorCode.INTERNAL_SERVER_ERROR,
+        error: "Something broke",
+      }),
+    );
+  });
+
+  it("includes requestId in error response body when set (#340)", () => {
+    const err = new AppError("Missing required field: xdr", 400);
+    const res = makeRes("test-request-id-123");
+    errorHandler(err, makeReq(), res, next);
+
+    const body = (res.json as jest.Mock).mock.calls[0][0];
+    expect(body.requestId).toBe("test-request-id-123");
+  });
+
+  it("omits requestId when not set (#340)", () => {
+    const err = new AppError("Missing required field: xdr", 400);
+    const res = makeRes(undefined);
+    errorHandler(err, makeReq(), res, next);
+
+    const body = (res.json as jest.Mock).mock.calls[0][0];
+    expect(body.requestId).toBeUndefined();
+  });
+
+  it("includes requestId in circuit-open error response (#340)", () => {
+    const err = Object.assign(new Error("Circuit breaker is open"), {
+      circuitOpen: true as const,
+      retryAfter: 10,
+    });
+    const res = makeRes("req-abc-456");
+    errorHandler(err, makeReq(), res, next);
+
+    const body = (res.json as jest.Mock).mock.calls[0][0];
+    expect(body.requestId).toBe("req-abc-456");
   });
 });

@@ -56,7 +56,11 @@ describe("POST /api/v1/simulate", () => {
       .send({ network: "testnet" });
 
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({ error: "Missing required field: xdr" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "Missing required field: xdr",
+      code: "MISSING_XDR",
+    });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
 
@@ -66,7 +70,11 @@ describe("POST /api/v1/simulate", () => {
       .send({ xdr: "", network: "testnet" });
 
     expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({ error: "Missing required field: xdr" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "Missing required field: xdr",
+      code: "MISSING_XDR",
+    });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
   });
 
@@ -77,9 +85,93 @@ describe("POST /api/v1/simulate", () => {
 
     expect(res.status).toBe(400);
     expect(res.body).toMatchObject({
+      success: false,
       error: "Invalid network. Use 'testnet', 'mainnet', or 'futurenet'",
+      code: "INVALID_NETWORK",
     });
     expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when ledgerSequence is 0", async () => {
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: 0 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "ledgerSequence must be a positive integer",
+      code: "INVALID_LEDGER_SEQUENCE",
+    });
+    expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when ledgerSequence is negative", async () => {
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: -5 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "ledgerSequence must be a positive integer",
+      code: "INVALID_LEDGER_SEQUENCE",
+    });
+    expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when ledgerSequence is a float", async () => {
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: 1.5 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "ledgerSequence must be a positive integer",
+      code: "INVALID_LEDGER_SEQUENCE",
+    });
+    expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when ledgerSequence is not a number", async () => {
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: "abc" });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "ledgerSequence must be a positive integer",
+      code: "INVALID_LEDGER_SEQUENCE",
+    });
+    expect(mockSimulateTransaction).not.toHaveBeenCalled();
+  });
+
+  it("passes ledgerSequence to simulateTransaction when valid", async () => {
+    const mockResult = {
+      success: true,
+      footprint: { readOnly: [], readWrite: [] },
+      contracts: [],
+      contractType: "unknown" as const,
+      ttl: {},
+      optimized: false,
+      rawFootprint: { readOnly: [], readWrite: [] },
+      cost: { cpuInsns: "0", memBytes: "0" },
+    };
+    mockSimulateTransaction.mockResolvedValueOnce(mockResult);
+
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, ledgerSequence: 123456 });
+
+    expect(res.status).toBe(200);
+    expect(mockSimulateTransaction).toHaveBeenCalledWith(
+      VALID_XDR,
+      "testnet",
+      expect.anything(),
+      123456,
+    );
   });
 
   it("returns 200 with result on successful simulation", async () => {
@@ -105,6 +197,7 @@ describe("POST /api/v1/simulate", () => {
       VALID_XDR,
       "testnet",
       expect.anything(),
+      undefined,
     );
   });
 
@@ -130,6 +223,7 @@ describe("POST /api/v1/simulate", () => {
       VALID_XDR,
       "testnet",
       expect.anything(),
+      undefined,
     );
   });
 
@@ -155,6 +249,7 @@ describe("POST /api/v1/simulate", () => {
       VALID_XDR,
       "mainnet",
       expect.anything(),
+      undefined,
     );
   });
 
@@ -173,6 +268,7 @@ describe("POST /api/v1/simulate", () => {
     expect(res.body).toMatchObject({
       success: false,
       error: "Transaction simulation failed: insufficient balance",
+      code: "RPC_SIMULATION_ERROR",
     });
   });
 
@@ -186,7 +282,11 @@ describe("POST /api/v1/simulate", () => {
       .send({ xdr: VALID_XDR, network: "testnet" });
 
     expect(res.status).toBe(500);
-    expect(res.body).toMatchObject({ error: "RPC connection refused" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "RPC connection refused",
+      code: "INTERNAL_SERVER_ERROR",
+    });
   });
 
   it("returns 500 with generic message when a non-Error is thrown", async () => {
@@ -197,7 +297,11 @@ describe("POST /api/v1/simulate", () => {
       .send({ xdr: VALID_XDR, network: "testnet" });
 
     expect(res.status).toBe(500);
-    expect(res.body).toMatchObject({ error: "Unexpected error" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "Unexpected error",
+      code: "UNEXPECTED_ERROR",
+    });
   });
 
   it("records XDR byte length via metrics.recordXdrBytes", async () => {

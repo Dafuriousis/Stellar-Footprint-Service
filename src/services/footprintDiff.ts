@@ -1,4 +1,10 @@
-import type { FootprintEntry } from "./footprintParser";
+/**
+ * A footprint input for comparison
+ */
+export interface FootprintInput {
+  readOnly: string[];
+  readWrite: string[];
+}
 
 /**
  * Result of comparing two footprints
@@ -6,78 +12,56 @@ import type { FootprintEntry } from "./footprintParser";
 export interface FootprintDiffResult {
   /** Entries added in the 'after' footprint */
   added: {
-    readOnly: FootprintEntry[];
-    readWrite: FootprintEntry[];
+    readOnly: string[];
+    readWrite: string[];
   };
   /** Entries removed in the 'after' footprint (present in 'before' but not in 'after') */
   removed: {
-    readOnly: FootprintEntry[];
-    readWrite: FootprintEntry[];
+    readOnly: string[];
+    readWrite: string[];
+  };
+  /** Entries unchanged between before and after */
+  unchanged: {
+    readOnly: string[];
+    readWrite: string[];
   };
 }
 
 /**
- * Compare two simulation results and return added/removed ledger keys
- * @param before - The before simulation result
- * @param after - The after simulation result
- * @returns Object containing added and removed entries for readOnly and readWrite footprints
+ * Compare two footprint objects and return added, removed, and unchanged ledger keys.
+ * @param before - The before footprint (XDR strings)
+ * @param after - The after footprint (XDR strings)
+ * @returns Object containing added, removed, and unchanged XDR strings
  */
 export function footprintDiff(
-  before: {
-    footprint?: {
-      readOnly: FootprintEntry[];
-      readWrite: FootprintEntry[];
-    } | null;
-  },
-  after: {
-    footprint?: {
-      readOnly: FootprintEntry[];
-      readWrite: FootprintEntry[];
-    } | null;
-  },
+  before: FootprintInput,
+  after: FootprintInput,
 ): FootprintDiffResult {
-  // Handle undefined or null footprints
-  const beforeFootprint = before.footprint ?? { readOnly: [], readWrite: [] };
-  const afterFootprint = after.footprint ?? { readOnly: [], readWrite: [] };
+  const beforeReadOnly = before.readOnly ?? [];
+  const beforeReadWrite = before.readWrite ?? [];
+  const afterReadOnly = after.readOnly ?? [];
+  const afterReadWrite = after.readWrite ?? [];
 
-  // Convert arrays to sets for efficient difference calculation
-  const beforeReadOnlySet = new Set(
-    beforeFootprint.readOnly.map((entry) => entry.xdr),
-  );
-  const beforeReadWriteSet = new Set(
-    beforeFootprint.readWrite.map((entry) => entry.xdr),
-  );
-  const afterReadOnlySet = new Set(
-    afterFootprint.readOnly.map((entry) => entry.xdr),
-  );
-  const afterReadWriteSet = new Set(
-    afterFootprint.readWrite.map((entry) => entry.xdr),
-  );
+  const beforeReadOnlySet = new Set(beforeReadOnly);
+  const beforeReadWriteSet = new Set(beforeReadWrite);
+  const afterReadOnlySet = new Set(afterReadOnly);
+  const afterReadWriteSet = new Set(afterReadWrite);
 
-  // Find added entries (in after but not in before)
-  const addedReadOnly = afterFootprint.readOnly.filter(
-    (entry) => !beforeReadOnlySet.has(entry.xdr),
-  );
-  const addedReadWrite = afterFootprint.readWrite.filter(
-    (entry) => !beforeReadWriteSet.has(entry.xdr),
-  );
+  // Added entries (in after but not in before)
+  const addedReadOnly = afterReadOnly.filter((xdr) => !beforeReadOnlySet.has(xdr));
+  const addedReadWrite = afterReadWrite.filter((xdr) => !beforeReadWriteSet.has(xdr));
 
-  // Find removed entries (in before but not in after)
-  const removedReadOnly = beforeFootprint.readOnly.filter(
-    (entry) => !afterReadOnlySet.has(entry.xdr),
-  );
-  const removedReadWrite = beforeFootprint.readWrite.filter(
-    (entry) => !afterReadWriteSet.has(entry.xdr),
-  );
+  // Removed entries (in before but not in after)
+  const removedReadOnly = beforeReadOnly.filter((xdr) => !afterReadOnlySet.has(xdr));
+  const removedReadWrite = beforeReadWrite.filter((xdr) => !afterReadWriteSet.has(xdr));
+
+  // Unchanged entries (present in both)
+  const unchangedReadOnly = beforeReadOnly.filter((xdr) => afterReadOnlySet.has(xdr));
+  const unchangedReadWrite = beforeReadWrite.filter((xdr) => afterReadWriteSet.has(xdr));
 
   return {
-    added: {
-      readOnly: addedReadOnly,
-      readWrite: addedReadWrite,
-    },
-    removed: {
-      readOnly: removedReadOnly,
-      readWrite: removedReadWrite,
-    },
+    added: { readOnly: addedReadOnly, readWrite: addedReadWrite },
+    removed: { readOnly: removedReadOnly, readWrite: removedReadWrite },
+    unchanged: { readOnly: unchangedReadOnly, readWrite: unchangedReadWrite },
   };
 }

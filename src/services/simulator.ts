@@ -447,6 +447,7 @@ export async function simulateTransaction(
   if (!hasSorobanOp) {
     return {
       success: false,
+      type: "invalid_transaction" as const,
       error:
         "Transaction must contain a Soroban operation (invokeHostFunction).",
       code: ErrorCode.TRANSACTION_MISSING_SOROBAN_OPERATION,

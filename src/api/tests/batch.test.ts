@@ -93,4 +93,41 @@ describe("POST /api/v1/simulate/batch concurrency", () => {
       error: "RPC error",
     });
   });
+
+  it("passes per-transaction ledgerSequence to simulateTransaction", async () => {
+    mockSimulate.mockResolvedValue(mockResult);
+
+    const transactions = [
+      { xdr: VALID_XDR, ledgerSequence: 100 },
+      { xdr: VALID_XDR },
+      { xdr: VALID_XDR, ledgerSequence: 200 },
+    ];
+    const res = await request(app)
+      .post("/api/v1/simulate/batch")
+      .send({ transactions, network: "testnet" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.results).toHaveLength(3);
+    expect(mockSimulate).toHaveBeenNthCalledWith(
+      1,
+      VALID_XDR,
+      "testnet",
+      expect.anything(),
+      100,
+    );
+    expect(mockSimulate).toHaveBeenNthCalledWith(
+      2,
+      VALID_XDR,
+      "testnet",
+      expect.anything(),
+      undefined,
+    );
+    expect(mockSimulate).toHaveBeenNthCalledWith(
+      3,
+      VALID_XDR,
+      "testnet",
+      expect.anything(),
+      200,
+    );
+  });
 });

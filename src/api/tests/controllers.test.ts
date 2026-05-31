@@ -327,6 +327,55 @@ describe("POST /api/v1/simulate", () => {
       Buffer.from(VALID_XDR, "base64").length,
     );
   });
+
+  it("returns 422 with type: invalid_transaction when simulator returns non-Soroban rejection", async () => {
+    const mockResult = {
+      success: false,
+      type: "invalid_transaction" as const,
+      error:
+        "Transaction must contain a Soroban operation (invokeHostFunction).",
+      code: "TRANSACTION_MISSING_SOROBAN_OPERATION",
+    };
+    mockSimulateTransaction.mockResolvedValueOnce(mockResult);
+
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, network: "testnet" });
+
+    expect(res.status).toBe(422);
+    expect(res.body).toMatchObject({
+      success: false,
+      type: "invalid_transaction",
+      error:
+        "Transaction must contain a Soroban operation (invokeHostFunction).",
+    });
+  });
+
+  it("returns 200 when network is futurenet", async () => {
+    const mockResult = {
+      success: true,
+      footprint: { readOnly: [], readWrite: [] },
+      contracts: [],
+      contractType: "unknown" as const,
+      ttl: {},
+      optimized: false,
+      rawFootprint: { readOnly: [], readWrite: [] },
+      cost: { cpuInsns: "0", memBytes: "0" },
+    };
+    mockSimulateTransaction.mockResolvedValueOnce(mockResult);
+
+    const res = await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, network: "futurenet" });
+
+    expect(res.status).toBe(200);
+    expect(mockSimulateTransaction).toHaveBeenCalledWith(
+      VALID_XDR,
+      "futurenet",
+      expect.anything(),
+      undefined,
+    );
+  });
 });
 
 describe("GET /api/v1/openapi.json", () => {
@@ -412,9 +461,9 @@ describe("network label in HTTP metrics", () => {
     };
     mockSimulateTransaction.mockResolvedValueOnce(mockResult);
 
-await request(app)
-       .post("/api/v1/simulate")
-       .send({ xdr: VALID_XDR, network: "mainnet" });
+    await request(app)
+      .post("/api/v1/simulate")
+      .send({ xdr: VALID_XDR, network: "mainnet" });
 
     expect(mockMetrics.recordSimulation).toHaveBeenCalledWith("mainnet", true);
   });
@@ -429,7 +478,9 @@ describe("POST /api/v1/footprint/diff", () => {
       .send({ after: { readOnly: [], readWrite: [] } });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/missing required fields: before and after/i);
+    expect(res.body.error).toMatch(
+      /missing required fields: before and after/i,
+    );
   });
 
   it("returns 400 when after is missing", async () => {
@@ -438,13 +489,18 @@ describe("POST /api/v1/footprint/diff", () => {
       .send({ before: { readOnly: [], readWrite: [] } });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/missing required fields: before and after/i);
+    expect(res.body.error).toMatch(
+      /missing required fields: before and after/i,
+    );
   });
 
   it("returns 400 when before.readOnly is not an array", async () => {
     const res = await request(app)
       .post("/api/v1/footprint/diff")
-      .send({ before: { readOnly: "not-an-array", readWrite: [] }, after: { readOnly: [], readWrite: [] } });
+      .send({
+        before: { readOnly: "not-an-array", readWrite: [] },
+        after: { readOnly: [], readWrite: [] },
+      });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/invalid before footprint/i);
@@ -453,7 +509,10 @@ describe("POST /api/v1/footprint/diff", () => {
   it("returns 400 when after.readWrite is not an array", async () => {
     const res = await request(app)
       .post("/api/v1/footprint/diff")
-      .send({ before: { readOnly: [], readWrite: [] }, after: { readOnly: [], readWrite: "not-an-array" } });
+      .send({
+        before: { readOnly: [], readWrite: [] },
+        after: { readOnly: [], readWrite: "not-an-array" },
+      });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/invalid after footprint/i);

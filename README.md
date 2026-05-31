@@ -318,7 +318,7 @@ export interface SimulateResult {
 }
 /**
  * Simulates a Stellar transaction and returns footprint data.
- * 
+ *
  * @param xdr - Base64 encoded transaction XDR
  * @param network - Stellar network type
  * @returns Simulation result containing footprint and cost
@@ -463,33 +463,32 @@ cp .env.example .env
 
 ## 🔧 Environment Variables
 
-| Variable                      | Description                                                                  | Required        | Default                               | Example                                               |
-| ----------------------------- | ---------------------------------------------------------------------------- | --------------- | ------------------------------------- | ----------------------------------------------------- |
-| `NODE_ENV`                    | Runtime environment                                                          | ✅              | —                                     | `production`                                          |
-| `PORT`                        | Port the HTTP server listens on                                              | ✅              | `3000`                                | `3000`                                                |
-| `TESTNET_RPC_URL`             | Stellar testnet Soroban RPC endpoint                                         | ✅              | `https://soroban-testnet.stellar.org` | `https://soroban-testnet.stellar.org`                 |
-| `MAINNET_RPC_URL`             | Stellar mainnet Soroban RPC endpoint                                         | ⚠️ mainnet only | —                                     | `https://mainnet.stellar.validationcloud.io/v1/<KEY>` |
-| `TESTNET_SECRET_KEY`          | Stellar secret key for testnet signing                                       | ⚠️ if signing   | —                                     | `SXXXXX...`                                           |
-| `MAINNET_SECRET_KEY`          | Stellar secret key for mainnet signing                                       | ⚠️ if signing   | —                                     | `SXXXXX...`                                           |
-| `NETWORK`                     | Default network when none is specified in request                            | ❌              | `testnet`                             | `mainnet`                                             |
-| `SIMULATE_TIMEOUT_MS`         | Timeout for simulation requests in milliseconds                              | ❌              | `30000`                               | `15000`                                               |
-| `LOG_LEVEL`                   | Logging verbosity (`debug` \| `info` \| `warn` \| `error`)                   | ❌              | `info`                                | `debug`                                               |
-| `COMPRESSION_THRESHOLD`       | Minimum response size in bytes before gzip compression is applied            | ❌              | `1024`                                | `512`                                                 |
-| `RPC_POOL_TTL_MS`             | How long an RPC server connection is reused before being recreated (ms)      | ❌              | `300000`                              | `60000`                                               |
-| `IP_ALLOWLIST`                | Comma-separated list of allowed IPs/CIDRs. If set, all other IPs are blocked | ❌              | —                                     | `192.168.1.0/24,10.0.0.1`                             |
-| `IP_BLOCKLIST`                | Comma-separated list of blocked IPs/CIDRs                                    | ❌              | —                                     | `1.2.3.4,5.6.7.0/24`                                  |
-| `BRUTE_FORCE_DELAY_THRESHOLD` | Number of requests from one IP before responses are delayed                  | ❌              | `10`                                  | `5`                                                   |
-| `BRUTE_FORCE_BLOCK_THRESHOLD` | Number of requests from one IP before the IP is blocked                      | ❌              | `20`                                  | `15`                                                  |
-| `BRUTE_FORCE_WINDOW_MS`       | Rolling time window for brute-force counting (ms)                            | ❌              | `60000`                               | `30000`                                               |
-| `BRUTE_FORCE_DELAY_MS`        | Delay added to responses once delay threshold is hit (ms)                    | ❌              | `5000`                                | `2000`                                                |
-| `BRUTE_FORCE_BLOCK_MS`        | Duration an IP remains blocked (ms)                                          | ❌              | `300000`                              | `600000`                                              |
-| `CB_FAILURE_THRESHOLD`        | Number of RPC failures before the circuit breaker opens                      | ❌              | `5`                                   | `3`                                                   |
-| `CB_RECOVERY_MS`              | Time the circuit breaker waits before attempting recovery (ms)               | ❌              | `30000`                               | `15000`                                               |
-| `BATCH_MAX_SIZE`              | Maximum number of transactions allowed in a single batch simulate request    | ❌              | `10`                                  | `5`                                                   |
-| `GRAFANA_USER`                | Grafana admin username (Docker Compose only)                                 | ❌              | `admin`                               | `admin`                                               |
-| `GRAFANA_PASSWORD`            | Grafana admin password (Docker Compose only)                                 | ❌              | `admin`                               | `s3cur3pass`                                          |
-| `REDIS_HOST`                  | Redis hostname for caching (Docker Compose only)                             | ❌              | `redis`                               | `localhost`                                           |
-| `REDIS_PORT`                  | Redis port (Docker Compose only)                                             | ❌              | `6379`                                | `6379`                                                |
+| Variable                      | Description                                                                                                                    | Required        | Default                               | Example                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------- | ------------------------------------- | --------------------------------------------------------- |
+| `NODE_ENV`                    | Runtime environment                                                                                                            | ✅              | —                                     | `production`                                              |
+| `PORT`                        | Port the HTTP server listens on                                                                                                | ✅              | `3000`                                | `3000`                                                    |
+| `TESTNET_RPC_URL`             | Stellar testnet Soroban RPC endpoint                                                                                           | ✅              | `https://soroban-testnet.stellar.org` | `https://soroban-testnet.stellar.org`                     |
+| `MAINNET_RPC_URL`             | Stellar mainnet Soroban RPC endpoint                                                                                           | ⚠️ mainnet only | —                                     | `https://mainnet.stellar.validationcloud.io/v1/<KEY>`     |
+| `TESTNET_SECRET_KEY`          | Stellar secret key for testnet signing                                                                                         | ⚠️ if signing   | —                                     | `SXXXXX...`                                               |
+| `MAINNET_SECRET_KEY`          | Stellar secret key for mainnet signing                                                                                         | ⚠️ if signing   | —                                     | `SXXXXX...`                                               |
+| `NETWORK`                     | Default network when none is specified in request                                                                              | ❌              | `testnet`                             | `mainnet`                                                 |
+| `SIMULATE_TIMEOUT_MS`         | Timeout for simulation requests in milliseconds                                                                                | ❌              | `30000`                               | `15000`                                                   |
+| `LOG_LEVEL`                   | Logging verbosity (`debug` \| `info` \| `warn` \| `error`)                                                                     | ❌              | `info`                                | `debug`                                                   |
+| `COMPRESSION_THRESHOLD`       | Minimum response size in bytes before gzip compression is applied                                                              | ❌              | `1024`                                | `512`                                                     |
+| `RPC_POOL_TTL_MS`             | How long an RPC server connection is reused before being recreated (ms)                                                        | ❌              | `300000`                              | `60000`                                                   |
+| `IP_ALLOWLIST`                | Comma-separated list of allowed IPs/CIDRs. If set, all other IPs are blocked                                                   | ❌              | —                                     | `192.168.1.0/24,10.0.0.1`                                 |
+| `IP_BLOCKLIST`                | Comma-separated list of blocked IPs/CIDRs                                                                                      | ❌              | —                                     | `1.2.3.4,5.6.7.0/24`                                      |
+| `BRUTE_FORCE_DELAY_THRESHOLD` | Number of requests from one IP before responses are delayed                                                                    | ❌              | `10`                                  | `5`                                                       |
+| `BRUTE_FORCE_BLOCK_THRESHOLD` | Number of requests from one IP before the IP is blocked                                                                        | ❌              | `20`                                  | `15`                                                      |
+| `BRUTE_FORCE_WINDOW_MS`       | Rolling time window for brute-force counting (ms)                                                                              | ❌              | `60000`                               | `30000`                                                   |
+| `BRUTE_FORCE_DELAY_MS`        | Delay added to responses once delay threshold is hit (ms)                                                                      | ❌              | `5000`                                | `2000`                                                    |
+| `BRUTE_FORCE_BLOCK_MS`        | Duration an IP remains blocked (ms)                                                                                            | ❌              | `300000`                              | `600000`                                                  |
+| `CB_FAILURE_THRESHOLD`        | Number of RPC failures before the circuit breaker opens                                                                        | ❌              | `5`                                   | `3`                                                       |
+| `CB_RECOVERY_MS`              | Time the circuit breaker waits before attempting recovery (ms)                                                                 | ❌              | `30000`                               | `15000`                                                   |
+| `BATCH_MAX_SIZE`              | Maximum number of transactions allowed in a single batch simulate request                                                      | ❌              | `10`                                  | `5`                                                       |
+| `GRAFANA_USER`                | Grafana admin username (Docker Compose only)                                                                                   | ❌              | `admin`                               | `admin`                                                   |
+| `GRAFANA_PASSWORD`            | Grafana admin password (Docker Compose only)                                                                                   | ❌              | `admin`                               | `s3cur3pass`                                              |
+| `REDIS_URL`                   | Redis connection URL. When set, enables the Redis cache backend; falls back to in-memory LRU if unset or on connection failure | ❌              | —                                     | `redis://localhost:6379` / `rediss://user:pass@host:6380` |
 
 > ⚠️ = conditionally required. Never commit real secret keys — use your platform's secrets manager in production.
 
@@ -544,16 +543,11 @@ Simulate a Soroban transaction and extract its footprint.
 }
 ```
 
-| Field             | Type   | Required | Description                                                                                                       |
-| ----------------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------- |
-| `xdr`             | string | ✅       | Base64-encoded transaction XDR                                                                                    |
-| `network`         | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`)                                                                 |
-| `ledgerSequence`  | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
-| Field             | Type   | Required | Description                                                                                                       |
-| ----------------- | ------ | -------- | ---------------------------------------------------------------------------                                       |
-| `xdr`             | string | ✅       | Base64-encoded transaction XDR                                                                                    |
-| `network`         | string | ❌       | `"testnet"` or `"mainnet"` (default: `"testnet"`)                                                                 |
-| `ledgerSequence`  | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
+| Field            | Type   | Required | Description                                                                                                       |
+| ---------------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `xdr`            | string | ✅       | Base64-encoded transaction XDR                                                                                    |
+| `network`        | string | ❌       | `"testnet"`, `"mainnet"`, or `"futurenet"` (default: `"testnet"`)                                                 |
+| `ledgerSequence` | number | ❌       | Specific ledger sequence to simulate against. Useful for reproducing historical simulation results and debugging. |
 
 #### Success Response (200)
 
@@ -1000,7 +994,7 @@ See the full [Deployment Guide](./docs/deployment.md) for environment variable r
 - [ ] Add batch simulation endpoint
 - [ ] Implement response caching with Redis
 - [ ] Add Prometheus metrics
-- [ ] Support Futurenet
+- [x] Support Futurenet
 - [ ] Build OpenAPI/Swagger docs
 - [x] Add deployment guide
 

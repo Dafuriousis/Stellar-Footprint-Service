@@ -1,21 +1,21 @@
-import { Request, Response, NextFunction } from "express";
 import fs from "fs";
 import path from "path";
 
-import * as StellarSdk from "@stellar/stellar-sdk";
 import { Network } from "@config/stellar";
 import metrics from "@middleware/metrics";
 import { getCache } from "@services/cache";
 import { decodeXdr, type XdrType } from "@services/decoder";
-import { footprintDiff, type FootprintInput } from "@services/footprintDiff";
 import { estimateFee, estimateFeeDetailed } from "@services/feeEstimator";
+import { footprintDiff, type FootprintInput } from "@services/footprintDiff";
 import { getNetworkStatus } from "@services/networkStatus";
 import { buildRestoreTransaction } from "@services/restorer";
 import { simulateTransaction } from "@services/simulator";
 import { createJob, deliverWebhook } from "@services/webhook";
+import * as StellarSdk from "@stellar/stellar-sdk";
 import { AppError } from "@utils/AppError";
 import { rpcCircuitBreaker } from "@utils/circuitBreaker";
 import { validateXdrInput } from "@utils/validateXdrInput";
+import { Request, Response, NextFunction } from "express";
 
 import { version } from "../../package.json";
 import { env } from "../config/env";
@@ -133,7 +133,12 @@ export async function simulate(
 
   const xdrValue = xdr as string;
 
-  if (network && network !== NETWORKS.MAINNET && network !== NETWORKS.TESTNET) {
+  if (
+    network &&
+    network !== NETWORKS.MAINNET &&
+    network !== NETWORKS.TESTNET &&
+    network !== NETWORKS.FUTURENET
+  ) {
     return next(
       new AppError(ERROR_MESSAGES.INVALID_NETWORK, HTTP_STATUS.BAD_REQUEST),
     );
@@ -209,7 +214,7 @@ export async function simulateBatch(
   next: NextFunction,
 ): Promise<void> {
   const { transactions, network } = req.body as {
-    transactions?: { xdr: string }[];
+    transactions?: { xdr: string; ledgerSequence?: number }[];
     network?: Network;
   };
 
@@ -248,12 +253,13 @@ export async function simulateBatch(
   metrics.incrementActiveSimulations();
 
   try {
-    const tasks = transactions.map(({ xdr }, index) => () => {
+    const tasks = transactions.map(({ xdr, ledgerSequence }, index) => () => {
       if (!xdr) return Promise.reject(new Error(ERROR_MESSAGES.MISSING_XDR));
       return simulateTransaction(
         xdr as string,
         net,
         res.locals.abortSignal,
+        ledgerSequence,
       ).then((result) => ({ index, ...result }));
     });
 
@@ -318,9 +324,12 @@ export async function networkStatus(
   if (networkParam === "all") {
     try {
       const configured: Network[] = [];
-      if (process.env.TESTNET_RPC_URL) configured.push(NETWORKS.TESTNET as Network);
-      if (process.env.MAINNET_RPC_URL) configured.push(NETWORKS.MAINNET as Network);
-      if (process.env.FUTURENET_RPC_URL) configured.push(NETWORKS.FUTURENET as Network);
+      if (process.env.TESTNET_RPC_URL)
+        configured.push(NETWORKS.TESTNET as Network);
+      if (process.env.MAINNET_RPC_URL)
+        configured.push(NETWORKS.MAINNET as Network);
+      if (process.env.FUTURENET_RPC_URL)
+        configured.push(NETWORKS.FUTURENET as Network);
 
       const entries = await Promise.all(
         configured.map(async (net) => {
@@ -328,7 +337,15 @@ export async function networkStatus(
             const status = await getNetworkStatus(net);
             return [net, status] as const;
           } catch (err) {
-            return [net, { error: err instanceof Error ? err.message : ERROR_MESSAGES.UNEXPECTED_ERROR }] as const;
+            return [
+              net,
+              {
+                error:
+                  err instanceof Error
+                    ? err.message
+                    : ERROR_MESSAGES.UNEXPECTED_ERROR,
+              },
+            ] as const;
           }
         }),
       );
@@ -371,7 +388,10 @@ export async function footprintDiffController(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const { before, after } = req.body as { before?: FootprintInput; after?: FootprintInput };
+  const { before, after } = req.body as {
+    before?: FootprintInput;
+    after?: FootprintInput;
+  };
 
   if (!before || !after) {
     return next(
@@ -538,7 +558,12 @@ export function decode(req: Request, res: Response, next: NextFunction): void {
     return next(new AppError(xdrCheck.error!, HTTP_STATUS.BAD_REQUEST));
   }
 
-  const validTypes: XdrType[] = ["transaction", "operation", "ledger_key", "auth_entry"];
+  const validTypes: XdrType[] = [
+    "transaction",
+    "operation",
+    "ledger_key",
+    "auth_entry",
+  ];
   if (!validTypes.includes(type as XdrType)) {
     return next(
       new AppError(
@@ -675,8 +700,7 @@ export function simulateDryRun(
       operations,
     });
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Failed to parse XDR";
+    const message = err instanceof Error ? err.message : "Failed to parse XDR";
     next(new AppError(message, HTTP_STATUS.BAD_REQUEST));
   }
 }
@@ -697,7 +721,10 @@ const HISTORY_MAX = 100;
 const HISTORY_TTL_MS = 24 * 60 * 60 * 1000; // 24 h
 
 // ip -> array of entries (newest last)
-const historyStore = new Map<string, { entry: HistoryEntry; expiresAt: number }[]>();
+const historyStore = new Map<
+  string,
+  { entry: HistoryEntry; expiresAt: number }[]
+>();
 
 export function recordHistory(ip: string, entry: HistoryEntry): void {
   let list = historyStore.get(ip) ?? [];
@@ -721,11 +748,17 @@ export function getSimulateHistory(
       "unknown";
 
     const limitParam = parseInt((req.query.limit as string) || "10", 10);
-    const limit = isNaN(limitParam) || limitParam < 1 ? 10 : Math.min(limitParam, HISTORY_MAX);
+    const limit =
+      isNaN(limitParam) || limitParam < 1
+        ? 10
+        : Math.min(limitParam, HISTORY_MAX);
 
     const now = Date.now();
     const raw = (historyStore.get(ip) ?? []).filter((e) => e.expiresAt > now);
-    const entries = raw.map((e) => e.entry).reverse().slice(0, limit);
+    const entries = raw
+      .map((e) => e.entry)
+      .reverse()
+      .slice(0, limit);
 
     res.status(HTTP_STATUS.OK).json({
       ip,

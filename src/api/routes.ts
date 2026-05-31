@@ -54,12 +54,6 @@ router.post("/simulate/batch", simulateBatch);
 // GET /simulate/cost-breakdown — accepts ?cpuInsns=&memBytes=&network= and returns detailed cost breakdown
 router.get("/simulate/cost-breakdown", costBreakdownController);
 
-// GET /simulate/supported-networks — returns networks that have configured RPC URLs
-router.get("/simulate/supported-networks", supportedNetworks);
-
-// POST /simulate/batch — accepts { transactions: [{ xdr }], network } and returns array of results
-router.post("/simulate/batch", simulateBatch);
-
 // GET /network/status — returns current network information
 router.get("/network/status", networkStatus);
 

@@ -127,7 +127,31 @@ pnpm test -- --coverage src/__tests__/features.test.ts
 
 ### Integration Tests
 
-Integration tests require the following environment variables to be set in your `.env` file:
+Integration tests require Redis to be running. You can start Redis using Docker Compose:
+
+```bash
+docker compose -f docker-compose.test.yml up -d
+```
+
+Then run the integration tests:
+
+```bash
+pnpm test:integration
+```
+
+Alternatively, you can run integration tests manually with Redis running:
+
+```bash
+pnpm test -- --testPathPattern='integration|simulate'
+```
+
+When finished, stop Redis:
+
+```bash
+docker compose -f docker-compose.test.yml down
+```
+
+**Environment variables required:**
 
 - `STELLAR_HORIZON_URL` — URL to Stellar Horizon server (e.g., `https://horizon.stellar.org`)
 - `STELLAR_RPC_URL` — URL to Stellar RPC endpoint (e.g., `https://soroban-testnet.stellar.org`)
@@ -218,6 +242,22 @@ type(scope): short description
 | `refactor` | Code restructure, no behavior change |
 | `test` | Adding or updating tests |
 | `chore` | Maintenance, dependency updates |
+
+### Scopes
+
+All commits **must** include a scope from this list:
+
+| Scope | Purpose |
+|---|---|
+| `api` | API endpoints and controllers |
+| `services` | Business logic and service layer |
+| `middleware` | Middleware (auth, logging, caching, etc.) |
+| `config` | Configuration and environment setup |
+| `utils` | Utility functions and helpers |
+| `docs` | Documentation and guides |
+| `infra` | Infrastructure, deployment, Docker, Kubernetes |
+| `tests` | Test suite and test infrastructure |
+| `dx` | Developer experience (tooling, build, linting) |
 
 ### Examples
 
